@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+body{
+    font-family: sans-serif
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE và Edge */
+  scrollbar-width: none; /* Firefox */
+}
