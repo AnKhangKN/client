@@ -5,6 +5,7 @@ import JoinPage from "../pages/user/Group/JoinPage/JoinPage";
 import DepartmentPage from "../pages/user/DepartmentPage/DepartmentPage";
 import MessagePage from "../pages/user/MessagePage/MessagePage";
 import NotificationPage from "../pages/user/NotificationPage/NotificationPage";
+import ProfilePage from "../pages/user/ProfilePage/ProfilePage"
 
 export const routes = [
   {
@@ -43,6 +44,11 @@ export const routes = [
   {
     path: "/notification",
     page: NotificationPage,
+    isShowSidebarUser: true,
+  },
+  {
+    path: "/profile",
+    page: ProfilePage,
     isShowSidebarUser: true,
   },
 ];
