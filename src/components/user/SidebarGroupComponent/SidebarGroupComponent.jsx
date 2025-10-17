@@ -134,50 +134,55 @@ const SidebarGroupComponent = () => {
   ];
 
   return (
-    <div className="flex flex-col xl:w-1/4 w-20 p-4 border-l bg-white overflow-hidden ">
-      <div className="flex justify-between items-center py-4">
-        <div className="text-xl">Nhóm</div>
+    <div className="md:flex hidden flex-col lg:w-[320px] w-24 p-4 border-l border-gray-200 bg-white overflow-hidden ">
+      <div className="flex lg:justify-between justify-center items-center py-4">
+        <div className="lg:block hidden text-xl">Nhóm</div>
 
-        <div className="flex justify-center items-center w-8 h-8 rounded-full text-2xl bg-gray-200">
+        <div className="flex justify-center items-center w-12 h-12 rounded-full text-2xl bg-gray-200">
           <MdSettings />
         </div>
       </div>
 
       <div className="overflow-y-auto scrollbar-hide">
-        <div className="flex items-center bg-gray-200 p-2 gap-2 rounded-full">
-          <div className="flex justify-center text-xl items-center">
+        <div className="flex items-center bg-gray-200 mx-2 gap-2 rounded-full">
+          <div className="flex justify-center text-xl p-3 items-center">
             <RiSearchLine />
           </div>
-          <div>Tìm kiếm</div>
+          <div className="lg:block hidden">Tìm kiếm</div>
         </div>
 
         {listNavigate.map((item, index) => (
           <div
-            className="flex items-center gap-2 my-4 cursor-pointer hover:bg-gray-100 p-2 rounded-lg"
+            className="flex items-center gap-2 mt-4 cursor-pointer hover:bg-gray-200 px-3 rounded-lg"
             key={index}
             onClick={() => navigate(item.nav)}
           >
-            <div className="text-xl">{item.icon}</div>
-            <div className="xl:block hidden">{item.label}</div>
+            <div className="w-10 h-10 text-2xl flex justify-center items-center">
+              {item.icon}
+            </div>
+            <div className="lg:block hidden">{item.label}</div>
           </div>
         ))}
 
-        <button className="flex w-full justify-center items-center mb-6 gap-2 bg-gray-400 py-2 rounded-lg">
-          <GoPlus size={20} /> Tạo nhóm mới
+        <button className="flex w-full justify-center items-center mt-4 mb-6 gap-2 bg-gray-200 py-2 rounded-lg">
+          <div className="flex justify-center items-center text-2xl">
+            <GoPlus />
+          </div>
+          <div className="lg:block hidden">Tạo nhóm mới</div>
         </button>
 
         {/* List group */}
 
         {listGroup.map((group) => (
-          <div className="flex items-center gap-2 py-2">
+          <div className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded-lg">
             <img
               className="w-10 h-10 rounded-full"
               src={group.groupAvatar}
               alt="logo"
             />
 
-            <div className="flex flex-col w-full">
-              <div className="font-bold text-ellipsis overflow-hidden whitespace-nowrap max-w-[300px]">
+            <div className="flex-col w-full lg:flex hidden">
+              <div className="font-bold text-ellipsis overflow-hidden whitespace-nowrap max-w-[215px]">
                 {group.groupName}
               </div>
 

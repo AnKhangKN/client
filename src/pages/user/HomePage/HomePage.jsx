@@ -10,6 +10,7 @@ import { PiShareFatLight } from "react-icons/pi";
 import { RiSearchLine } from "react-icons/ri";
 import ChatBoxComponent from "../../../components/user/ChatBoxComponent/ChatBoxComponent";
 import TextCollapse from "../../../components/user/TextCollapse/TextCollapse";
+import HeaderComponent from "../../../components/user/HeaderComponent/HeaderComponent";
 
 const HomePage = () => {
   const [heartedPosts, setHeartedPosts] = useState({});
@@ -166,14 +167,16 @@ const HomePage = () => {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      <HeaderComponent />
+
       {/* content */}
-      <div className="flex py-4 flex-col items-center w-full overflow-y-auto scrollbar-hide">
+      <div className="flex md:py-4 pt-18 flex-col items-center w-full overflow-y-auto scrollbar-hide">
         {/* add new post */}
         <div className="px-4 mb-2 w-11/12 max-w-[600px] shadow bg-white">
           <div className="flex gap-2 py-4">
             <img className="w-10 rounded-full" src={LogoCTUT} alt="" />
 
-            <div className="w-full bg-gray-100 px-3 rounded-full flex items-center justify-start">
+            <div className="w-full bg-gray-100 px-4 rounded-full text-gray-500 flex items-center justify-start">
               Khang ơi, đang nghĩ gì thế!
             </div>
           </div>

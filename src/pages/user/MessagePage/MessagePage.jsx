@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import LogoCTUT from "../../../assets/logo/logo-ctut.png";
-import { BsPencilSquare } from "react-icons/bs";
+import { BsEmojiWink, BsImage, BsPencilSquare } from "react-icons/bs";
 import { RiSearchLine } from "react-icons/ri";
+import { CiCircleInfo } from "react-icons/ci";
+import { VscSend } from "react-icons/vsc"; // 🟢 icon gửi tin nhắn
 
 const MessagePage = () => {
+  const [message, setMessage] = useState(""); // 🟢 state lưu nội dung input
+
   const listActiveFriends = [
     { id: "1", memberAvatar: LogoCTUT, memberName: "Khang" },
     { id: "2", memberAvatar: LogoCTUT, memberName: "Linh" },
@@ -27,20 +31,19 @@ const MessagePage = () => {
       <div className="lg:w-[350px] w-[100px] bg-white border-r border-gray-200 flex flex-col">
         <div className="overflow-y-auto flex-1 p-3 scrollbar-hide">
           {/* Danh sách bạn bè hoạt động */}
-
           <div className="mb-6">
             <div className="flex items-center justify-between text-gray-700 px-3 py-4">
               <div className="lg:block hidden">Bạn bè đang hoạt động</div>
-              <div className="flex justify-center items-center text-2xl h-10 w-10">
+              <div className="flex justify-center items-center cursor-pointer hover:bg-gray-200 rounded-lg text-2xl h-10 w-10">
                 <BsPencilSquare />
               </div>
             </div>
 
-            <div className="flex items-center justify-center lg:justify-start mx-2 p-4 h-12 w-12 lg:w-full bg-gray-200 rounded-full my-4">
-              <div className="flex justify-center items-center text-xl">
+            <div className="flex items-center justify-center ms-2 lg:justify-start py-4 h-12 w-12 lg:w-[300px] bg-gray-200 rounded-full my-4">
+              <div className="flex justify-center items-center w-12 h-12 text-xl">
                 <RiSearchLine />
               </div>
-              <div></div>
+              <div className="lg:block hidden">Tìm kiếm</div>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -94,14 +97,53 @@ const MessagePage = () => {
       {/* Khu vực chat chính */}
       <div className="flex-1 flex flex-col bg-gray-50">
         {/* Header */}
-        <div className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4">
-          <div className="font-semibold text-gray-800 text-lg">Tin nhắn</div>
-          <div className="text-sm text-gray-500">Đang trực tuyến</div>
+        <div className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-4">
+          <div className="flex items-center gap-4 text-gray-800 text-lg">
+            <img className="w-12 h-12 rounded-full" src={LogoCTUT} alt="" />
+            <div className="flex flex-col">
+              <div className="text-sm">Khang</div>
+              <div className="text-[12px] text-gray-500">_khang13</div>
+            </div>
+          </div>
+          <div className="text-3xl hover:bg-gray-200 p-2 cursor-pointer text-gray-800">
+            <CiCircleInfo />
+          </div>
         </div>
 
         {/* Nội dung chat */}
-        <div className="flex-1 flex items-center justify-center text-gray-400">
-          Chọn người để bắt đầu trò chuyện 💬
+        <div className="flex-1 flex flex-col md:mb-0 mb-10 bg-white overflow-hidden h-screen">
+          <div className="overflow-y-auto p-4">
+            <div className="h-screen">text</div>
+            <div>text</div>
+          </div>
+
+          {/* input */}
+          <div className="h-20 p-4">
+            <div className="border border-gray-600 flex items-center w-full rounded-full px-1">
+              <input
+                className="px-2 mx-2 w-full outline-0"
+                type="text"
+                placeholder="Nhập tin nhắn..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+
+              {message.trim() ? (
+                <div className="flex justify-center items-center p-2 text-2xl text-blue-600 cursor-pointer hover:text-blue-700">
+                  <VscSend />
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <div className="flex justify-center items-center p-2 text-2xl cursor-pointer">
+                    <BsImage />
+                  </div>
+                  <div className="flex justify-center items-center p-2 text-2xl cursor-pointer">
+                    <BsEmojiWink />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
