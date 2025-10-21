@@ -1,8 +1,9 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 import { routes } from "./routes";
-import SidebarGroupLayout from "./layouts/user/SidebarGroupLayout";
-import SidebarLayout from "./layouts/user/SidebarLayout";
+import SidebarGroupLayoutUser from "./layouts/user/SidebarGroupLayoutUser";
+import SidebarLayoutUser from "./layouts/user/SidebarLayoutUser";
+import SidebarLayoutAdmin from "./layouts/admin/SidebarLayoutAdmin";
 
 function App() {
   return (
@@ -14,9 +15,11 @@ function App() {
           let Layout = React.Fragment;
 
           if (route.isShowSidebarGroupUser && route.isShowSidebarUser) {
-            Layout = SidebarGroupLayout;
+            Layout = SidebarGroupLayoutUser;
           } else if (route.isShowSidebarUser) {
-            Layout = SidebarLayout;
+            Layout = SidebarLayoutUser;
+          } else if (route.isShowSidebarAdmin) {
+            Layout = SidebarLayoutAdmin;
           }
 
           return (
