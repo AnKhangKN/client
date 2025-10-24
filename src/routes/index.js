@@ -12,6 +12,10 @@ import DashboardPage from "../pages/admin/DashboardPage/DashboardPage";
 import GroupManagementPage from "../pages/admin/GroupManagementPage/GroupManagementPage";
 import DepartmentManagementPage from "../pages/admin/DepartmentManagementPage/DepartmentManagementPage";
 import MessageManagementPage from "../pages/admin/MessageMamagementPage/MessageManagementPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage/ForgotPasswordPage";
+import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
+import UserManagementPage from "../pages/admin/UserManagementPage/UserManagementPage";
+import NotificationPageAdmin from "../pages/admin/NotificationPage/NotificationPage";
 
 export const routes = [
   // auth
@@ -22,6 +26,10 @@ export const routes = [
   {
     path: "/register",
     page: RegisterPage,
+  },
+  {
+    path: "/forgot-password",
+    page: ForgotPasswordPage,
   },
 
   // user
@@ -76,10 +84,16 @@ export const routes = [
     isShowSidebarAdmin: true,
   },
   {
+    path: "/admin/user",
+    page: UserManagementPage,
+    isShowSidebarAdmin: true,
+  },
+  {
     path: "/admin/groups",
     page: GroupManagementPage,
     isShowSidebarAdmin: true,
   },
+
   {
     path: "/admin/department",
     page: DepartmentManagementPage,
@@ -90,4 +104,12 @@ export const routes = [
     page: MessageManagementPage,
     isShowSidebarAdmin: true,
   },
+  {
+    path: "/admin/notification",
+    page: NotificationPageAdmin,
+    isShowSidebarAdmin: true,
+  },
+
+  // Not found page
+  { path: "*", page: NotFoundPage },
 ];

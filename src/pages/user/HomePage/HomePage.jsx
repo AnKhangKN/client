@@ -1,20 +1,26 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import LogoCTUT from "../../../assets/logo/logo-ctut.png";
 import { ImImages } from "react-icons/im";
-import { BsDashLg, BsEmojiWinkFill } from "react-icons/bs";
+import { BsDashLg, BsEmojiLaughing, BsEmojiLaughingFill } from "react-icons/bs";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import { MdOutlineClose } from "react-icons/md";
-import { IoHeartOutline, IoHeartSharp } from "react-icons/io5";
-import { VscComment } from "react-icons/vsc";
-import { PiShareFatLight } from "react-icons/pi";
+import { IoEarth, IoHeartOutline, IoHeartSharp } from "react-icons/io5";
+import {
+  PiChatCenteredDotsLight,
+  PiShareLight,
+  PiSmileyMelting,
+} from "react-icons/pi";
 import { RiSearchLine } from "react-icons/ri";
 import ChatBoxComponent from "../../../components/user/ChatBoxComponent/ChatBoxComponent";
 import TextCollapse from "../../../components/user/TextCollapse/TextCollapse";
 import HeaderComponent from "../../../components/user/HeaderComponent/HeaderComponent";
+import { useSelector } from "react-redux";
+import { IoMdLock } from "react-icons/io";
+import { GoChevronDown } from "react-icons/go";
+import ButtonComponent from "../../../components/shared/ButtonComponent/ButtonComponent";
+import useClickOutside from "../../../hooks/useClickOutside";
 
 const HomePage = () => {
-  const [heartedPosts, setHeartedPosts] = useState({});
-
   const listPost = [
     {
       id: "1",
@@ -145,7 +151,11 @@ const HomePage = () => {
     { id: "3", groupAvatar: LogoCTUT, groupName: "Web" },
   ];
 
+  const [heartedPosts, setHeartedPosts] = useState({});
+  const user = useSelector((state) => state.user);
   const [posts, setPosts] = useState(listPost);
+  const [modalNewPost, setModelNewPost] = useState(false);
+  const newPostRef = useRef(null);
 
   const handleHeartPost = (postId) => {
     setPosts((prevPosts) =>
@@ -165,6 +175,16 @@ const HomePage = () => {
     }));
   };
 
+  const handleOpenModalAddNewPost = () => {
+    setModelNewPost(true);
+  };
+
+  const handleCloseModalAddNewPost = () => {
+    setModelNewPost(false);
+  };
+
+  useClickOutside(newPostRef, modalNewPost, () => setModelNewPost(false));
+
   return (
     <div className="flex h-screen overflow-hidden">
       <HeaderComponent />
@@ -176,8 +196,11 @@ const HomePage = () => {
           <div className="flex gap-2 py-4">
             <img className="w-10 rounded-full" src={LogoCTUT} alt="" />
 
-            <div className="w-full bg-gray-100 px-4 rounded-full text-gray-500 flex items-center justify-start">
-              Khang ơi, đang nghĩ gì thế!
+            <div
+              onClick={handleOpenModalAddNewPost}
+              className="w-full cursor-pointer bg-gray-100 px-4 rounded-full text-gray-500 flex items-center justify-start"
+            >
+              {user.firstName} ơi, đang nghĩ gì thế!
             </div>
           </div>
 
@@ -191,12 +214,85 @@ const HomePage = () => {
 
             <div className="flex justify-center cursor-pointer gap-2 px-4 py-3 items-center hover:bg-gray-200">
               <div className="flex justify-center items-center text-xl">
-                <BsEmojiWinkFill />
+                <PiSmileyMelting />
               </div>
               <div>Cảm xúc của bạn!</div>
             </div>
           </div>
         </div>
+
+        {/* Modal add post */}
+        {modalNewPost && (
+          <div className="fixed inset-0 bg-black/20 flex justify-center items-center">
+            <div
+              ref={newPostRef}
+              className="bg-white p-4 rounded-lg w-[500px] flex flex-col gap-4"
+            >
+              <div className="flex justify-between items-center">
+                <div className="text-xl">Tạo bài post mới</div>
+
+                <div
+                  onClick={handleCloseModalAddNewPost}
+                  className="bg-gray-200 h-10 w-10 cursor-pointer rounded-full flex justify-center items-center"
+                >
+                  <MdOutlineClose size={24} />
+                </div>
+              </div>
+
+              <div className="flex justify-start items-center gap-2">
+                <img
+                  className="w-10 h-10 rounded-full"
+                  src={LogoCTUT}
+                  alt="Logo ctut"
+                />
+                <div>
+                  <div>
+                    {user.lastName} {user.firstName}
+                  </div>
+                  <div className="px-1.5 pb-0.5 pt-1 rounded-sm bg-gray-200 flex gap-1">
+                    <div className="flex justify-center items-start">
+                      <IoMdLock size={16} />
+                      {/* <IoEarth size={16} /> */}
+                    </div>
+                    <div className="text-sm">Chỉ mình tôi</div>
+                    <div className="flex justify-center items-center">
+                      <GoChevronDown size={16} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <textarea
+                  className="w-full outline-0"
+                  name=""
+                  id=""
+                  placeholder={`${user.firstName} ơi, bạn đang nghĩ gì thế!`}
+                ></textarea>
+              </div>
+
+              {/* Background textarea */}
+              <div></div>
+
+              <div className="border rounded-lg px-4 py-3 flex items-center justify-between">
+                <div>Thêm vào bài viết của bạn</div>
+
+                <div className="flex items-center gap-2 text-2xl">
+                  <div className="text-green-600">
+                    <ImImages />
+                  </div>
+                  <div className="text-yellow-600">
+                    <BsEmojiLaughing />
+                  </div>
+                  <div></div>
+                  <div></div>
+                </div>
+              </div>
+
+              <ButtonComponent text="Đăng bài" />
+            </div>
+          </div>
+        )}
 
         {/* new post */}
         {posts.map((item) => (
@@ -323,17 +419,17 @@ const HomePage = () => {
                 ) : (
                   <IoHeartOutline className="text-gray-600 transition" />
                 )}
-                <div className="text-lg">{item.heart}</div>
+                <div className="text-[16px]">{item.heart}</div>
               </button>
 
               <button className="flex gap-2 cursor-pointer items-center">
-                <VscComment />
-                <div className="text-lg">{item.comment}</div>
+                <PiChatCenteredDotsLight />
+                <div className="text-[16px]">{item.comment}</div>
               </button>
 
               <button className="flex gap-2 cursor-pointer items-center">
-                <PiShareFatLight />
-                <div className="text-lg">{item.share}</div>
+                <PiShareLight />
+                <div className="text-[16px]">{item.share}</div>
               </button>
             </div>
           </div>
@@ -341,7 +437,7 @@ const HomePage = () => {
       </div>
 
       {/* list friend */}
-      <div className="flex-col me-4 my-4 overflow-y-auto w-[380px] shadow lg:flex hidden scrollbar-hide bg-white">
+      <div className="flex-col me-4 my-4 px-2 overflow-y-auto w-[380px] shadow lg:flex hidden scrollbar-hide bg-white">
         {/* List active friend */}
         <div>
           <div className="flex py-4 px-2 justify-between items-center">

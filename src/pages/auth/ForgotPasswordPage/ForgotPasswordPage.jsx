@@ -1,24 +1,18 @@
 import React, { useState } from "react";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
 import { useNavigate } from "react-router-dom";
-import * as AuthServices from "../../../services/shared/AuthServices";
-import * as UserServices from "../../../services/shared/UserServices";
-import { useDispatch } from "react-redux";
-import { updateUser } from "../../../features/user/userSlice";
 import MessageComponent from "../../../components/shared/MessageComponent/MessageComponent";
+import LogoCTUT from "../../../assets/logo/logo-ctut.png";
 import ButtonComponent from "../../../components/shared/ButtonComponent/ButtonComponent";
 import InputComponent from "../../../components/shared/InputComponent/InputComponent";
 
-const LoginPage = () => {
+const ForgotPasswordPage = () => {
   const navigate = useNavigate();
+  const [message, setMessage] = useState({ text: "", type: "info", key: 0 });
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const dispatch = useDispatch();
-  const [message, setMessage] = useState({ text: "", type: "info", key: 0 });
 
   const [data, setData] = useState({
     email: "",
-    password: "",
   });
 
   const handleChange = (e) => {
@@ -26,85 +20,37 @@ const LoginPage = () => {
     setData((prev) => ({ ...prev, [id]: value }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     setMessage({ text: "", type: "info", key: 0 });
-
-    const { email, password } = data;
+    const { email } = data;
 
     if (!email) {
       return setMessage({
-        text: "Hãy nhập email của bạn!",
+        text: "Hãy nhập email để reset mật khẩu.",
         type: "warning",
         key: Date.now(),
       });
     }
-
-    if (!password) {
-      return setMessage({
-        text: "Hãy nhập mật khẩu của bạn!",
-        type: "warning",
-        key: Date.now(),
-      });
-    }
-
     try {
       setLoading(true);
-
-      const platform = "web";
-      const res = await AuthServices.loginService({
-        email,
-        password,
-        platform,
-      });
-
-      const accessToken = res?.data?.accessToken;
-      if (!accessToken) {
-        throw new Error("Không nhận được access token từ máy chủ!");
-      }
-
-      localStorage.setItem("accessToken", accessToken);
-      const userData = await handleGetDetailUser(accessToken);
+      console.log(email);
 
       setIsSuccess(true);
       setMessage({
-        text: "Đăng nhập thành công!",
+        text: "Truy cập mail để nhận lại mật khẩu.",
         type: "success",
         key: Date.now(),
       });
 
-      setData({ email: "", password: "" });
-
       setTimeout(() => {
-        navigate(userData?.isAdmin ? "/admin" : "/");
+        navigate("/login");
       }, 3000);
     } catch (error) {
-      console.error("Login error:", error);
+      console.log(error);
 
-      setMessage({
-        text:
-          error?.response?.data?.message ||
-          error?.message ||
-          "Đăng nhập thất bại! Vui lòng kiểm tra lại thông tin.",
-        type: "error",
-        key: Date.now(),
-      });
+      throw error;
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGetDetailUser = async (accessToken) => {
-    try {
-      const res = await UserServices.getDetailUser(accessToken);
-      const user = res?.user;
-
-      if (!user) throw new Error("Không tìm thấy thông tin người dùng!");
-
-      dispatch(updateUser(user));
-      return user;
-    } catch (error) {
-      console.error("Lỗi khi lấy thông tin người dùng:", error);
-      throw error;
     }
   };
 
@@ -144,28 +90,12 @@ const LoginPage = () => {
           placeholder="ctuet.edu.vn"
         />
 
-        <InputComponent
-          id="password"
-          label="Mật khẩu"
-          type="password"
-          value={data.password}
-          onChange={handleChange}
-          placeholder="• • • • • •"
-        />
-
-        <div
-          onClick={() => navigate("/forgot-password")}
-          className="text-blue-600 text-sm text-end hover:underline cursor-pointer"
-        >
-          Quên mật khẩu?
-        </div>
-
         <ButtonComponent
-          text="Đăng nhập"
+          text="Đặt lại mật khẩu"
           onClick={handleSubmit}
           loading={loading}
-          sendTranslate={isSuccess}
           disabled={isSuccess}
+          sendTranslate={isSuccess}
         />
 
         <div className="flex justify-center items-center gap-2">
@@ -182,4 +112,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default ForgotPasswordPage;

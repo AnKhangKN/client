@@ -1,48 +1,46 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import LogoCTUT from "../../../assets/logo/logo-ctut.png";
 import {
   HiOutlineBars3,
   HiMiniUserGroup,
   HiOutlineUserGroup,
 } from "react-icons/hi2";
-import { GoHome, GoHomeFill } from "react-icons/go";
+import { GoHome, GoHomeFill, GoReport } from "react-icons/go";
 import {
   PiBellSimpleRinging,
   PiBellSimpleRingingFill,
   PiChatTeardropDots,
   PiChatTeardropDotsFill,
+  PiSunHorizon,
 } from "react-icons/pi";
 import { useLocation, useNavigate } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
 import { MdOutlineClose } from "react-icons/md";
 import "./style.css";
+import { useSelector } from "react-redux";
+import { IoSettingsOutline } from "react-icons/io5";
+import { BsAppIndicator } from "react-icons/bs";
+import useClickOutside from "../../../hooks/useClickOutside";
 
 const SidebarComponent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchContainer, setSearchContainer] = useState(false);
   const searchRef = useRef(null);
+  const user = useSelector((state) => state.user);
+  const [modalMore, setModalMore] = useState(false);
+  const moreRef = useRef(null);
 
-  // 👉 Mở / Đóng modal tìm kiếm
+  // Mở / Đóng modal tìm kiếm
   const handleOpenSearchContainer = () => setSearchContainer(true);
   const handleCloseSearchContainer = () => setSearchContainer(false);
 
-  // 👉 Click ngoài modal => tự động đóng
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setSearchContainer(false);
-      }
-    };
+  const handleOpenModalMore = () => {
+    setModalMore(true);
+  };
 
-    if (searchContainer) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [searchContainer]);
+  useClickOutside(searchRef, searchContainer, () => setSearchContainer(false));
+  useClickOutside(moreRef, modalMore, () => setModalMore(false));
 
   const listNavigate = [
     {
@@ -109,13 +107,21 @@ const SidebarComponent = () => {
   return (
     <div
       className={`hidden md:flex flex-col justify-between ${
-        location.pathname === "/message" ? "w-20" : "xl:w-1/6 w-20"
+        location.pathname === "/message" ||
+        location.pathname === "/groups/feed" ||
+        location.pathname === "/groups/discover" ||
+        location.pathname === "/groups/join"
+          ? "w-20"
+          : "xl:w-1/6 w-20"
       } p-4 border-r border-gray-300 bg-white relative`}
     >
       {/* Logo */}
       <div
         className={`flex items-center h-10 ${
-          location.pathname === "/message"
+          location.pathname === "/message" ||
+          location.pathname === "/groups/feed" ||
+          location.pathname === "/groups/discover" ||
+          location.pathname === "/groups/join"
             ? "justify-center"
             : "justify-center xl:justify-start"
         } gap-2`}
@@ -124,12 +130,22 @@ const SidebarComponent = () => {
           src={LogoCTUT}
           alt="Logo"
           className={`w-10 ${
-            location.pathname === "/message" ? "block" : "xl:hidden block"
+            location.pathname === "/message" ||
+            location.pathname === "/groups/feed" ||
+            location.pathname === "/groups/discover" ||
+            location.pathname === "/groups/join"
+              ? "block"
+              : "xl:hidden block"
           } rounded-full`}
         />
         <span
           className={`text-3xl text_logo ${
-            location.pathname === "/message" ? "hidden" : "xl:block hidden"
+            location.pathname === "/message" ||
+            location.pathname === "/groups/feed" ||
+            location.pathname === "/groups/discover" ||
+            location.pathname === "/groups/join"
+              ? "hidden"
+              : "xl:block hidden"
           } font-semibold`}
         >
           CTUT Connect
@@ -151,7 +167,12 @@ const SidebarComponent = () => {
             </div>
             <div
               className={`${
-                location.pathname === "/message" ? "hidden" : "xl:block hidden"
+                location.pathname === "/message" ||
+                location.pathname === "/groups/feed" ||
+                location.pathname === "/groups/discover" ||
+                location.pathname === "/groups/join"
+                  ? "hidden"
+                  : "xl:block hidden"
               }`}
             >
               {item.label}
@@ -198,7 +219,7 @@ const SidebarComponent = () => {
       <div className="flex flex-col gap-3 pt-4">
         <div
           className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-200 rounded-lg"
-          onClick={() => navigate("/profile")}
+          onClick={() => navigate(user.isAdmin ? "/admin" : "/profile")}
         >
           <img
             className="w-6 h-6 rounded-full xl:me-3"
@@ -207,24 +228,85 @@ const SidebarComponent = () => {
           />
           <div
             className={`${
-              location.pathname === "/message" ? "hidden" : "xl:block hidden"
+              location.pathname === "/message" ||
+              location.pathname === "/groups/feed" ||
+              location.pathname === "/groups/discover" ||
+              location.pathname === "/groups/join"
+                ? "hidden"
+                : "xl:block hidden"
             }`}
           >
-            Trang cá nhân
+            {user.firstName}
           </div>
         </div>
 
-        <div className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-200 rounded-lg">
-          <div className="text-2xl flex justify-center items-center xl:me-3">
-            <HiOutlineBars3 />
-          </div>
+        <div className="relative">
           <div
-            className={`${
-              location.pathname === "/message" ? "hidden" : "xl:block hidden"
-            }`}
+            onClick={handleOpenModalMore}
+            className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-200 rounded-lg"
           >
-            Xem thêm
+            <div className="text-2xl flex justify-center items-center xl:me-3">
+              <HiOutlineBars3 />
+            </div>
+            <div
+              className={`${
+                location.pathname === "/message" ||
+                location.pathname === "/groups/feed" ||
+                location.pathname === "/groups/discover" ||
+                location.pathname === "/groups/join"
+                  ? "hidden"
+                  : "xl:block hidden"
+              }`}
+            >
+              Xem thêm
+            </div>
           </div>
+
+          {modalMore && (
+            <div
+              ref={moreRef}
+              className="absolute bottom-13 shadow-lg flex flex-col gap-1 overflow-hidden rounded-xl bg-gray-200"
+            >
+              <div className="bg-white rounded-t-xl">
+                <div className="flex items-center gap-3 hover:bg-gray-200 py-3 px-4">
+                  <div>
+                    <IoSettingsOutline />
+                  </div>
+                  <div>Cài đặt</div>
+                </div>
+
+                <div className="flex items-center hover:bg-gray-200 gap-3 py-3 px-4">
+                  <div>
+                    <BsAppIndicator />
+                  </div>
+                  <div>Hoạt động của bạn</div>
+                </div>
+
+                <div className="flex items-center hover:bg-gray-200 gap-3 py-3 px-4">
+                  <div>
+                    <PiSunHorizon />
+                  </div>
+                  <div>Chuyển chế độ sáng</div>
+                </div>
+
+                <div className="flex items-center hover:bg-gray-200 gap-3 py-3 px-4">
+                  <div>
+                    <GoReport />
+                  </div>
+                  <div>Báo cáo sự cố</div>
+                </div>
+              </div>
+
+              <div className="flex flex-col bg-white rounded-b-xl">
+                <div className="border-b border-gray-200 py-3 px-4 cursor-pointer hover:bg-gray-200">
+                  Chuyển đổi tài khoản
+                </div>
+                <div className="p-3 px-4 cursor-pointer hover:bg-gray-200">
+                  Đăng xuất
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

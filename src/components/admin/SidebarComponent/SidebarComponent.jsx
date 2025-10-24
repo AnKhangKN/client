@@ -2,7 +2,9 @@ import React from "react";
 import LogoCTUT from "../../../assets/logo/logo-ctut.png";
 import {
   HiMiniUserGroup,
+  HiOutlineUser,
   HiOutlineUserGroup,
+  HiUser,
 } from "react-icons/hi2";
 import {
   PiBellSimpleRinging,
@@ -11,10 +13,7 @@ import {
   PiChatTeardropDotsFill,
 } from "react-icons/pi";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  RiDashboard3Fill,
-  RiDashboard3Line,
-} from "react-icons/ri";
+import { RiDashboard3Fill, RiDashboard3Line } from "react-icons/ri";
 import "./style.css";
 
 const SidebarComponent = ({ isShowSidebar }) => {
@@ -34,6 +33,12 @@ const SidebarComponent = ({ isShowSidebar }) => {
     },
     {
       icon:
+        location.pathname === "/admin/user" ? <HiUser /> : <HiOutlineUser />,
+      nav: "/admin/user",
+      label: "Quản lý người dùng",
+    },
+    {
+      icon:
         location.pathname === "/admin/groups" ? (
           <HiMiniUserGroup />
         ) : (
@@ -42,6 +47,7 @@ const SidebarComponent = ({ isShowSidebar }) => {
       nav: "/admin/groups",
       label: "Quản lý nhóm",
     },
+
     {
       icon:
         location.pathname === "/admin/department" ? (

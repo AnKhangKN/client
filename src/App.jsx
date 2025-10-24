@@ -1,42 +1,147 @@
-import React from "react";
-import { Route, Routes } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Route, Routes, useNavigate } from "react-router-dom";
 import { routes } from "./routes";
 import SidebarGroupLayoutUser from "./layouts/user/SidebarGroupLayoutUser";
 import SidebarLayoutUser from "./layouts/user/SidebarLayoutUser";
 import SidebarLayoutAdmin from "./layouts/admin/SidebarLayoutAdmin";
+import { useDispatch, useSelector } from "react-redux";
+import * as UserServices from "./services/shared/UserServices";
+import { updateUser } from "./features/user/userSlice";
+import NotFoundPage from "./pages/NotFoundPage/NotFoundPage";
+import * as TokenUtils from "./utils/token.utils";
+import LoadingComponent from "./components/shared/LoadingComponent/LoadingComponent";
 
 function App() {
-  return (
-    <>
-      <Routes>
-        {routes.map((route, index) => {
-          const Page = route.page;
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.user);
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = React.useState(true);
 
-          let Layout = React.Fragment;
+  // useEffect(() => {
+  //   const initApp = async () => {
+  //     const accessToken = await TokenUtils.getValidAccessToken();
+  //     const currentPath = window.location.pathname;
 
-          if (route.isShowSidebarGroupUser && route.isShowSidebarUser) {
-            Layout = SidebarGroupLayoutUser;
-          } else if (route.isShowSidebarUser) {
-            Layout = SidebarLayoutUser;
-          } else if (route.isShowSidebarAdmin) {
-            Layout = SidebarLayoutAdmin;
+  //     // Danh sách các route công khai (không cần đăng nhập)
+  //     const publicPaths = ["/login", "/register", "/forgot-password"];
+
+  //     // Nếu chưa đăng nhập mà không nằm trong danh sách công khai → quay về /login
+  //     if (!accessToken) {
+  //       if (!publicPaths.includes(currentPath)) {
+  //         navigate("/login");
+  //       }
+  //       setIsLoading(false);
+  //       return;
+  //     }
+
+  //     try {
+  //       const res = await UserServices.getDetailUser(accessToken);
+  //       if (res?.user) {
+  //         console.log(res.user.isAdmin);
+
+  //         dispatch(updateUser(res.user));
+  //       } else {
+  //         localStorage.removeItem("accessToken");
+  //         navigate("/login");
+  //       }
+  //     } catch (error) {
+  //       console.error("Không thể lấy thông tin người dùng:", error);
+  //       localStorage.removeItem("accessToken");
+  //       navigate("/login");
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   };
+
+  //   initApp();
+  // }, [dispatch, navigate]);
+
+  useEffect(() => {
+    const initApp = async () => {
+      const accessToken = await TokenUtils.getValidAccessToken();
+      const currentPath = window.location.pathname;
+
+      // Các route công khai
+      const publicPaths = ["/login", "/register", "/forgot-password"];
+      const firstVisitPaths = ["/", ...publicPaths]; // những đường dẫn "lần đầu mở app"
+
+      if (!accessToken) {
+        if (!publicPaths.includes(currentPath)) {
+          navigate("/login");
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const res = await UserServices.getDetailUser(accessToken);
+        if (res?.user) {
+          dispatch(updateUser(res.user));
+
+          // Chỉ redirect lần đầu khi mở app
+          if (firstVisitPaths.includes(currentPath)) {
+            if (res.user.isAdmin) {
+              navigate("/admin");
+            } else {
+              navigate("/"); // user thường
+            }
           }
+        } else {
+          localStorage.removeItem("accessToken");
+          navigate("/login");
+        }
+      } catch (error) {
+        console.error("Không thể lấy thông tin người dùng:", error);
+        localStorage.removeItem("accessToken");
+        navigate("/login");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-          return (
-            <Route
-              key={index}
-              path={route.path}
-              element={
+    initApp();
+  }, [dispatch, navigate]);
+
+  if (isLoading) {
+    return <LoadingComponent />;
+  }
+
+  return (
+    <Routes>
+      {routes.map((route, index) => {
+        const Page = route.page;
+
+        let Layout = React.Fragment;
+
+        if (route.isShowSidebarGroupUser && route.isShowSidebarUser) {
+          Layout = SidebarGroupLayoutUser;
+        } else if (route.isShowSidebarUser) {
+          Layout = SidebarLayoutUser;
+        } else if (route.isShowSidebarAdmin) {
+          Layout = SidebarLayoutAdmin;
+        }
+
+        const checkAuth =
+          !route.isShowSidebarAdmin ||
+          (route.isShowSidebarAdmin && user?.isAdmin);
+
+        return (
+          <Route
+            key={index}
+            path={route.path}
+            element={
+              checkAuth ? (
                 <Layout>
                   <Page />
                 </Layout>
-              }
-            />
-          );
-        })}
-        <Route></Route>
-      </Routes>
-    </>
+              ) : (
+                <NotFoundPage />
+              )
+            }
+          />
+        );
+      })}
+    </Routes>
   );
 }
 
