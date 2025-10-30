@@ -16,6 +16,10 @@ import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage/ForgotPasswordP
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 import UserManagementPage from "../pages/admin/UserManagementPage/UserManagementPage";
 import NotificationPageAdmin from "../pages/admin/NotificationPage/NotificationPage";
+import ProfilePageAdmin from "../pages/admin/ProfilePage/ProfilePage";
+import EditProfilePage from "../pages/admin/EditProfilePage/EditProfilePage";
+import SecurityPage from "../pages/admin/SecurityPage/SecurityPage";
+import PostManagementPage from "../pages/admin/PostManagementPage/PostManagementPage";
 
 export const routes = [
   // auth
@@ -76,6 +80,11 @@ export const routes = [
     page: ProfilePage,
     isShowSidebarUser: true,
   },
+  {
+    path: "/profile/:userName",
+    page: ProfilePage,
+    isShowSidebarUser: true,
+  },
 
   // admin
   {
@@ -86,6 +95,11 @@ export const routes = [
   {
     path: "/admin/user",
     page: UserManagementPage,
+    isShowSidebarAdmin: true,
+  },
+  {
+    path: "/admin/posts",
+    page: PostManagementPage,
     isShowSidebarAdmin: true,
   },
   {
@@ -107,6 +121,21 @@ export const routes = [
   {
     path: "/admin/notification",
     page: NotificationPageAdmin,
+    isShowSidebarAdmin: true,
+  },
+  {
+    path: "/admin/profile",
+    page: ProfilePageAdmin,
+    isShowSidebarAdmin: true,
+  },
+  {
+    path: "/admin/profile/edit",
+    page: EditProfilePage,
+    isShowSidebarAdmin: true,
+  },
+  {
+    path: "/admin/profile/security",
+    page: SecurityPage,
     isShowSidebarAdmin: true,
   },
 

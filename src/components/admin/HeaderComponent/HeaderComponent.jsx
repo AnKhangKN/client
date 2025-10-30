@@ -1,15 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { HiBars3, HiBars3BottomLeft } from "react-icons/hi2";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import LogoCTUT from "../../../assets/logo/logo-ctut.png";
 import { PiBellSimpleRingingLight, PiMoonLight } from "react-icons/pi";
 import ButtonComponent from "../../../components/shared/ButtonComponent/ButtonComponent";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
+import useClickOutsideForPosition from "../../../hooks/useClickOutsideForPosition";
+import * as TokenUtils from "../../../utils/token.utils";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import MessageComponent from "../../shared/MessageComponent/MessageComponent";
 
 const HeaderComponent = ({ toggleSidebar }) => {
   const [isOpen, setIsOpen] = useState(true);
   const [isSubModal, setSubModal] = useState(false);
   const [modalLogout, setModalLogout] = useState(false);
+  const [isOpenNotify, setIsOpenNotify] = useState(false);
+  const navigate = useNavigate();
+  const [message, setMessage] = useState({
+    type: "",
+    text: "",
+    key: 0,
+  });
+
+  const notifyRef = useRef(null);
+  const subModalRef = useRef(null);
   const location = useLocation();
 
   const listLocation = [
@@ -25,20 +39,51 @@ const HeaderComponent = ({ toggleSidebar }) => {
     toggleSidebar();
   };
 
-  const handleOpenSubModal = () => {
-    setSubModal((prev) => !prev);
-  };
+  const handleOpenSubModal = () => setSubModal((prev) => !prev);
+  const handleOpenModalLogout = () => setModalLogout(true);
+  const handleCloseModalLogout = () => setModalLogout(false);
+  const handleToggleNotify = () => setIsOpenNotify((prev) => !prev);
 
-  const handleOpenModalLogout = () => {
-    setModalLogout(true);
-  };
+  useClickOutsideForPosition(notifyRef, () => setIsOpenNotify(false));
+  useClickOutsideForPosition(subModalRef, () => setSubModal(false));
 
-  const handleCloseModalLogout = () => {
-    setModalLogout(false);
+  const handleLogout = async () => {
+    try {
+      const accessToken = await TokenUtils.getValidAccessToken();
+
+      await AuthServices.logoutServices(accessToken);
+
+      localStorage.removeItem("accessToken");
+
+      setMessage({
+        type: "success",
+        text: "Đăng xuất thành công!",
+        key: Date.now(),
+      });
+
+      setTimeout(() => navigate("/login"), 3000);
+    } catch (error) {
+      setMessage({
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Đăng xuất thất bại",
+        type: "error",
+        key: Date.now(),
+      });
+    }
   };
 
   return (
     <div className="flex-shrink-0 py-4 border-b border-gray-400 bg-white shadow">
+      {message.text && (
+        <MessageComponent
+          type={message.type}
+          message={message.text}
+          key={message.key}
+        />
+      )}
+
       <div className="flex justify-between items-center px-4">
         {/* Left: Toggle + Page Title */}
         <div className="flex items-center">
@@ -67,20 +112,28 @@ const HeaderComponent = ({ toggleSidebar }) => {
             <PiMoonLight />
           </div>
 
-          <div className="relative">
-            <div className="text-2xl cursor-pointer hover:bg-gray-200 p-2 rounded-full transition-all duration-300 active:scale-90">
+          {/* Notification */}
+          <div className="relative" ref={notifyRef}>
+            <div
+              onClick={handleToggleNotify}
+              className="text-2xl cursor-pointer hover:bg-gray-200 p-2 rounded-full transition-all duration-300 active:scale-90 relative"
+            >
               <PiBellSimpleRingingLight />
+              <div className="absolute top-0 right-0 bg-blue-600 rounded-full w-5 h-5 flex justify-center items-center">
+                <span className="text-[10px] text-white">1</span>
+              </div>
             </div>
 
-            <div className="absolute top-0 right-0 bg-blue-600 rounded-full w-5 h-5 flex justify-center items-center">
-              <span className="text-[10px] text-white">1</span>
-              {/* 
-              <span className="text-[10px] text-white">99</span>
-              <span className="text-[8px] text-white">+</span>
-               */}
-            </div>
-
-            <div className="absolute top-10 w-[360px] flex flex-col gap-4 rounded-sm border right-0 bg-white shadow-lg p-4">
+            {/* Modal Notification */}
+            <div
+              className={`absolute top-12 w-[360px] flex flex-col gap-4 rounded-sm border border-gray-200
+                right-0 bg-white shadow-lg p-4 transform transition-all duration-200 ease-in-out z-10 
+              ${
+                isOpenNotify
+                  ? "opacity-100 translate-y-0 visible"
+                  : "opacity-0 -translate-y-2 invisible"
+              }`}
+            >
               <div className="flex justify-between items-center">
                 <div>Thông báo cho bạn.</div>
                 <div>
@@ -88,16 +141,22 @@ const HeaderComponent = ({ toggleSidebar }) => {
                 </div>
               </div>
 
-              <div>
-                <div>Thông báo 1</div>
-                <div>Thông báo 2</div>
-                <div>Thông báo 3</div>
-                <div></div>
+              <div className="flex flex-col gap-2">
+                <div className="hover:bg-gray-100 p-2 rounded cursor-pointer">
+                  Thông báo 1
+                </div>
+                <div className="hover:bg-gray-100 p-2 rounded cursor-pointer">
+                  Thông báo 2
+                </div>
+                <div className="hover:bg-gray-100 p-2 rounded cursor-pointer">
+                  Thông báo 3
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="relative ms-8">
+          {/* Avatar + Menu */}
+          <div className="relative ms-8" ref={subModalRef}>
             <img
               src={LogoCTUT}
               onClick={handleOpenSubModal}
@@ -107,14 +166,18 @@ const HeaderComponent = ({ toggleSidebar }) => {
 
             {/* Sub Modal */}
             <div
-              className={`absolute flex flex-col w-52 end-0 top-10 bg-white rounded-lg shadow-lg overflow-hidden transform transition-all duration-200 ease-in-out p-2
+              className={`absolute flex border border-gray-200 z-10 flex-col w-52 end-0 top-11 bg-white rounded-lg 
+                shadow-lg overflow-hidden transform transition-all duration-200 ease-in-out p-2
               ${
                 isSubModal
                   ? "opacity-100 translate-y-0 visible"
                   : "opacity-0 -translate-y-2 invisible"
               }`}
             >
-              <div className="p-2 hover:bg-gray-200 rounded-sm cursor-pointer transition-all">
+              <div
+                onClick={() => navigate("/admin/profile")}
+                className="p-2 hover:bg-gray-200 rounded-sm cursor-pointer transition-all"
+              >
                 Trang cá nhân
               </div>
               <div
@@ -127,8 +190,8 @@ const HeaderComponent = ({ toggleSidebar }) => {
 
             {/* Modal confirm logout */}
             {modalLogout && (
-              <div className="fixed top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-black/50">
-                <div className="bg-white flex flex-col p-6 gap-6  rounded-lg">
+              <div className="fixed z-10 top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-black/50">
+                <div className="bg-white flex flex-col p-6 gap-6 rounded-lg">
                   <div className="text-xl">
                     Bạn có chắc chắn muốn đăng xuất?
                   </div>
@@ -140,7 +203,7 @@ const HeaderComponent = ({ toggleSidebar }) => {
                       textColor="text-black"
                       hoverColor="hover:bg-gray-100"
                     />
-                    <ButtonComponent text="Đăng xuất" />
+                    <ButtonComponent text="Đăng xuất" onClick={handleLogout} />
                   </div>
                 </div>
               </div>

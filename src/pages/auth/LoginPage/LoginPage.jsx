@@ -27,8 +27,6 @@ const LoginPage = () => {
   };
 
   const handleSubmit = async () => {
-    setMessage({ text: "", type: "info", key: 0 });
-
     const { email, password } = data;
 
     if (!email) {
@@ -47,9 +45,8 @@ const LoginPage = () => {
       });
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
-
       const platform = "web";
       const res = await AuthServices.loginService({
         email,
@@ -59,13 +56,16 @@ const LoginPage = () => {
 
       const accessToken = res?.data?.accessToken;
       if (!accessToken) {
-        throw new Error("Không nhận được access token từ máy chủ!");
+        return setMessage({
+          text: "Lỗi từ máy chủ hãy chờ xử lý!",
+          type: "error",
+          key: Date.now(),
+        });
       }
 
       localStorage.setItem("accessToken", accessToken);
       const userData = await handleGetDetailUser(accessToken);
 
-      setIsSuccess(true);
       setMessage({
         text: "Đăng nhập thành công!",
         type: "success",
@@ -73,13 +73,13 @@ const LoginPage = () => {
       });
 
       setData({ email: "", password: "" });
+      setIsSuccess(true);
 
       setTimeout(() => {
         navigate(userData?.isAdmin ? "/admin" : "/");
-      }, 3000);
+        setIsSuccess(false);
+      }, 2000);
     } catch (error) {
-      console.error("Login error:", error);
-
       setMessage({
         text:
           error?.response?.data?.message ||

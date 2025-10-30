@@ -1,9 +1,7 @@
-import React from 'react'
+import React from "react";
 
 const DiscoverPage = () => {
-  return (
-    <div>DiscoverPage</div>
-  )
-}
+  return <div className="dark:bg-[#1c1c1d] dark:text-white">DiscoverPage</div>;
+};
 
-export default DiscoverPage
+export default DiscoverPage;

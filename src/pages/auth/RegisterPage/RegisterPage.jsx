@@ -27,10 +27,8 @@ const RegisterPage = () => {
     setData((prev) => ({ ...prev, [id]: value }));
   };
 
-  // --- handle submit form ---
   const handleSubmit = async () => {
     const { lastName, firstName, email, password, confirmPassword } = data;
-    setMessage({ text: "", type: "info", key: 0 });
 
     if (!lastName)
       return setMessage({
@@ -83,9 +81,8 @@ const RegisterPage = () => {
         key: Date.now(),
       });
 
+    setLoading(true);
     try {
-      setLoading(true);
-
       await AuthServices.registerService({
         lastName,
         firstName,
@@ -94,16 +91,18 @@ const RegisterPage = () => {
         confirmPassword,
       });
 
-      setIsSuccess(true);
-
       setMessage({
         text: "Đăng ký tài khoản thành công!",
         type: "success",
         key: Date.now(),
       });
 
-      // tự động điều hướng sau 1.5s
-      setTimeout(() => navigate("/login"), 3000);
+      setIsSuccess(true);
+
+      setTimeout(() => {
+        navigate("/login");
+        setIsSuccess(false);
+      }, 2000);
     } catch (error) {
       setMessage({
         text:
@@ -149,19 +148,19 @@ const RegisterPage = () => {
           {/* --- Họ và tên --- */}
           <div className="flex gap-4">
             <InputComponent
-              id="lastName"
-              label="Họ"
-              value={data.lastName}
-              onChange={handleChange}
-              placeholder="Nhập họ của bạn"
-            />
-
-            <InputComponent
               id="firstName"
               label="Tên"
               value={data.firstName}
               onChange={handleChange}
               placeholder="Nhập tên của bạn"
+            />
+
+            <InputComponent
+              id="lastName"
+              label="Họ"
+              value={data.lastName}
+              onChange={handleChange}
+              placeholder="Nhập họ của bạn"
             />
           </div>
 

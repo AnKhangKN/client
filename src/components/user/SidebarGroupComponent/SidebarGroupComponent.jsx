@@ -134,17 +134,23 @@ const SidebarGroupComponent = () => {
   ];
 
   return (
-    <div className="md:flex hidden flex-col lg:w-[320px] w-24 p-4 border-l border-gray-200 bg-white overflow-hidden ">
+    <div
+      className="md:flex hidden flex-col lg:w-[320px] w-24 p-4 dark:bg-[#1c1c1d] text-white
+    dark:border-0 border-l border-gray-200 overflow-hidden "
+    >
       <div className="flex lg:justify-between justify-center items-center py-4">
         <div className="lg:block hidden text-xl">Nhóm</div>
 
-        <div className="flex justify-center items-center w-12 h-12 rounded-full text-2xl bg-gray-200">
+        <div
+          className="flex justify-center items-center w-12 h-12 rounded-full text-2xl
+        bg-gray-200 dark:bg-[#303030]"
+        >
           <MdSettings />
         </div>
       </div>
 
       <div className="overflow-y-auto scrollbar-hide">
-        <div className="flex items-center bg-gray-200 mx-2 gap-2 rounded-full">
+        <div className="flex items-center bg-gray-200 dark:bg-[#303030] mx-2 gap-2 rounded-full">
           <div className="flex justify-center text-xl p-3 items-center">
             <RiSearchLine />
           </div>
@@ -164,7 +170,10 @@ const SidebarGroupComponent = () => {
           </div>
         ))}
 
-        <button className="flex w-full justify-center items-center mt-4 mb-6 gap-2 bg-gray-200 py-2 rounded-lg">
+        <button
+          className="flex w-full justify-center items-center mt-4 mb-6 
+        gap-2 dark:bg-[#303030] bg-gray-200 py-2 rounded-lg"
+        >
           <div className="flex justify-center items-center text-2xl">
             <GoPlus />
           </div>
@@ -176,7 +185,7 @@ const SidebarGroupComponent = () => {
         {listGroup.map((group) => (
           <div className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded-lg">
             <img
-              className="w-10 h-10 rounded-full"
+              className="w-10 h-10 dark:bg-white rounded-full"
               src={group.groupAvatar}
               alt="logo"
             />

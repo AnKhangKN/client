@@ -14,47 +14,17 @@ import LoadingComponent from "./components/shared/LoadingComponent/LoadingCompon
 function App() {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user);
+  const { mode } = useSelector((state) => state.theme);
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = React.useState(true);
 
-  // useEffect(() => {
-  //   const initApp = async () => {
-  //     const accessToken = await TokenUtils.getValidAccessToken();
-  //     const currentPath = window.location.pathname;
-
-  //     // Danh sách các route công khai (không cần đăng nhập)
-  //     const publicPaths = ["/login", "/register", "/forgot-password"];
-
-  //     // Nếu chưa đăng nhập mà không nằm trong danh sách công khai → quay về /login
-  //     if (!accessToken) {
-  //       if (!publicPaths.includes(currentPath)) {
-  //         navigate("/login");
-  //       }
-  //       setIsLoading(false);
-  //       return;
-  //     }
-
-  //     try {
-  //       const res = await UserServices.getDetailUser(accessToken);
-  //       if (res?.user) {
-  //         console.log(res.user.isAdmin);
-
-  //         dispatch(updateUser(res.user));
-  //       } else {
-  //         localStorage.removeItem("accessToken");
-  //         navigate("/login");
-  //       }
-  //     } catch (error) {
-  //       console.error("Không thể lấy thông tin người dùng:", error);
-  //       localStorage.removeItem("accessToken");
-  //       navigate("/login");
-  //     } finally {
-  //       setIsLoading(false);
-  //     }
-  //   };
-
-  //   initApp();
-  // }, [dispatch, navigate]);
+  useEffect(() => {
+    if (mode === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [mode]);
 
   useEffect(() => {
     const initApp = async () => {

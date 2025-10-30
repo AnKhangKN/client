@@ -13,13 +13,14 @@ const ButtonComponent = ({
   bgColor = "bg-blue-600",
   hoverColor = "hover:bg-blue-700",
   textColor = "text-white",
+  textSize = "text-[16px]",
 }) => {
   const [animateSend, setAnimateSend] = useState(false);
 
   useEffect(() => {
     if (sendTranslate) {
       setAnimateSend(true);
-      const timer = setTimeout(() => setAnimateSend(false), 3000);
+      const timer = setTimeout(() => setAnimateSend(false), 2000);
       return () => clearTimeout(timer);
     }
   }, [sendTranslate]); // Hiệu ứng máy bay bay ngang button.
@@ -29,7 +30,7 @@ const ButtonComponent = ({
       onClick={!loading && !disabled ? onClick : undefined}
       disabled={loading || disabled || sendTranslate}
       className={`relative overflow-hidden flex items-center justify-center ${width} ${bgColor} ${textColor} ${rounded}
-         py-2 shadow-md transition-all duration-150 
+         py-2 shadow-md transition-all duration-150 ${textSize}
         ${
           loading || disabled
             ? "opacity-80 cursor-not-allowed"
@@ -47,7 +48,7 @@ const ButtonComponent = ({
         <div className="relative flex items-center justify-center w-full">
           <span className="relative z-10 opacity-70 text-blue-600">{text}</span>
           <IoMdSend
-            className={`absolute top-1/2 -translate-y-1/2 text-white w-6 h-6 transition-all duration-[3000ms] ease-in-out
+            className={`absolute top-1/2 -translate-y-1/2 text-white w-6 h-6 transition-all duration-2000 ease-in-out
               ${
                 animateSend
                   ? "translate-x-[550%] opacity-100"

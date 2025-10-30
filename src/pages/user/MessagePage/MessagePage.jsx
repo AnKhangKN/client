@@ -3,10 +3,10 @@ import LogoCTUT from "../../../assets/logo/logo-ctut.png";
 import { BsEmojiWink, BsImage, BsPencilSquare } from "react-icons/bs";
 import { RiSearchLine } from "react-icons/ri";
 import { CiCircleInfo } from "react-icons/ci";
-import { VscSend } from "react-icons/vsc"; // 🟢 icon gửi tin nhắn
+import { VscSend } from "react-icons/vsc";
 
 const MessagePage = () => {
-  const [message, setMessage] = useState(""); // 🟢 state lưu nội dung input
+  const [message, setMessage] = useState("");
 
   const listActiveFriends = [
     { id: "1", memberAvatar: LogoCTUT, memberName: "Khang" },
@@ -26,20 +26,26 @@ const MessagePage = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen dark:bg-[#1c1c1d] dark:text-white">
       {/* Sidebar danh sách bạn bè và nhóm */}
-      <div className="lg:w-[350px] w-[100px] bg-white border-r border-gray-200 flex flex-col">
+      <div
+        className="lg:w-[350px] w-[100px] border-r border-gray-200 dark:border-gray-600 
+      flex flex-col"
+      >
         <div className="overflow-y-auto flex-1 p-3 scrollbar-hide">
           {/* Danh sách bạn bè hoạt động */}
           <div className="mb-6">
-            <div className="flex items-center justify-between text-gray-700 px-3 py-4">
+            <div className="flex items-center justify-between px-3 py-4">
               <div className="lg:block hidden">Bạn bè đang hoạt động</div>
               <div className="flex justify-center items-center cursor-pointer hover:bg-gray-200 rounded-lg text-2xl h-10 w-10">
                 <BsPencilSquare />
               </div>
             </div>
 
-            <div className="flex items-center justify-center ms-2 lg:justify-start py-4 h-12 w-12 lg:w-[300px] bg-gray-200 rounded-full my-4">
+            <div
+              className="flex items-center justify-center ms-2 lg:justify-start py-4 h-12 w-12 
+            lg:w-[300px] bg-gray-200 dark:bg-[#303030] rounded-full my-4"
+            >
               <div className="flex justify-center items-center w-12 h-12 text-xl">
                 <RiSearchLine />
               </div>
@@ -53,11 +59,13 @@ const MessagePage = () => {
                   className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition"
                 >
                   <div className="relative">
-                    <img
-                      className="w-12 h-12 rounded-full object-cover border"
-                      src={friend.memberAvatar}
-                      alt={friend.memberName}
-                    />
+                    <div className="bg-white w-12 h-12 rounded-full overflow-hidden border">
+                      <img
+                        className="w-full h-full object-cover"
+                        src={friend.memberAvatar}
+                        alt={friend.memberName}
+                      />
+                    </div>
                     <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
                   </div>
                   <div className="lg:block hidden text-sm font-medium">
@@ -70,7 +78,7 @@ const MessagePage = () => {
 
           {/* Danh sách nhóm */}
           <div>
-            <div className="lg:block hidden text-gray-700 font-semibold mb-2 px-2">
+            <div className="lg:block hidden font-semibold mb-2 px-2">
               Nhóm đã tham gia
             </div>
             <div className="flex flex-col gap-2">
@@ -79,11 +87,13 @@ const MessagePage = () => {
                   key={group.id}
                   className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition"
                 >
-                  <img
-                    className="w-12 h-12 rounded-lg object-cover border"
-                    src={group.groupAvatar}
-                    alt={group.groupName}
-                  />
+                  <div className="bg-white w-12 h-12 rounded-lg border overflow-hidden">
+                    <img
+                      className="w-full h-full object-cover "
+                      src={group.groupAvatar}
+                      alt={group.groupName}
+                    />
+                  </div>
                   <div className="lg:block hidden text-sm font-medium">
                     {group.groupName}
                   </div>
@@ -95,23 +105,25 @@ const MessagePage = () => {
       </div>
 
       {/* Khu vực chat chính */}
-      <div className="flex-1 flex flex-col bg-gray-50">
+      <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-4">
-          <div className="flex items-center gap-4 text-gray-800 text-lg">
-            <img className="w-12 h-12 rounded-full" src={LogoCTUT} alt="" />
+        <div className="h-20 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between px-4">
+          <div className="flex items-center gap-4 text-lg">
+            <div className="bg-white w-12 h-12 rounded-full overflow-hidden">
+              <img className="w-full h-full " src={LogoCTUT} alt="" />
+            </div>
             <div className="flex flex-col">
               <div className="text-sm">Khang</div>
               <div className="text-[12px] text-gray-500">_khang13</div>
             </div>
           </div>
-          <div className="text-3xl hover:bg-gray-200 p-2 cursor-pointer text-gray-800">
+          <div className="text-3xl hover:bg-gray-200 p-2 cursor-pointer">
             <CiCircleInfo />
           </div>
         </div>
 
         {/* Nội dung chat */}
-        <div className="flex-1 flex flex-col md:mb-0 mb-10 bg-white overflow-hidden h-screen">
+        <div className="flex-1 flex flex-col md:mb-0 mb-10 overflow-hidden h-screen">
           <div className="overflow-y-auto p-4">
             <div className="h-screen">text</div>
             <div>text</div>

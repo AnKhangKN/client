@@ -1,82 +1,17 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import LogoCTUT from "../../../assets/logo/logo-ctut.png";
-import { ImImages } from "react-icons/im";
-import { BsDashLg, BsEmojiLaughing, BsEmojiLaughingFill } from "react-icons/bs";
-import { HiOutlineDotsHorizontal } from "react-icons/hi";
-import { MdOutlineClose } from "react-icons/md";
-import { IoEarth, IoHeartOutline, IoHeartSharp } from "react-icons/io5";
-import {
-  PiChatCenteredDotsLight,
-  PiShareLight,
-  PiSmileyMelting,
-} from "react-icons/pi";
-import { RiSearchLine } from "react-icons/ri";
 import ChatBoxComponent from "../../../components/user/ChatBoxComponent/ChatBoxComponent";
-import TextCollapse from "../../../components/user/TextCollapse/TextCollapse";
 import HeaderComponent from "../../../components/user/HeaderComponent/HeaderComponent";
-import { useSelector } from "react-redux";
-import { IoMdLock } from "react-icons/io";
-import { GoChevronDown } from "react-icons/go";
-import ButtonComponent from "../../../components/shared/ButtonComponent/ButtonComponent";
 import useClickOutside from "../../../hooks/useClickOutside";
+import ActiveFriendsListAndGroupsListComponent from "../../../components/user/ActiveFriendsListAndGroupsComponent/ActiveFriendsListAndGroupsComponent";
+import PostComponent from "../../../components/user/PostComponent/PostComponent";
+import PostCreateComponent from "../../../components/user/PostCreateComponent/PostCreateComponent";
+import * as ValidateToken from "../../../utils/token.utils";
+import * as PostServices from "../../../services/user/PostServices";
+import FriendsSuggestComponent from "../../../components/user/FriendsSuggestComponent.jsx/FriendsSuggestComponent";
+import * as UserServices from "../../../services/user/UserServices";
 
 const HomePage = () => {
-  const listPost = [
-    {
-      id: "1",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-      createAt: "13/10/2024 6H30",
-      content: "Nội dung bài post với 2",
-      hashtag: ["#CongNgheThongTin"],
-      emotion: "vui",
-      images: [LogoCTUT, LogoCTUT],
-      heart: 300,
-      comment: 45,
-      share: 10,
-    },
-    {
-      id: "2",
-      userAvatar: LogoCTUT,
-      userName: "Khang nè",
-      createAt: "13/10/2024 6H30",
-      content:
-        "Nội dung bài post quá dài gồm 3 ảnh (nội dung dài quá thể có thể hơn 2 dòng, nếu nội dung bài viết quá dài hơn 2 dòng sẽ hiện ... ở dưới sẽ hiện xem thêm khi click vào xem thêm sẽ hiện full bài post gồm tất cả nội dung của bài viết người xem có thể xem toàn bộ bài viết trên hoạt ảnh cũng sẽ chen lên các nội dung khiến bài post dài ra hơn bình thường).",
-      hashtag: ["#CongNgheThongTin", "#CTUT"],
-      emotion: "buồn",
-      images: [LogoCTUT, LogoCTUT, LogoCTUT],
-      heart: 300,
-      comment: 45,
-      share: 10,
-    },
-    {
-      id: "3",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-      createAt: "13/10/2024 6H30",
-      content: "Nội dung bài post với 1 ảnh",
-      hashtag: ["#CongNgheThongTin", "#CTUT", "#HeThongThongTin"],
-      emotion: "buồn",
-      images: [LogoCTUT],
-      heart: 300,
-      comment: 45,
-      share: 10,
-    },
-    {
-      id: "4",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-      createAt: "13/10/2024 6H30",
-      content: "Nội dung bài post trên 3 ảnh",
-      hashtag: ["#CongNgheThongTin"],
-      emotion: "buồn",
-      images: [LogoCTUT, LogoCTUT, LogoCTUT, LogoCTUT],
-      heart: 300,
-      comment: 45,
-      share: 10,
-    },
-  ];
-
   const listActiveFriends = [
     {
       id: "1",
@@ -151,359 +86,78 @@ const HomePage = () => {
     { id: "3", groupAvatar: LogoCTUT, groupName: "Web" },
   ];
 
-  const [heartedPosts, setHeartedPosts] = useState({});
-  const user = useSelector((state) => state.user);
-  const [posts, setPosts] = useState(listPost);
+  const [posts, setPosts] = useState([]);
+  const firstFivePosts = posts.slice(0, 1);
+  const remainingPosts = posts.slice(1);
+
   const [modalNewPost, setModelNewPost] = useState(false);
+  const [friendsSuggest, setFriendsSuggest] = useState([]);
   const newPostRef = useRef(null);
-
-  const handleHeartPost = (postId) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) => {
-        if (post.id === postId) {
-          const isHearted = heartedPosts[postId] || false;
-          const newHeart = isHearted ? post.heart - 1 : post.heart + 1;
-          return { ...post, heart: newHeart };
-        }
-        return post;
-      })
-    );
-
-    setHeartedPosts((prev) => ({
-      ...prev,
-      [postId]: !prev[postId],
-    }));
-  };
-
-  const handleOpenModalAddNewPost = () => {
-    setModelNewPost(true);
-  };
-
-  const handleCloseModalAddNewPost = () => {
-    setModelNewPost(false);
-  };
 
   useClickOutside(newPostRef, modalNewPost, () => setModelNewPost(false));
 
+  const fetchPosts = async () => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const res = await PostServices.getPosts(accessToken);
+      setPosts(res.posts);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  };
+
+  const fetchFriendsSuggest = async () => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const res = await UserServices.getFriendSuggest(accessToken);
+
+      setFriendsSuggest(res.data);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+    fetchFriendsSuggest();
+  }, []);
+
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden dark:bg-[#1c1c1d] dark:text-white">
       <HeaderComponent />
 
       {/* content */}
       <div className="flex md:py-4 pt-18 flex-col items-center w-full overflow-y-auto scrollbar-hide">
         {/* add new post */}
-        <div className="px-4 mb-2 w-11/12 max-w-[600px] shadow bg-white">
-          <div className="flex gap-2 py-4">
-            <img className="w-10 rounded-full" src={LogoCTUT} alt="" />
+        <PostCreateComponent />
 
-            <div
-              onClick={handleOpenModalAddNewPost}
-              className="w-full cursor-pointer bg-gray-100 px-4 rounded-full text-gray-500 flex items-center justify-start"
-            >
-              {user.firstName} ơi, đang nghĩ gì thế!
-            </div>
-          </div>
+        <div className="w-11/12 max-w-[600px] space-y-4">
+          {/* Hiển thị 5 bài đầu */}
+          <PostComponent postsList={firstFivePosts} />
 
-          <div className="flex py-2 justify-around items-center border-t border-gray-300">
-            <div className="flex justify-center cursor-pointer gap-2 px-4 py-3 items-center hover:bg-gray-200">
-              <div className="flex justify-center items-center text-xl">
-                <ImImages />
-              </div>
-              <div>Ảnh/Video</div>
-            </div>
+          {/* Gợi ý bạn bè */}
+          {posts.length > 1 && (
+            <FriendsSuggestComponent friendsSuggest={friendsSuggest} />
+          )}
 
-            <div className="flex justify-center cursor-pointer gap-2 px-4 py-3 items-center hover:bg-gray-200">
-              <div className="flex justify-center items-center text-xl">
-                <PiSmileyMelting />
-              </div>
-              <div>Cảm xúc của bạn!</div>
-            </div>
-          </div>
+          {/* Hiển thị các bài viết còn lại */}
+          <PostComponent postsList={remainingPosts} />
         </div>
-
-        {/* Modal add post */}
-        {modalNewPost && (
-          <div className="fixed inset-0 bg-black/20 flex justify-center items-center">
-            <div
-              ref={newPostRef}
-              className="bg-white p-4 rounded-lg w-[500px] flex flex-col gap-4"
-            >
-              <div className="flex justify-between items-center">
-                <div className="text-xl">Tạo bài post mới</div>
-
-                <div
-                  onClick={handleCloseModalAddNewPost}
-                  className="bg-gray-200 h-10 w-10 cursor-pointer rounded-full flex justify-center items-center"
-                >
-                  <MdOutlineClose size={24} />
-                </div>
-              </div>
-
-              <div className="flex justify-start items-center gap-2">
-                <img
-                  className="w-10 h-10 rounded-full"
-                  src={LogoCTUT}
-                  alt="Logo ctut"
-                />
-                <div>
-                  <div>
-                    {user.lastName} {user.firstName}
-                  </div>
-                  <div className="px-1.5 pb-0.5 pt-1 rounded-sm bg-gray-200 flex gap-1">
-                    <div className="flex justify-center items-start">
-                      <IoMdLock size={16} />
-                      {/* <IoEarth size={16} /> */}
-                    </div>
-                    <div className="text-sm">Chỉ mình tôi</div>
-                    <div className="flex justify-center items-center">
-                      <GoChevronDown size={16} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <textarea
-                  className="w-full outline-0"
-                  name=""
-                  id=""
-                  placeholder={`${user.firstName} ơi, bạn đang nghĩ gì thế!`}
-                ></textarea>
-              </div>
-
-              {/* Background textarea */}
-              <div></div>
-
-              <div className="border rounded-lg px-4 py-3 flex items-center justify-between">
-                <div>Thêm vào bài viết của bạn</div>
-
-                <div className="flex items-center gap-2 text-2xl">
-                  <div className="text-green-600">
-                    <ImImages />
-                  </div>
-                  <div className="text-yellow-600">
-                    <BsEmojiLaughing />
-                  </div>
-                  <div></div>
-                  <div></div>
-                </div>
-              </div>
-
-              <ButtonComponent text="Đăng bài" />
-            </div>
-          </div>
-        )}
-
-        {/* new post */}
-        {posts.map((item) => (
-          <div
-            key={item.id}
-            className="p-4 my-2 w-11/12 max-w-[600px] shadow bg-white"
-          >
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <img className="w-10 h-10" src={item.userAvatar} alt="" />
-                <div className="flex flex-col">
-                  <div className="flex gap-1 items-center">
-                    <div>{item.userName}</div>
-                    <div className="w-1 h-1 rounded-full bg-blue-600"></div>
-                    <div className="text-blue-600">Theo dõi</div>
-                  </div>
-                  <div className="text-sm text-gray-500">{item.createAt}</div>
-                </div>
-              </div>
-
-              <div className="flex gap-4 items-center">
-                <div className="flex justify-center items-center w-6 h-6">
-                  <HiOutlineDotsHorizontal />
-                </div>
-                <div className="flex justify-center items-center  w-6 h-6">
-                  <MdOutlineClose />
-                </div>
-              </div>
-            </div>
-
-            {/* content */}
-            <TextCollapse text={item.content} />
-
-            {/* hashtag */}
-            <div className="flex flex-wrap gap-2 mt-2 text-blue-500 text-sm">
-              {item.hashtag.map((tag, i) => (
-                <span key={i}>{tag}</span>
-              ))}
-            </div>
-
-            {/* emotion */}
-            <div className="flex items-center gap-1 my-2 text-sm text-gray-600">
-              <BsDashLg />
-              <span>đang cảm thấy {item.emotion}.</span>
-            </div>
-
-            {/* picture */}
-            {(() => {
-              const images = item.images;
-
-              if (images.length === 1) {
-                return (
-                  <div className="max-h-[590px] overflow-hidden">
-                    <img
-                      className="w-full h-full rounded-lg object-cover"
-                      src={images[0]}
-                      alt="image"
-                    />
-                  </div>
-                );
-              } else if (images.length === 2) {
-                return (
-                  <div className="grid grid-cols-2 gap-2 max-h-[590px] overflow-hidden">
-                    {images.map((img, index) => (
-                      <img
-                        key={index}
-                        className="w-full h-full rounded-lg object-cover"
-                        src={img}
-                        alt={`image-${index}`}
-                      />
-                    ))}
-                  </div>
-                );
-              } else {
-                // ≥ 3 ảnh
-                return (
-                  <div className="grid grid-cols-3 gap-2 max-h-[590px] overflow-hidden">
-                    {/* Ảnh lớn bên trái */}
-                    <div className="col-span-2">
-                      <img
-                        className="w-full h-full object-cover rounded-lg"
-                        src={images[0]}
-                        alt="main"
-                      />
-                    </div>
-
-                    {/* Hai ảnh nhỏ bên phải (xếp dọc) */}
-                    <div className="grid grid-rows-2 gap-2">
-                      {images.slice(1, 3).map((img, index) => (
-                        <div key={index} className="relative">
-                          <img
-                            className="w-full h-full object-cover rounded-lg"
-                            src={img}
-                            alt={`image-${index + 1}`}
-                          />
-
-                          {/* Nếu là ảnh cuối cùng trong phần hiển thị và vẫn còn ảnh dư */}
-                          {index === 1 && images.length > 3 && (
-                            <div className="absolute inset-0 bg-black/60 rounded-lg flex items-center justify-center">
-                              <span className="text-white text-2xl font-semibold">
-                                +{images.length - 3}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              }
-            })()}
-
-            {/* emoji */}
-            <div></div>
-
-            {/* action */}
-            <div className="flex justify-around items-center text-2xl pt-4 mt-6 border-t border-gray-300">
-              <button
-                className="flex gap-2 cursor-pointer items-center"
-                onClick={() => handleHeartPost(item.id)}
-              >
-                {heartedPosts[item.id] ? (
-                  <IoHeartSharp className="text-red-500 transition" />
-                ) : (
-                  <IoHeartOutline className="text-gray-600 transition" />
-                )}
-                <div className="text-[16px]">{item.heart}</div>
-              </button>
-
-              <button className="flex gap-2 cursor-pointer items-center">
-                <PiChatCenteredDotsLight />
-                <div className="text-[16px]">{item.comment}</div>
-              </button>
-
-              <button className="flex gap-2 cursor-pointer items-center">
-                <PiShareLight />
-                <div className="text-[16px]">{item.share}</div>
-              </button>
-            </div>
-          </div>
-        ))}
       </div>
 
-      {/* list friend */}
-      <div className="flex-col me-4 my-4 px-2 overflow-y-auto w-[380px] shadow lg:flex hidden scrollbar-hide bg-white">
-        {/* List active friend */}
-        <div>
-          <div className="flex py-4 px-2 justify-between items-center">
-            <div>Bạn bè hoạt động</div>
-            <div className="flex items-center gap-4">
-              <div>
-                <RiSearchLine />
-              </div>
-              <div>
-                <HiOutlineDotsHorizontal />
-              </div>
-            </div>
-          </div>
-
-          {listActiveFriends.map((friend) => (
-            <div
-              key={friend.id}
-              className="flex items-center gap-3 py-2 px-2 hover:bg-gray-100 cursor-pointer transition"
-            >
-              <div className="relative">
-                <img
-                  className="w-10 h-10 rounded-full object-cover"
-                  src={friend.userAvatar}
-                  alt={friend.userName}
-                />
-                {/* chấm xanh online */}
-                <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
-              </div>
-              <div className="text-gray-800 text-sm font-medium">
-                {friend.userName}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* List group */}
-        <div>
-          <div className="flex py-4 px-2 border-t border-gray-400 justify-between items-center">
-            <div>Nhóm chat</div>
-            <div className="flex items-center gap-4">
-              <div>
-                <RiSearchLine />
-              </div>
-              <div>
-                <HiOutlineDotsHorizontal />
-              </div>
-            </div>
-          </div>
-
-          {listGroup.map((group) => (
-            <div
-              key={group.id}
-              className="flex py-2 px-2 hover:bg-gray-200 cursor-pointer items-center gap-2"
-            >
-              <img
-                className="w-10 h-10 rounded-full"
-                src={group.groupAvatar}
-                alt=""
-              />
-
-              <div>
-                {group.groupName} {group.id}
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* friends list and groups list */}
+      <div
+        className="flex-col me-4 my-4 px-2 overflow-y-auto w-[380px] shadow lg:flex hidden 
+      scrollbar-hide"
+      >
+        <ActiveFriendsListAndGroupsListComponent
+          activeFriendsList={listActiveFriends}
+          groupsList={listGroup}
+        />
       </div>
 
       <div className="fixed lg:hidden block bottom-8 right-8">

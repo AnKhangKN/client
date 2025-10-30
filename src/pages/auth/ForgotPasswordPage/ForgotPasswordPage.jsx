@@ -31,24 +31,31 @@ const ForgotPasswordPage = () => {
         key: Date.now(),
       });
     }
+
+    setLoading(true);
     try {
-      setLoading(true);
       console.log(email);
 
-      setIsSuccess(true);
       setMessage({
         text: "Truy cập mail để nhận lại mật khẩu.",
         type: "success",
         key: Date.now(),
       });
 
+      setIsSuccess(true);
+
       setTimeout(() => {
         navigate("/login");
-      }, 3000);
+      }, 2000);
     } catch (error) {
-      console.log(error);
-
-      throw error;
+      setMessage({
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Lỗi hãy kiểm tra lại thông tin.",
+        type: "error",
+        key: Date.now(),
+      });
     } finally {
       setLoading(false);
     }

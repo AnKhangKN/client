@@ -4,7 +4,7 @@ import { IoIosCloseCircle } from "react-icons/io";
 import { IoWarning } from "react-icons/io5";
 import { PiCheckCircleFill } from "react-icons/pi";
 
-const MessageComponent = ({ message, type = "info", duration = 4000 }) => {
+const MessageComponent = ({ message, type = "info", duration = 3000 }) => {
   const [visible, setVisible] = useState(true);
   const [full, setFull] = useState(false);
 
@@ -47,7 +47,7 @@ const MessageComponent = ({ message, type = "info", duration = 4000 }) => {
 
   return (
     <div
-      className={`fixed top-5 right-5 shadow transition-all duration-500 ease-in-out transform ${
+      className={`fixed z-100 top-5 right-5 shadow-2xl transition-all duration-500 ease-in-out transform ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-5"
       }`}
     >
@@ -66,7 +66,7 @@ const MessageComponent = ({ message, type = "info", duration = 4000 }) => {
       <div
         className={`${
           currentType.bgColor
-        } transition-all ease-in-out duration-3000 h-1 ${
+        } transition-all ease-in-out duration-2000 h-1 ${
           full ? "w-full" : "w-0"
         }`}
       ></div>

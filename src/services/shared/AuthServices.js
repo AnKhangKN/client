@@ -6,7 +6,7 @@ export const loginService = async (data) => {
       `${import.meta.env.VITE_BACKEND_API}/auth/login`,
       data,
       {
-        withCredentials: true, // <== thêm dòng này
+        withCredentials: true,
       }
     );
 
@@ -45,7 +45,7 @@ export const registerService = async (data) => {
   }
 };
 
-export const logoutServices = async ({ accessToken }) => {
+export const logoutServices = async (accessToken) => {
   try {
     const res = await axios.delete(
       `${import.meta.env.VITE_BACKEND_API}/auth/logout`,

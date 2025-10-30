@@ -14,7 +14,7 @@ const SidebarLayoutAdmin = ({ children }) => {
           toggleSidebar={() => setIsShowSidebar((prev) => !prev)}
         />
 
-        <div className="overflow-y-auto bg-[#f1f5f9] p-4">{children}</div>
+        <div className="overflow-y-auto bg-white p-4">{children}</div>
       </div>
     </div>
   );

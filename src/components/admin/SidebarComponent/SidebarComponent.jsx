@@ -15,6 +15,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { RiDashboard3Fill, RiDashboard3Line } from "react-icons/ri";
 import "./style.css";
+import { IoNewspaperOutline, IoNewspaperSharp } from "react-icons/io5";
 
 const SidebarComponent = ({ isShowSidebar }) => {
   const navigate = useNavigate();
@@ -39,6 +40,16 @@ const SidebarComponent = ({ isShowSidebar }) => {
     },
     {
       icon:
+        location.pathname === "/admin/posts" ? (
+          <IoNewspaperSharp />
+        ) : (
+          <IoNewspaperOutline />
+        ),
+      nav: "/admin/posts",
+      label: "Quản lý bài viết",
+    },
+    {
+      icon:
         location.pathname === "/admin/groups" ? (
           <HiMiniUserGroup />
         ) : (
@@ -52,13 +63,13 @@ const SidebarComponent = ({ isShowSidebar }) => {
       icon:
         location.pathname === "/admin/department" ? (
           <img
-            className="w-6 h-6 flex-shrink-0 rounded-full border border-gray-900 bg-white"
+            className="w-6 h-6 shrink-0 rounded-full border border-gray-900 bg-white"
             src={LogoCTUT}
             alt="logo"
           />
         ) : (
           <img
-            className="w-6 h-6 rounded-full flex-shrink-0 bg-white"
+            className="w-6 h-6 rounded-full shrink-0 bg-white"
             src={LogoCTUT}
             alt="logo"
           />
@@ -96,7 +107,7 @@ const SidebarComponent = ({ isShowSidebar }) => {
       bg-white`}
     >
       {/* Logo */}
-      <div className="flex items-center h-10 gap-2 p-1">
+      <div className="flex items-center h-10 gap-2 px-1 pt-5 py-14">
         <img src={LogoCTUT} alt="Logo" className="w-10 rounded-full" />
         <span
           className={`text-3xl text_logo font-semibold overflow-hidden transition-all duration-1000 ease-in-out

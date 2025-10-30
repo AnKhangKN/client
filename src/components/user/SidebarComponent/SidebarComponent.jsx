@@ -11,25 +11,37 @@ import {
   PiBellSimpleRingingFill,
   PiChatTeardropDots,
   PiChatTeardropDotsFill,
-  PiSunHorizon,
+  PiCloudSunThin,
+  PiMoonLight,
 } from "react-icons/pi";
 import { useLocation, useNavigate } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
 import { MdOutlineClose } from "react-icons/md";
 import "./style.css";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { IoSettingsOutline } from "react-icons/io5";
 import { BsAppIndicator } from "react-icons/bs";
 import useClickOutside from "../../../hooks/useClickOutside";
+import * as AuthServices from "../../../services/shared/AuthServices";
+import MessageComponent from "../../../components/shared/MessageComponent/MessageComponent";
+import * as TokenUtils from "../../../utils/token.utils";
+import { toggleTheme } from "../../../features/theme/themeSlice";
 
 const SidebarComponent = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const location = useLocation();
   const [searchContainer, setSearchContainer] = useState(false);
   const searchRef = useRef(null);
   const user = useSelector((state) => state.user);
+  const theme = useSelector((state) => state.theme.mode);
   const [modalMore, setModalMore] = useState(false);
   const moreRef = useRef(null);
+  const [message, setMessage] = useState({
+    text: "",
+    type: "",
+    key: 1,
+  });
 
   // Mở / Đóng modal tìm kiếm
   const handleOpenSearchContainer = () => setSearchContainer(true);
@@ -68,13 +80,13 @@ const SidebarComponent = () => {
       icon:
         location.pathname === "/department" ? (
           <img
-            className="w-6 h-6 flex-shrink-0 rounded-full border border-gray-900"
+            className="w-6 h-6 shrink-0 rounded-full border border-gray-900 dark:border-white bg-white"
             src={LogoCTUT}
             alt="logo"
           />
         ) : (
           <img
-            className="w-6 h-6 rounded-full flex-shrink-0"
+            className="w-6 h-6 shrink-0 rounded-full bg-white"
             src={LogoCTUT}
             alt="logo"
           />
@@ -104,17 +116,51 @@ const SidebarComponent = () => {
     },
   ];
 
+  const handleLogout = async () => {
+    try {
+      const accessToken = await TokenUtils.getValidAccessToken();
+
+      await AuthServices.logoutServices(accessToken);
+
+      localStorage.removeItem("accessToken");
+
+      setMessage({
+        text: "Đăng xuất thành công!",
+        type: "success",
+        key: Date.now(),
+      });
+      setTimeout(() => navigate("/login"), 2000);
+    } catch (error) {
+      setMessage({
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Đăng xuất thất bại",
+        type: "error",
+        key: Date.now(),
+      });
+    }
+  };
+
   return (
     <div
-      className={`hidden md:flex flex-col justify-between ${
+      className={`hidden md:flex flex-col justify-between bg-white dark:bg-[#1c1c1d] dark:text-white ${
         location.pathname === "/message" ||
         location.pathname === "/groups/feed" ||
         location.pathname === "/groups/discover" ||
         location.pathname === "/groups/join"
           ? "w-20"
           : "xl:w-1/6 w-20"
-      } p-4 border-r border-gray-300 bg-white relative`}
+      } p-4 border-r border-gray-300 dark:border-0 relative`}
     >
+      {message.text && (
+        <MessageComponent
+          key={message.key}
+          type={message.type}
+          message={message.text}
+        />
+      )}
+
       {/* Logo */}
       <div
         className={`flex items-center h-10 ${
@@ -160,7 +206,8 @@ const SidebarComponent = () => {
             onClick={
               item.onClick ? item.onClick : () => item.nav && navigate(item.nav)
             }
-            className={`flex items-center gap-3 p-3 rounded-lg hover:bg-gray-200 cursor-pointer`}
+            className={`flex items-center gap-3 p-3 rounded-lg hover:bg-gray-200
+              dark:hover:bg-[#3c3c3c] cursor-pointer`}
           >
             <div className="text-2xl flex justify-center items-center xl:me-3">
               {item.icon}
@@ -218,11 +265,12 @@ const SidebarComponent = () => {
       {/* Bottom section */}
       <div className="flex flex-col gap-3 pt-4">
         <div
-          className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-200 rounded-lg"
+          className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-200
+          dark:hover:bg-[#3c3c3c] rounded-lg"
           onClick={() => navigate(user.isAdmin ? "/admin" : "/profile")}
         >
           <img
-            className="w-6 h-6 rounded-full xl:me-3"
+            className="w-6 h-6 rounded-full bg-white xl:me-3"
             src={LogoCTUT}
             alt="Logo"
           />
@@ -243,7 +291,8 @@ const SidebarComponent = () => {
         <div className="relative">
           <div
             onClick={handleOpenModalMore}
-            className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-200 rounded-lg"
+            className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-200
+            dark:hover:bg-[#3c3c3c] rounded-lg"
           >
             <div className="text-2xl flex justify-center items-center xl:me-3">
               <HiOutlineBars3 />
@@ -265,43 +314,63 @@ const SidebarComponent = () => {
           {modalMore && (
             <div
               ref={moreRef}
-              className="absolute bottom-13 shadow-lg flex flex-col gap-1 overflow-hidden rounded-xl bg-gray-200"
+              className="absolute bottom-13 w-60 shadow-lg flex flex-col gap-1 overflow-hidden 
+              rounded-xl bg-gray-200 dark:bg-[#353535] z-10"
             >
-              <div className="bg-white rounded-t-xl">
-                <div className="flex items-center gap-3 hover:bg-gray-200 py-3 px-4">
-                  <div>
+              <div className="bg-white dark:bg-[#262626] rounded-t-xl">
+                <div
+                  className="flex items-center gap-3 cursor-pointer hover:bg-gray-200 
+                dark:hover:bg-[#3c3c3c] py-3 px-4"
+                >
+                  <div className="w-5 h-5 flex items-center justify-center">
                     <IoSettingsOutline />
                   </div>
                   <div>Cài đặt</div>
                 </div>
 
-                <div className="flex items-center hover:bg-gray-200 gap-3 py-3 px-4">
-                  <div>
+                <div className="flex items-center cursor-pointer hover:bg-gray-200 dark:hover:bg-[#3c3c3c] gap-3 py-3 px-4">
+                  <div className="w-5 h-5 flex items-center justify-center">
                     <BsAppIndicator />
                   </div>
                   <div>Hoạt động của bạn</div>
                 </div>
 
-                <div className="flex items-center hover:bg-gray-200 gap-3 py-3 px-4">
-                  <div>
-                    <PiSunHorizon />
+                <div
+                  onClick={() => dispatch(toggleTheme())}
+                  className="flex items-center cursor-pointer hover:bg-gray-200 dark:hover:bg-[#3c3c3c] gap-3 py-3 px-3.5"
+                >
+                  <div className="w-5 h-5 flex items-center justify-center">
+                    {theme === "light" ? <PiMoonLight /> : <PiCloudSunThin />}
                   </div>
-                  <div>Chuyển chế độ sáng</div>
+                  <div>
+                    {theme === "light"
+                      ? "Chuyển chế độ tối"
+                      : "Chuyển chế độ sáng"}
+                  </div>
                 </div>
 
-                <div className="flex items-center hover:bg-gray-200 gap-3 py-3 px-4">
-                  <div>
+                <div
+                  className="flex items-center cursor-pointer hover:bg-gray-200 dark:hover:bg-[#3c3c3c] 
+                gap-3 py-3 px-4"
+                >
+                  <div className="w-5 h-5 flex items-center justify-center">
                     <GoReport />
                   </div>
                   <div>Báo cáo sự cố</div>
                 </div>
               </div>
 
-              <div className="flex flex-col bg-white rounded-b-xl">
-                <div className="border-b border-gray-200 py-3 px-4 cursor-pointer hover:bg-gray-200">
+              <div className="flex flex-col bg-white dark:bg-[#262626] rounded-b-xl">
+                <div
+                  className="border-b border-[#3c3c3c] py-3 px-4 cursor-pointer hover:bg-gray-200 
+                dark:hover:bg-[#3c3c3c]"
+                >
                   Chuyển đổi tài khoản
                 </div>
-                <div className="p-3 px-4 cursor-pointer hover:bg-gray-200">
+                <div
+                  onClick={handleLogout}
+                  className="p-3 px-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-[#3c3c3c]"
+                >
                   Đăng xuất
                 </div>
               </div>
