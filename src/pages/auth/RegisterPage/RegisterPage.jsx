@@ -148,19 +148,19 @@ const RegisterPage = () => {
           {/* --- Họ và tên --- */}
           <div className="flex gap-4">
             <InputComponent
-              id="firstName"
-              label="Tên"
-              value={data.firstName}
-              onChange={handleChange}
-              placeholder="Nhập tên của bạn"
-            />
-
-            <InputComponent
               id="lastName"
               label="Họ"
               value={data.lastName}
               onChange={handleChange}
               placeholder="Nhập họ của bạn"
+            />
+
+            <InputComponent
+              id="firstName"
+              label="Tên"
+              value={data.firstName}
+              onChange={handleChange}
+              placeholder="Nhập tên của bạn"
             />
           </div>
 

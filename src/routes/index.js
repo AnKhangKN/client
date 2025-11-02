@@ -2,7 +2,6 @@ import HomePage from "../pages/user/HomePage/HomePage";
 import FeedPage from "../pages/user/Group/FeedPage/FeedPage";
 import DiscoverPage from "../pages/user/Group/DiscoverPage/DiscoverPage";
 import JoinPage from "../pages/user/Group/JoinPage/JoinPage";
-import DepartmentPage from "../pages/user/DepartmentPage/DepartmentPage";
 import MessagePage from "../pages/user/MessagePage/MessagePage";
 import NotificationPage from "../pages/user/NotificationPage/NotificationPage";
 import ProfilePage from "../pages/user/ProfilePage/ProfilePage";
@@ -20,6 +19,7 @@ import ProfilePageAdmin from "../pages/admin/ProfilePage/ProfilePage";
 import EditProfilePage from "../pages/admin/EditProfilePage/EditProfilePage";
 import SecurityPage from "../pages/admin/SecurityPage/SecurityPage";
 import PostManagementPage from "../pages/admin/PostManagementPage/PostManagementPage";
+import FeedDePartmentPage from "../pages/user/Department/FeedPage/FeedPage";
 
 export const routes = [
   // auth
@@ -61,8 +61,8 @@ export const routes = [
     isShowSidebarGroupUser: true,
   },
   {
-    path: "/department",
-    page: DepartmentPage,
+    path: "/department/feed",
+    page: FeedDePartmentPage,
     isShowSidebarUser: true,
   },
   {
@@ -73,11 +73,6 @@ export const routes = [
   {
     path: "/notification",
     page: NotificationPage,
-    isShowSidebarUser: true,
-  },
-  {
-    path: "/profile",
-    page: ProfilePage,
     isShowSidebarUser: true,
   },
   {

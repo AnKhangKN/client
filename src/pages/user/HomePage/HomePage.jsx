@@ -127,22 +127,23 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden dark:bg-[#1c1c1d] dark:text-white">
+    <div className="flex h-screen overflow-hidden dark:bg-[#1c1c1d] dark:text-white relative">
       <HeaderComponent />
 
-      {/* content */}
-      <div className="flex md:py-4 pt-18 flex-col items-center w-full overflow-y-auto scrollbar-hide">
-        {/* add new post */}
-        <PostCreateComponent />
-
+      {/* content ----- scrollbar-hide  */}
+      <div className="flex lg:pl-2 lg:pr-[326px] w-full pt-10 flex-col items-center overflow-y-auto">
         <div className="w-11/12 max-w-[600px] space-y-4">
+          <PostCreateComponent />
+
           {/* Hiển thị 5 bài đầu */}
           <PostComponent postsList={firstFivePosts} />
 
           {/* Gợi ý bạn bè */}
-          {posts.length > 1 && (
-            <FriendsSuggestComponent friendsSuggest={friendsSuggest} />
-          )}
+          <div className={`${friendsSuggest?.length ? "block" : "hidden"}`}>
+            {posts.length > 1 && (
+              <FriendsSuggestComponent friendsSuggest={friendsSuggest} />
+            )}
+          </div>
 
           {/* Hiển thị các bài viết còn lại */}
           <PostComponent postsList={remainingPosts} />
@@ -151,8 +152,8 @@ const HomePage = () => {
 
       {/* friends list and groups list */}
       <div
-        className="flex-col me-4 my-4 px-2 overflow-y-auto w-[380px] shadow lg:flex hidden 
-      scrollbar-hide"
+        className="absolute right-1 top-5 border border-gray-200 rounded-lg bottom-2 flex-col me-4 my-4 px-2 
+        overflow-y-auto w-[320px] shadow lg:flex hidden scrollbar-hide"
       >
         <ActiveFriendsListAndGroupsListComponent
           activeFriendsList={listActiveFriends}

@@ -20,7 +20,7 @@ axiosJWT.interceptors.request.use(
 export const getDetailUser = async (accessToken) => {
   try {
     const res = await axiosJWT.get(
-      `${import.meta.env.VITE_BACKEND_API}/user/profile`,
+      `${import.meta.env.VITE_BACKEND_API}/shared/profiles`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,

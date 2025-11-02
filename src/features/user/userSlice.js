@@ -8,6 +8,7 @@ const initialState = {
   email: "",
   userName: "",
   userAvatar: "",
+  coverImage: "",
   privacyPost: "",
   following: [],
   follower: [],
@@ -27,6 +28,7 @@ export const userSlice = createSlice({
         email,
         userName,
         userAvatar,
+        coverImage,
         privacyPost,
         following,
         follower,
@@ -40,6 +42,7 @@ export const userSlice = createSlice({
       state.email = email;
       state.userName = userName;
       state.userAvatar = userAvatar;
+      state.coverImage = coverImage;
       state.privacyPost = privacyPost;
       state.following = following || [];
       state.follower = follower || [];

@@ -23,6 +23,7 @@ const PostCreateComponent = () => {
   const [modalEmotion, setModalEmotion] = useState(false);
   const [modalSelectBgTextArea, setModalSelectBgTextArea] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const [selectedEmotion, setSelectedEmotion] = useState(null);
@@ -206,7 +207,10 @@ const PostCreateComponent = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-[#252728] w-11/12 max-w-[600px] shadow-md p-4 rounded-md">
+    <div
+      className="bg-white dark:bg-[#252728] shadow-md p-4 rounded-md border 
+    border-gray-200 mb-3"
+    >
       {message.text && (
         <MessageComponent
           key={message.key}
@@ -323,7 +327,7 @@ const PostCreateComponent = () => {
                     )}
                     {openPrivacyPost && (
                       <div
-                        className="absolute top-6 -left-3.5 p-2 dark:bg-[#3c3c3c] w-40 rounded-sm
+                        className="absolute top-6 -left-3.5 z-50 p-2 dark:bg-[#3c3c3c] w-40 rounded-sm
                       bg-white shadow border border-gray-200 dark:border-[#393939]"
                       >
                         {privacyOptions.map((privacy) => (
@@ -346,14 +350,32 @@ const PostCreateComponent = () => {
               </div>
 
               {/* Textarea + background */}
-              <div className={`${selectedBgTextArea} p-2 rounded-sm`}>
+              <div className={`${selectedBgTextArea} p-2 rounded-sm relative`}>
                 <textarea
-                  className="w-full outline-0 rounded-md text-black h-48 dark:text-white resize-none bg-transparent"
-                  placeholder={`${
-                    user?.firstName || "Người dùng"
-                  } ơi, bạn đang nghĩ gì thế!`}
+                  className={`w-full outline-0 rounded-md  h-48 scrollbar-hide
+                  dark:text-white resize-none ${
+                    selectedBgTextArea ? "text-4xl text-center text-white" : ""
+                  } 
+                  bg-transparent`}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={(e) => {
+                    // chỉ hiện lại placeholder nếu không có text
+                    if (e.target.value.trim() === "") setIsFocused(false);
+                  }}
                 />
 
+                {!isFocused && (
+                  <p
+                    className={`absolute ${
+                      selectedBgTextArea ? "top-1/2 left-1/2" : "top-5 left-25"
+                    } -translate-x-1/2 -translate-y-1/2 text-gray-500 
+                  pointer-events-none`}
+                  >
+                    {`${
+                      user?.firstName || "Người dùng"
+                    } ơi, bạn đang nghĩ gì thế!`}
+                  </p>
+                )}
                 {/* Background selector */}
                 {mediaList.length === 0 && filesList.length === 0 && (
                   <div className="relative mt-3">
@@ -449,16 +471,28 @@ const PostCreateComponent = () => {
               <div className="flex items-center gap-4 ">
                 <button
                   onClick={() => imageRef.current.click()}
-                  className="flex items-center justify-center text-2xl text-green-600 
-                  dark:hover:bg-[#3b3d3e] hover:bg-gray-200 p-2 rounded-full cursor-pointer"
+                  disabled={selectedBgTextArea}
+                  className={`flex items-center justify-center text-2xl 
+                    ${
+                      selectedBgTextArea
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-green-600 cursor-pointer"
+                    }
+                  dark:hover:bg-[#3b3d3e] hover:bg-gray-200 p-2 rounded-full`}
                 >
                   <ImImages />
                 </button>
 
                 <button
                   onClick={() => fileRef.current.click()}
-                  className="flex items-center justify-center text-2xl text-blue-600 
-                  dark:hover:bg-[#3b3d3e] hover:bg-gray-200 p-2 rounded-full cursor-pointer"
+                  disabled={selectedBgTextArea}
+                  className={`flex items-center justify-center text-2xl 
+                    ${
+                      selectedBgTextArea
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-blue-600 cursor-pointer"
+                    } 
+                  dark:hover:bg-[#3b3d3e] hover:bg-gray-200 p-2 rounded-full`}
                 >
                   <BsFileEarmarkCheckFill />
                 </button>

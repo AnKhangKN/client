@@ -78,7 +78,7 @@ const SidebarComponent = () => {
     },
     {
       icon:
-        location.pathname === "/department" ? (
+        location.pathname === "/department/feed" ? (
           <img
             className="w-6 h-6 shrink-0 rounded-full border border-gray-900 dark:border-white bg-white"
             src={LogoCTUT}
@@ -91,7 +91,7 @@ const SidebarComponent = () => {
             alt="logo"
           />
         ),
-      nav: "/department",
+      nav: "/department/feed",
       label: "Đoàn khoa",
     },
     {
@@ -267,7 +267,9 @@ const SidebarComponent = () => {
         <div
           className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-200
           dark:hover:bg-[#3c3c3c] rounded-lg"
-          onClick={() => navigate(user.isAdmin ? "/admin" : "/profile")}
+          onClick={() =>
+            navigate(user.isAdmin ? "/admin" : `/profile/${user.userName}`)
+          }
         >
           <img
             className="w-6 h-6 rounded-full bg-white xl:me-3"

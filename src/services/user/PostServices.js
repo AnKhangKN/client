@@ -37,3 +37,22 @@ export const getPosts = async (accessToken) => {
     throw error;
   }
 };
+
+export const heartPost = async (accessToken, data) => {
+  try {
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_API}/user/posts/hearts`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};

@@ -3,7 +3,7 @@ import axios from "axios";
 export const loginService = async (data) => {
   try {
     const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_API}/auth/login`,
+      `${import.meta.env.VITE_BACKEND_API}/shared/login`,
       data,
       {
         withCredentials: true,
@@ -20,7 +20,7 @@ export const loginService = async (data) => {
 export const refreshToken = async () => {
   try {
     const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_API}/auth/token/refresh`,
+      `${import.meta.env.VITE_BACKEND_API}/shared/token/refresh`,
       {},
       { withCredentials: true }
     );
@@ -34,7 +34,7 @@ export const refreshToken = async () => {
 export const registerService = async (data) => {
   try {
     const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_API}/auth/register`,
+      `${import.meta.env.VITE_BACKEND_API}/shared/register`,
       data
     );
 
@@ -48,7 +48,7 @@ export const registerService = async (data) => {
 export const logoutServices = async (accessToken) => {
   try {
     const res = await axios.delete(
-      `${import.meta.env.VITE_BACKEND_API}/auth/logout`,
+      `${import.meta.env.VITE_BACKEND_API}/shared/logout`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,

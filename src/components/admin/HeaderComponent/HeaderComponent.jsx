@@ -15,6 +15,8 @@ const HeaderComponent = ({ toggleSidebar }) => {
   const [isSubModal, setSubModal] = useState(false);
   const [modalLogout, setModalLogout] = useState(false);
   const [isOpenNotify, setIsOpenNotify] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [message, setMessage] = useState({
     type: "",
@@ -48,6 +50,7 @@ const HeaderComponent = ({ toggleSidebar }) => {
   useClickOutsideForPosition(subModalRef, () => setSubModal(false));
 
   const handleLogout = async () => {
+    setIsLoading(true);
     try {
       const accessToken = await TokenUtils.getValidAccessToken();
 
@@ -61,7 +64,9 @@ const HeaderComponent = ({ toggleSidebar }) => {
         key: Date.now(),
       });
 
-      setTimeout(() => navigate("/login"), 3000);
+      setTimeout(() => navigate("/login"), 2000);
+
+      setIsSuccess(true);
     } catch (error) {
       setMessage({
         text:
@@ -71,11 +76,13 @@ const HeaderComponent = ({ toggleSidebar }) => {
         type: "error",
         key: Date.now(),
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex-shrink-0 py-4 border-b border-gray-400 bg-white shadow">
+    <div className="shrink-0 py-4 border-b border-gray-400 bg-white shadow">
       {message.text && (
         <MessageComponent
           type={message.type}
@@ -203,7 +210,12 @@ const HeaderComponent = ({ toggleSidebar }) => {
                       textColor="text-black"
                       hoverColor="hover:bg-gray-100"
                     />
-                    <ButtonComponent text="Đăng xuất" onClick={handleLogout} />
+                    <ButtonComponent
+                      text="Đăng xuất"
+                      onClick={handleLogout}
+                      isLoading={isLoading}
+                      disabled={isSuccess}
+                    />
                   </div>
                 </div>
               </div>

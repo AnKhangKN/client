@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { BsDashLg } from "react-icons/bs";
 
-const TextCollapse = ({ text, maxLines = 2, bgColor = "" }) => {
+const TextCollapse = ({ text, maxLines = 2, bgColor = "", haveFiles = "" }) => {
   const [expanded, setExpanded] = useState(false);
   const [isLongText, setIsLongText] = useState(false);
   const textRef = useRef(null);
@@ -18,7 +18,11 @@ const TextCollapse = ({ text, maxLines = 2, bgColor = "" }) => {
   return (
     <div
       className={`mt-4 ${bgColor} rounded-sm ${
-        bgColor ? "text-center px-3 py-40 text-4xl" : ""
+        bgColor
+          ? haveFiles?.length > 0
+            ? "px-3 py-3 text-white"
+            : "text-center px-3 py-40 text-4xl text-white"
+          : ""
       }`}
     >
       <div

@@ -21,7 +21,7 @@ export const getFriendSuggest = async (accessToken) => {
 export const followFriend = async (accessToken, data) => {
   try {
     const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_API}/user/users/follow`,
+      `${import.meta.env.VITE_BACKEND_API}/user/follow`,
       data,
       {
         headers: {
@@ -40,8 +40,26 @@ export const followFriend = async (accessToken, data) => {
 export const hiddenOrBlockFriend = async (accessToken, data) => {
   try {
     const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_API}/user/users/hidden`,
+      `${import.meta.env.VITE_BACKEND_API}/user/hidden`,
       data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+export const getProfile = async (accessToken, userName) => {
+  try {
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_API}/user/profiles/${userName}`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
