@@ -1,85 +1,17 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import LogoCTUT from "../../../assets/logo/logo-ctut.png";
 import ChatBoxComponent from "../../../components/user/ChatBoxComponent/ChatBoxComponent";
 import HeaderComponent from "../../../components/user/HeaderComponent/HeaderComponent";
-import useClickOutside from "../../../hooks/useClickOutside";
 import ActiveFriendsListAndGroupsListComponent from "../../../components/user/ActiveFriendsListAndGroupsComponent/ActiveFriendsListAndGroupsComponent";
-import PostComponent from "../../../components/user/PostComponent/PostComponent";
+import PostComponent from "../../../components/user/Post/PostComponent/PostComponent";
 import PostCreateComponent from "../../../components/user/PostCreateComponent/PostCreateComponent";
 import * as ValidateToken from "../../../utils/token.utils";
 import * as PostServices from "../../../services/user/PostServices";
 import FriendsSuggestComponent from "../../../components/user/FriendsSuggestComponent.jsx/FriendsSuggestComponent";
 import * as UserServices from "../../../services/user/UserServices";
+import { useSelector } from "react-redux";
 
 const HomePage = () => {
-  const listActiveFriends = [
-    {
-      id: "1",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-    },
-    {
-      id: "2",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-    },
-    {
-      id: "3",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-    },
-    {
-      id: "4",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-    },
-    {
-      id: "5",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-    },
-    {
-      id: "7",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-    },
-    {
-      id: "8",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-    },
-    {
-      id: "9",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-    },
-    {
-      id: "10",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-    },
-    {
-      id: "11",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-    },
-    {
-      id: "12",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-    },
-    {
-      id: "13",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-    },
-    {
-      id: "14",
-      userAvatar: LogoCTUT,
-      userName: "Khang",
-    },
-  ];
-
   const listGroup = [
     { id: "1", groupAvatar: LogoCTUT, groupName: "Web" },
     { id: "2", groupAvatar: LogoCTUT, groupName: "Web" },
@@ -90,11 +22,8 @@ const HomePage = () => {
   const firstFivePosts = posts.slice(0, 1);
   const remainingPosts = posts.slice(1);
 
-  const [modalNewPost, setModelNewPost] = useState(false);
   const [friendsSuggest, setFriendsSuggest] = useState([]);
-  const newPostRef = useRef(null);
-
-  useClickOutside(newPostRef, modalNewPost, () => setModelNewPost(false));
+  const online = useSelector((state) => state.online || []);
 
   const fetchPosts = async () => {
     try {
@@ -156,14 +85,14 @@ const HomePage = () => {
         overflow-y-auto w-[320px] shadow lg:flex hidden scrollbar-hide"
       >
         <ActiveFriendsListAndGroupsListComponent
-          activeFriendsList={listActiveFriends}
+          activeFriendsList={online.onlineFriends}
           groupsList={listGroup}
         />
       </div>
 
-      <div className="fixed lg:hidden block bottom-8 right-8">
+      <div className="fixed z-50 lg:hidden block bottom-12 right-5">
         <ChatBoxComponent
-          listFriends={listActiveFriends}
+          listFriends={online.onlineFriends}
           listGroups={listGroup}
         />
       </div>

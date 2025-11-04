@@ -46,19 +46,16 @@ export const routes = [
     path: "/groups/feed",
     page: FeedPage,
     isShowSidebarUser: true,
-    isShowSidebarGroupUser: true,
   },
   {
     path: "/groups/discover",
     page: DiscoverPage,
     isShowSidebarUser: true,
-    isShowSidebarGroupUser: true,
   },
   {
     path: "/groups/join",
     page: JoinPage,
     isShowSidebarUser: true,
-    isShowSidebarGroupUser: true,
   },
   {
     path: "/department/feed",

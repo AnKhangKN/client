@@ -26,6 +26,7 @@ import * as AuthServices from "../../../services/shared/AuthServices";
 import MessageComponent from "../../../components/shared/MessageComponent/MessageComponent";
 import * as TokenUtils from "../../../utils/token.utils";
 import { toggleTheme } from "../../../features/theme/themeSlice";
+import { socket } from "../../../utils/socket";
 
 const SidebarComponent = () => {
   const navigate = useNavigate();
@@ -123,6 +124,8 @@ const SidebarComponent = () => {
       await AuthServices.logoutServices(accessToken);
 
       localStorage.removeItem("accessToken");
+      socket.emit("logout", user.id);
+      socket.disconnect();
 
       setMessage({
         text: "Đăng xuất thành công!",

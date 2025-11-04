@@ -16,11 +16,11 @@ import { GiEarthAmerica } from "react-icons/gi";
 import TextCollapse from "../TextCollapse/TextCollapse";
 import MediaLayout from "../MediaLayout/MediaLayout";
 import FileItem from "../FileItem/FileItem";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
-import { formatVietnamTime } from "../../../utils/formatVietnamTime";
+import LogoCTUT from "../../../../assets/logo/logo-ctut.png";
+import { formatVietnamTime } from "../../../../utils/formatVietnamTime";
 import MediaCarousel from "../MediaCarousel/MediaCarousel";
-import * as ValidateToken from "../../../utils/token.utils";
-import * as PostServices from "../../../services/user/PostServices";
+import * as ValidateToken from "../../../../utils/token.utils";
+import * as PostServices from "../../../../services/user/PostServices";
 import { useSelector } from "react-redux";
 
 const PostComponent = ({ postsList }) => {
@@ -90,7 +90,7 @@ const PostComponent = ({ postsList }) => {
       {posts.map((item) => (
         <div
           key={item._id}
-          className="p-4 my-3 shadow rounded-md dark:bg-[#252728] border border-gray-200"
+          className="p-4 shadow rounded-md dark:bg-[#252728] border border-gray-200"
         >
           {/* HEADER */}
           <div className="flex justify-between items-center">
@@ -122,13 +122,50 @@ const PostComponent = ({ postsList }) => {
               </div>
 
               {/* Info */}
-              <div className="flex flex-col">
+              <div className="flex flex-col ">
                 {item.group ? (
                   <>
                     <div>{item.group.groupName}</div>
-                    <div className="text-sm text-gray-500 flex items-center gap-2">
+
+                    <div className="group text-sm text-gray-500 flex items-center gap-2 relative">
                       <div>{item.author.firstName}</div>
+
                       <div className="w-1 h-1 rounded-full bg-gray-600"></div>
+
+                      <div>{formatVietnamTime(item.createdAt)}</div>
+
+                      <div className="w-1 h-1 rounded-full bg-gray-600"></div>
+
+                      <div>
+                        {item.privacy === "public" ? (
+                          <GiEarthAmerica className="text-gray-600 text-lg" />
+                        ) : item.privacy === "friends" ? (
+                          <FaUserFriends className="text-gray-600 text-lg" />
+                        ) : (
+                          <IoMdLock className="text-gray-600 text-lg" />
+                        )}
+                      </div>
+
+                      <div
+                        className="group-hover:block hidden opacity-0 absolute right-6 top-1 bg-gray-600 text-white px-1.5 py-0.5 text-[10px] 
+                      rounded-lg"
+                      >
+                        {item.privacy === "public" ? (
+                          <div>Công khai</div>
+                        ) : item.privacy === "friends" ? (
+                          <div>Bạn bè</div>
+                        ) : (
+                          <div>Mình tôi</div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex gap-2 items-center">
+                      {item.author.lastName} {item.author.firstName}
+                    </div>
+                    <div className="group text-sm text-gray-500 flex items-center gap-2 relative">
                       <div>{formatVietnamTime(item.createdAt)}</div>
                       <div className="w-1 h-1 rounded-full bg-gray-600"></div>
                       <div>
@@ -140,25 +177,17 @@ const PostComponent = ({ postsList }) => {
                           <IoMdLock className="text-gray-600 text-lg" />
                         )}
                       </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex gap-2 items-center">
-                      <div>
-                        {item.author.lastName} {item.author.firstName}
-                      </div>
-                    </div>
-                    <div className="text-sm text-gray-500 flex items-center gap-2">
-                      <div>{formatVietnamTime(item.createdAt)}</div>
-                      <div className="w-1 h-1 rounded-full bg-gray-600"></div>
-                      <div>
+
+                      <div
+                        className="group-hover:block hidden absolute -right-6 -top-7 bg-gray-600 text-white 
+                        px-1.5 py-1 text-[12px] rounded-lg"
+                      >
                         {item.privacy === "public" ? (
-                          <GiEarthAmerica className="text-gray-600 text-lg" />
+                          <div>Công khai</div>
                         ) : item.privacy === "friends" ? (
-                          <FaUserFriends className="text-gray-600 text-lg" />
+                          <div>Bạn bè</div>
                         ) : (
-                          <IoMdLock className="text-gray-600 text-lg" />
+                          <div>Mình tôi</div>
                         )}
                       </div>
                     </div>

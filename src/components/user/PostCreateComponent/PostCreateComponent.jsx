@@ -15,11 +15,15 @@ import * as ValidateToken from "../../../utils/token.utils";
 import MessageComponent from "../../shared/MessageComponent/MessageComponent";
 import ButtonComponent from "../../shared/ButtonComponent/ButtonComponent";
 import { GiEarthAmerica } from "react-icons/gi";
+import useClickOutside from "../../../hooks/useClickOutside";
 
 const PostCreateComponent = () => {
   const user = useSelector((state) => state.user);
 
   const [modalNewPost, setModelNewPost] = useState(false);
+  const newPostRef = useRef(null);
+
+  useClickOutside(newPostRef, modalNewPost, () => setModelNewPost(false));
   const [modalEmotion, setModalEmotion] = useState(false);
   const [modalSelectBgTextArea, setModalSelectBgTextArea] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -274,6 +278,7 @@ const PostCreateComponent = () => {
       {modalNewPost && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
           <div
+            ref={newPostRef}
             className="bg-white dark:bg-[#2c2c2c] rounded-sm p-6 w-full max-w-xl 
           relative max-h-[90vh] flex flex-col"
           >

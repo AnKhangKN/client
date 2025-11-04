@@ -121,7 +121,7 @@ const FriendsSuggestComponent = ({ friendsSuggest }) => {
         {canScrollPrev && (
           <button
             onClick={handlePrev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 
+            className="absolute left-0 top-1/2 -translate-y-1/2 cursor-pointer
                        bg-white dark:bg-gray-700 p-2 rounded-full shadow z-30"
           >
             <FiChevronLeft size={22} />
@@ -132,7 +132,7 @@ const FriendsSuggestComponent = ({ friendsSuggest }) => {
         {canScrollNext && (
           <button
             onClick={handleNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 
+            className="absolute right-0 top-1/2 -translate-y-1/2 cursor-pointer 
                        bg-white dark:bg-gray-700 p-2 rounded-full shadow z-30"
           >
             <FiChevronRight size={22} />

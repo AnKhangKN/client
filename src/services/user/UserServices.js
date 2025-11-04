@@ -73,3 +73,39 @@ export const getProfile = async (accessToken, userName) => {
     throw error;
   }
 };
+
+export const getFollower = async (accessToken, userName) => {
+  try {
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_API}/user/follower/${userName}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+export const getFollowing = async (accessToken, userName) => {
+  try {
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_API}/user/following/${userName}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};

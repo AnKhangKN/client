@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 import { routes } from "./routes";
-import SidebarGroupLayoutUser from "./layouts/user/SidebarGroupLayoutUser";
 import SidebarLayoutUser from "./layouts/user/SidebarLayoutUser";
 import SidebarLayoutAdmin from "./layouts/admin/SidebarLayoutAdmin";
 import { useDispatch, useSelector } from "react-redux";
@@ -83,9 +82,7 @@ function App() {
 
         let Layout = React.Fragment;
 
-        if (route.isShowSidebarGroupUser && route.isShowSidebarUser) {
-          Layout = SidebarGroupLayoutUser;
-        } else if (route.isShowSidebarUser) {
+        if (route.isShowSidebarUser) {
           Layout = SidebarLayoutUser;
         } else if (route.isShowSidebarAdmin) {
           Layout = SidebarLayoutAdmin;

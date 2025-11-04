@@ -135,7 +135,7 @@ const SidebarGroupComponent = () => {
 
   return (
     <div
-      className="md:flex hidden flex-col lg:w-[320px] w-24 p-4 dark:bg-[#1c1c1d] text-white
+      className="md:flex hidden flex-col lg:w-[320px] w-24 p-4 dark:bg-[#1c1c1d] dark:text-white
     dark:border-0 border-l border-gray-200 overflow-hidden "
     >
       <div className="flex lg:justify-between justify-center items-center py-4">
@@ -183,7 +183,10 @@ const SidebarGroupComponent = () => {
         {/* List group */}
 
         {listGroup.map((group) => (
-          <div className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded-lg">
+          <div
+            key={group.id}
+            className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded-lg"
+          >
             <img
               className="w-10 h-10 dark:bg-white rounded-full"
               src={group.groupAvatar}

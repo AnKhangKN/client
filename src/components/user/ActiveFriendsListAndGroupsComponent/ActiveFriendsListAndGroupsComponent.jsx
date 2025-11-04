@@ -1,11 +1,34 @@
-import React from "react";
+import React, { useState } from "react";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import { RiSearchLine } from "react-icons/ri";
+import MessageBoxComponent from "../MessageBoxComponent/MessageBoxComponent";
+import GroupMessageBoxComponent from "../GroupMessageBoxComponent/GroupMessageBoxComponent.jsx";
+import logoCTUT from "../../../assets/logo/logo-ctut.png";
 
 const ActiveFriendsListAndGroupsListComponent = ({
   activeFriendsList,
   groupsList,
 }) => {
+  const [messageBox, setMessageBox] = useState(false);
+
+  const [messageGroupBox, setMessageGroupBox] = useState(false);
+
+  const handleOpenMessageBox = () => {
+    setMessageBox(true);
+  };
+
+  const handleCloseMessageBox = () => {
+    setMessageBox(false);
+  };
+
+  const handleOpenMessageGroupBox = () => {
+    setMessageGroupBox(true);
+  };
+
+  const handleCloseMessageGroupBox = () => {
+    setMessageGroupBox(false);
+  };
+
   return (
     <>
       {/* List active friend */}
@@ -24,13 +47,14 @@ const ActiveFriendsListAndGroupsListComponent = ({
 
         {activeFriendsList.map((friend) => (
           <div
-            key={friend.id}
+            key={friend._id}
+            onClick={handleOpenMessageBox}
             className="flex items-center gap-3 py-2 px-2 hover:bg-gray-100 cursor-pointer transition"
           >
             <div className="relative">
               <img
                 className="w-10 h-10 rounded-full dark:bg-white object-cover"
-                src={friend.userAvatar}
+                src={friend.userAvatar || logoCTUT}
                 alt={friend.userName}
               />
               {/* chấm xanh online */}
@@ -61,6 +85,7 @@ const ActiveFriendsListAndGroupsListComponent = ({
         {groupsList.map((group) => (
           <div
             key={group.id}
+            onClick={handleOpenMessageGroupBox}
             className="flex py-2 px-2 hover:bg-gray-200 cursor-pointer items-center gap-4"
           >
             <img
@@ -75,6 +100,16 @@ const ActiveFriendsListAndGroupsListComponent = ({
           </div>
         ))}
       </div>
+
+      {messageBox ? (
+        <MessageBoxComponent handleCloseMessageBox={handleCloseMessageBox} />
+      ) : null}
+
+      {messageGroupBox ? (
+        <GroupMessageBoxComponent
+          handleCloseMessageGroupBox={handleCloseMessageGroupBox}
+        />
+      ) : null}
     </>
   );
 };
