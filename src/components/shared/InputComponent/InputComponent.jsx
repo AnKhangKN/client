@@ -7,6 +7,8 @@ const InputComponent = ({
   type = "text",
   value = "",
   onChange,
+  onFocus,
+  onBlur,
   placeholder = "",
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +29,8 @@ const InputComponent = ({
         type={inputType}
         value={value}
         onChange={onChange}
+        onFocus={onFocus}
+        onBlur={onBlur}
         placeholder={placeholder}
         className="peer w-full border border-gray-400 rounded-md px-3 py-2
           placeholder-transparent focus:placeholder-gray-400

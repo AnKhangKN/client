@@ -71,7 +71,7 @@ export const getMessageHistory = async (accessToken, chatId) => {
   }
 };
 
-export const getChatList = async (accessToken) => {
+export const getAllChatList = async (accessToken) => {
   try {
     const res = await axios.get(
       `${import.meta.env.VITE_BACKEND_API}/shared/chats`,

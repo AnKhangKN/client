@@ -197,8 +197,22 @@ const PostComponent = ({ postsList }) => {
             </div>
 
             {/* Menu */}
-            <div className="flex gap-3 items-center">
-              <HiOutlineDotsHorizontal className="w-6 h-6" size={18} />
+            <div className="flex gap-3 items-center relative">
+              <div className="hover:bg-gray-200 p-1.5 rounded-full">
+                <HiOutlineDotsHorizontal className="w-6 h-6 " size={18} />
+              </div>
+
+              <div className="absolute bg-white top-10 shadow-xl border right-0 border-gray-200 p-2 w-60">
+                <div className="hover:bg-gray-200 py-1 px-2 cursor-pointer">
+                  Báo cáo quản trị viên
+                </div>
+                <div className="hover:bg-gray-200 py-1 px-2 cursor-pointer">
+                  Bỏ theo dõi {item.author.firstName}
+                </div>
+                <div className="hover:bg-gray-200 py-1 px-2 cursor-pointer">
+                  Báo cáo bài viết
+                </div>
+              </div>
             </div>
           </div>
           {/* CONTENT */}
