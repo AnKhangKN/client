@@ -20,6 +20,7 @@ import EditProfilePage from "../pages/admin/EditProfilePage/EditProfilePage";
 import SecurityPage from "../pages/admin/SecurityPage/SecurityPage";
 import PostManagementPage from "../pages/admin/PostManagementPage/PostManagementPage";
 import FeedDePartmentPage from "../pages/user/Department/FeedPage/FeedPage";
+import CreateGroupPage from "../pages/user/Group/CreateGroupPage/CreateGroupPage";
 
 export const routes = [
   // auth
@@ -56,6 +57,10 @@ export const routes = [
     path: "/groups/join",
     page: JoinPage,
     isShowSidebarUser: true,
+  },
+  {
+    path: "/groups/create",
+    page: CreateGroupPage,
   },
   {
     path: "/department/feed",

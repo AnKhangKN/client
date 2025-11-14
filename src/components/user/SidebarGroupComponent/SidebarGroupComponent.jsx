@@ -171,7 +171,8 @@ const SidebarGroupComponent = () => {
         ))}
 
         <button
-          className="flex w-full justify-center items-center mt-4 mb-6 
+          onClick={() => navigate("/groups/create")}
+          className="flex w-full justify-center items-center mt-4 mb-6 cursor-pointer
         gap-2 dark:bg-[#303030] bg-gray-200 py-2 rounded-lg"
         >
           <div className="flex justify-center items-center text-2xl">
@@ -181,7 +182,6 @@ const SidebarGroupComponent = () => {
         </button>
 
         {/* List group */}
-
         {listGroup.map((group) => (
           <div
             key={group.id}

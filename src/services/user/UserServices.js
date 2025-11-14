@@ -109,3 +109,20 @@ export const getFollowing = async (accessToken, userName) => {
     throw error;
   }
 };
+
+export const getFriends = async (accessToken) => {
+  try {
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_API}/user/friends`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+  }
+};

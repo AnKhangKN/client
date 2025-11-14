@@ -84,11 +84,12 @@ const GroupMessageBoxComponent = ({ handleCloseMessageGroupBox }) => {
 
                 {/* Tin nhắn */}
                 <div
-                  className={`px-3 py-1.5 rounded-2xl max-w-[75%] text-sm break-words whitespace-pre-wrap ${
+                  className={`px-3 py-1.5 rounded-2xl max-w-[75%] text-sm whitespace-pre-wrap ${
                     msg.sender === "me"
                       ? "bg-indigo-600 text-white"
                       : "bg-gray-200 text-gray-800"
                   }`}
+                  style={{ wordBreak: "break-word" }}
                 >
                   {msg.text}
                 </div>

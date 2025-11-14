@@ -9,6 +9,8 @@ import { updateUser } from "./features/user/userSlice";
 import NotFoundPage from "./pages/NotFoundPage/NotFoundPage";
 import * as TokenUtils from "./utils/token.utils";
 import LoadingComponent from "./components/shared/LoadingComponent/LoadingComponent";
+import { socket } from "./utils/socket";
+import { updateOnlineFriends } from "./features/onlineFriends/onlineFriends";
 
 function App() {
   const dispatch = useDispatch();
@@ -70,6 +72,21 @@ function App() {
 
     initApp();
   }, [dispatch, navigate]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    socket.emit("setup", user.id);
+
+    socket.on("onlineFriends", (friends) => {
+      // console.log("✅ Mutual friends online:", friends);
+
+      dispatch(updateOnlineFriends({ onlineFriends: friends }));
+    });
+
+    return () => {
+      socket.off("onlineFriends");
+    };
+  }, [user.id, dispatch]);
 
   if (isLoading) {
     return <LoadingComponent />;

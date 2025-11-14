@@ -7,6 +7,7 @@ import PostCreateComponent from "../../../components/user/PostCreateComponent/Po
 import PostComponent from "../../../components/user/Post/PostComponent/PostComponent";
 import * as ValidateToken from "../../../utils/token.utils";
 import * as UserServices from "../../../services/user/UserServices";
+import * as ChatServices from "../../../services/shared/ChatServices";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { updateFollowingList } from "../../../features/user/userSlice";
@@ -29,9 +30,12 @@ const ProfilePage = () => {
   const [previewCover, setPreviewCover] = useState(null);
   const [previewAvatar, setPreviewAvatar] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [followingCount, setFollowingCount] = useState(0);
   const [modalFollowList, setModalFollowList] = useState(false);
   const modalFollowListRef = useRef(null);
-  const [modalMessageBox, setModalMessageBox] = useState(false);
+  const [messageBox, setMessageBox] = useState(false);
+  const [chatId, setChatId] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   useClickOutside(modalFollowListRef, modalFollowList, () =>
     setModalFollowList(false)
@@ -69,6 +73,7 @@ const ProfilePage = () => {
 
   useEffect(() => {
     setFollower(userDetail.followers?.length || 0);
+    setFollowingCount(userDetail.following?.length || 0);
   }, [userDetail]);
 
   useEffect(() => {
@@ -104,8 +109,24 @@ const ProfilePage = () => {
       const res = await UserServices.followFriend(accessToken, { friendId });
 
       setIsFollowing(res.isFollowing);
-      setFollower((prev) => prev + (res.isFollowing ? 1 : -1));
-      dispatch(updateFollowingList({ friendId, isFollowing }));
+
+      // Nếu đang xem trang của người khác
+      if (userDetail._id !== user.id) {
+        setFollower((prev) => prev + (res.isFollowing ? 1 : -1));
+      }
+
+      // Nếu đang ở trang cá nhân của chính mình (hoặc modal following)
+      if (userDetail._id === user.id) {
+        setFollowingCount((prev) => prev + (res.isFollowing ? 1 : -1));
+
+        // Cập nhật danh sách followList trong modal (để đổi nút / ẩn người đó)
+        if (followType === "following" && !res.isFollowing) {
+          setFollowList((prev) => prev.filter((f) => f._id !== friendId));
+        }
+      }
+
+      // Cập nhật Redux
+      dispatch(updateFollowingList({ friendId, isFollowing: res.isFollowing }));
     } catch (error) {
       console.error(error);
     } finally {
@@ -137,12 +158,25 @@ const ProfilePage = () => {
     setModalFollowList(false);
   };
 
-  const handleOpenMessageBox = () => {
-    setModalMessageBox(true);
+  const handleOpenMessageBox = async (friend) => {
+    setMessageBox(true);
+    setSelectedUser(friend);
+
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const res = await ChatServices.createChat(accessToken, {
+        senderId: friend._id,
+      });
+
+      setChatId(res._id);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleCloseMessageBox = () => {
-    setModalMessageBox(false);
+    setMessageBox(false);
   };
 
   return (
@@ -252,7 +286,7 @@ const ProfilePage = () => {
                       <ButtonComponent
                         text="Nhắn tin"
                         py="py-1"
-                        onClick={handleOpenMessageBox}
+                        onClick={() => handleOpenMessageBox(userDetail)}
                       />
                     </div>
                   ) : (
@@ -268,7 +302,7 @@ const ProfilePage = () => {
                       <ButtonComponent
                         text="Nhắn tin"
                         py="py-1"
-                        onClick={handleOpenMessageBox}
+                        onClick={() => handleOpenMessageBox(userDetail)}
                       />
                     </div>
                   )}
@@ -306,7 +340,7 @@ const ProfilePage = () => {
                     onClick={() => handleOpenModalFollowList("following")}
                   >
                     <div className="text-gray-500">Đang theo dõi</div>
-                    <div>{userDetail.following?.length || 0}</div>
+                    <div>{followingCount || 0}</div>
                     <div className="text-gray-500">người</div>
                   </div>
                 </div>
@@ -375,30 +409,35 @@ const ProfilePage = () => {
                                   </div>
 
                                   {/* Nếu là chính mình thì ẩn nút */}
-                                  {f._id !== user.id && (
-                                    <ButtonComponent
-                                      text={
-                                        isFollowed
-                                          ? "Đang theo dõi"
-                                          : "Theo dõi"
-                                      }
-                                      width="w-32"
-                                      bgColor={
-                                        isFollowed
-                                          ? "bg-gray-100"
-                                          : "bg-blue-500"
-                                      }
-                                      textColor={
-                                        isFollowed ? "text-black" : "text-white"
-                                      }
-                                      hoverColor={
-                                        isFollowed
-                                          ? "hover:bg-gray-200"
-                                          : "hover:bg-blue-600"
-                                      }
-                                      onClick={() => handleFollowFriend(f._id)}
-                                    />
-                                  )}
+                                  {f._id !== user.id &&
+                                    followType === "following" && (
+                                      <ButtonComponent
+                                        text={
+                                          isFollowed
+                                            ? "Đang theo dõi"
+                                            : "Theo dõi"
+                                        }
+                                        width="w-32"
+                                        bgColor={
+                                          isFollowed
+                                            ? "bg-gray-100"
+                                            : "bg-blue-500"
+                                        }
+                                        textColor={
+                                          isFollowed
+                                            ? "text-black"
+                                            : "text-white"
+                                        }
+                                        hoverColor={
+                                          isFollowed
+                                            ? "hover:bg-gray-200"
+                                            : "hover:bg-blue-600"
+                                        }
+                                        onClick={() =>
+                                          handleFollowFriend(f._id)
+                                        }
+                                      />
+                                    )}
                                 </div>
                               );
                             })
@@ -492,10 +531,11 @@ const ProfilePage = () => {
         </div>
 
         {/* Message box */}
-        {modalMessageBox ? (
+        {messageBox ? (
           <MessageBoxComponent
             handleCloseMessageBox={handleCloseMessageBox}
-            userName={userName}
+            chatId={chatId}
+            selectedUser={selectedUser}
           />
         ) : null}
       </div>
