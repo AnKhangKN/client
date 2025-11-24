@@ -1,96 +1,147 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import { IoMdLock } from "react-icons/io";
 import { BsDashLg } from "react-icons/bs";
 import {
-  PiArrowSquareInLight,
+  PiArrowsClockwiseLight,
+  PiChatCenteredDotsLight,
   PiChatCenteredTextLight,
-  PiFilesLight,
+  PiDotsThreeLight,
   PiHeartFill,
   PiHeartLight,
-  PiImagesSquareLight,
 } from "react-icons/pi";
+import { CiLocationArrow1 } from "react-icons/ci";
 import { FaUserFriends } from "react-icons/fa";
 import { GiEarthAmerica } from "react-icons/gi";
-
 import TextCollapse from "../TextCollapse/TextCollapse";
 import MediaLayout from "../MediaLayout/MediaLayout";
 import FileItem from "../FileItem/FileItem";
 import LogoCTUT from "../../../../assets/logo/logo-ctut.png";
 import { formatVietnamTime } from "../../../../utils/formatVietnamTime";
-import MediaCarousel from "../MediaCarousel/MediaCarousel";
 import * as ValidateToken from "../../../../utils/token.utils";
-import * as PostServices from "../../../../services/user/PostServices";
 import { useSelector } from "react-redux";
+import ModalDetailPost from "../ModalDetailPost/ModalDetailPost";
+import * as CommentServices from "../../../../services/user/CommentServices";
+import * as HeartServices from "../../../../services/user/HeartServices";
+import { useNavigate } from "react-router-dom";
 
 const PostComponent = ({ postsList }) => {
-  const [posts, setPosts] = useState(postsList || []);
+  const [posts, setPosts] = useState([]);
   const [heartedPosts, setHeartedPosts] = useState({});
   const [modalDetailPostId, setModalDetailPostId] = useState(null);
   const user = useSelector((state) => state.user);
+  const menuRefs = useRef({});
+  const [commentsList, setCommentsList] = useState([]);
+  const navigate = useNavigate();
+  const [actionPostModal, setActionPostModal] = useState(false);
 
-  // Đồng bộ postsList từ parent mà không mất trạng thái heart
   useEffect(() => {
-    setPosts((prev) =>
-      postsList.map((post) => {
-        const oldPost = prev.find((p) => p._id === post._id);
-        return { ...post, heart: oldPost?.heart ?? post.heartsCount };
-      })
-    );
-  }, [postsList]);
+    setPosts(postsList || []);
+
+    const initialHearted = {};
+    postsList?.forEach((p) => {
+      initialHearted[p._id] = p.hearts.some((h) => h.author === user.id);
+    });
+
+    setHeartedPosts(initialHearted);
+  }, [postsList, user.id]);
 
   const handleHeartPost = async (postId) => {
+    const accessToken = await ValidateToken.getValidAccessToken();
+    const targetType = "Post";
+
+    const willHeart = !heartedPosts[postId];
+
+    setPosts((prev) =>
+      prev.map((p) =>
+        p._id === postId
+          ? {
+              ...p,
+              heartsCount: willHeart ? p.heartsCount + 1 : p.heartsCount - 1,
+              hearts: willHeart
+                ? [...p.hearts, { author: user.id }]
+                : p.hearts.filter((h) => h.author !== user.id),
+            }
+          : p
+      )
+    );
+
+    setHeartedPosts((prev) => ({
+      ...prev,
+      [postId]: willHeart,
+    }));
+
     try {
-      const accessToken = await ValidateToken.getValidAccessToken();
-      const targetType = "Post";
+      const res = await HeartServices.heartTarget(
+        accessToken,
+        postId,
+        targetType
+      );
 
-      // Gọi API heartPost (toggle)
-      await PostServices.heartPost(accessToken, { postId, targetType });
-
-      setPosts((prevPosts) =>
-        prevPosts.map((post) => {
-          if (post._id === postId) {
-            const isAlreadyHearted =
-              heartedPosts[postId] ||
-              post.hearts.some((h) => h.author === user.id);
-
-            const newHeartCount = isAlreadyHearted
-              ? post.heart - 1
-              : post.heart + 1;
-
-            const newHearts = isAlreadyHearted
-              ? post.hearts.filter((h) => h.author !== user.id)
-              : [...post.hearts, { author: user.id }];
-
-            return { ...post, heart: newHeartCount, hearts: newHearts };
-          }
-          return post;
-        })
+      setPosts((prev) =>
+        prev.map((p) =>
+          p._id === postId
+            ? {
+                ...p,
+                heartsCount: res.heartsCount,
+                hearts: res.isHearted
+                  ? [...p.hearts, { author: user.id }]
+                  : p.hearts.filter((h) => h.author !== user.id),
+              }
+            : p
+        )
       );
 
       setHeartedPosts((prev) => ({
         ...prev,
-        [postId]: !(
-          heartedPosts[postId] ||
-          posts
-            .find((p) => p._id === postId)
-            .hearts.some((h) => h.author === user.id)
-        ),
+        [postId]: res.isHearted,
       }));
     } catch (error) {
       console.log(error);
+
+      setPosts((prev) =>
+        prev.map((p) =>
+          p._id === postId
+            ? {
+                ...p,
+                heartsCount: willHeart ? p.heartsCount - 1 : p.heartsCount + 1,
+                hearts: willHeart
+                  ? p.hearts.filter((h) => h.author !== user.id)
+                  : [...p.hearts, { author: user.id }],
+              }
+            : p
+        )
+      );
+
+      setHeartedPosts((prev) => ({
+        ...prev,
+        [postId]: !willHeart,
+      }));
     }
   };
 
-  const handleOpenModal = (postId) => setModalDetailPostId(postId);
-  const handleCloseModal = () => setModalDetailPostId(null);
+  const handleOpenModal = async (postId) => {
+    setModalDetailPostId(postId);
+
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+      const comments = await CommentServices.getCommentsByPostId(
+        accessToken,
+        postId
+      );
+
+      setCommentsList(comments);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    }
+  };
 
   return (
     <>
       {posts.map((item) => (
         <div
           key={item._id}
-          className="p-4 shadow rounded-md dark:bg-[#252728] border border-gray-200"
+          className="p-4 shadow rounded-md dark:bg-[#252728] dark:border-0 border border-gray-200"
         >
           {/* HEADER */}
           <div className="flex justify-between items-center">
@@ -165,30 +216,32 @@ const PostComponent = ({ postsList }) => {
                     <div className="flex gap-2 items-center">
                       {item.author.lastName} {item.author.firstName}
                     </div>
-                    <div className="group text-sm text-gray-500 flex items-center gap-2 relative">
+                    <div className="text-sm text-gray-500 flex items-center gap-2">
                       <div>{formatVietnamTime(item.createdAt)}</div>
                       <div className="w-1 h-1 rounded-full bg-gray-600"></div>
-                      <div>
-                        {item.privacy === "public" ? (
-                          <GiEarthAmerica className="text-gray-600 text-lg" />
-                        ) : item.privacy === "friends" ? (
-                          <FaUserFriends className="text-gray-600 text-lg" />
-                        ) : (
-                          <IoMdLock className="text-gray-600 text-lg" />
-                        )}
-                      </div>
+                      <div className="group relative">
+                        <div>
+                          {item.privacy === "public" ? (
+                            <GiEarthAmerica className="text-gray-600 text-lg" />
+                          ) : item.privacy === "friends" ? (
+                            <FaUserFriends className="text-gray-600 text-lg" />
+                          ) : (
+                            <IoMdLock className="text-gray-600 text-lg" />
+                          )}
+                        </div>
 
-                      <div
-                        className="group-hover:block hidden absolute -right-6 -top-7 bg-gray-600 text-white 
-                        px-1.5 py-1 text-[12px] rounded-lg"
-                      >
-                        {item.privacy === "public" ? (
-                          <div>Công khai</div>
-                        ) : item.privacy === "friends" ? (
-                          <div>Bạn bè</div>
-                        ) : (
-                          <div>Mình tôi</div>
-                        )}
+                        <div
+                          className="group-hover:block hidden w-20 text-center absolute -right-8 -top-7 bg-gray-600 
+                          text-white px-1.5 py-1 text-[12px] rounded-lg"
+                        >
+                          {item.privacy === "public" ? (
+                            <div>Công khai</div>
+                          ) : item.privacy === "friends" ? (
+                            <div>Bạn bè</div>
+                          ) : (
+                            <div>Mình tôi</div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </>
@@ -197,22 +250,45 @@ const PostComponent = ({ postsList }) => {
             </div>
 
             {/* Menu */}
-            <div className="flex gap-3 items-center relative">
-              <div className="hover:bg-gray-200 p-1.5 rounded-full">
-                <HiOutlineDotsHorizontal className="w-6 h-6 " size={18} />
+            <div
+              className="flex gap-3 items-center relative"
+              ref={(el) => (menuRefs.current[item._id] = el)}
+            >
+              <div
+                className="hover:bg-gray-200 p-1.5 rounded-full group cursor-pointer"
+                onClick={() => setActionPostModal(true)}
+              >
+                <HiOutlineDotsHorizontal size={20} />
               </div>
 
-              <div className="absolute bg-white top-10 shadow-xl border right-0 border-gray-200 p-2 w-60">
-                <div className="hover:bg-gray-200 py-1 px-2 cursor-pointer">
-                  Báo cáo quản trị viên
+              {actionPostModal && (
+                <div className="bg-black/40 inset-0 z-50 flex justify-center items-center fixed">
+                  <div className="bg-white rounded-lg flex flex-col gap-2 text-center w-80">
+                    <div className="cursor-pointer font-bold text-red-500 border-b border-gray-200 py-1.5">
+                      Báo cáo
+                    </div>
+                    <div className="cursor-pointer font-bold text-red-500 border-b border-gray-200 py-1.5">
+                      Bỏ theo dõi Khang
+                    </div>
+                    <div
+                      className="cursor-pointer border-b border-gray-200 py-1.5"
+                      onClick={() => navigate(`/post/${item._id}`)}
+                    >
+                      Đi tới bài viết
+                    </div>
+                    <div className="cursor-pointer border-b border-gray-200 py-1.5">
+                      Chia sẽ lên...
+                    </div>
+
+                    <div
+                      className="cursor-pointer py-1.5"
+                      onClick={() => setActionPostModal(false)}
+                    >
+                      Hủy
+                    </div>
+                  </div>
                 </div>
-                <div className="hover:bg-gray-200 py-1 px-2 cursor-pointer">
-                  Bỏ theo dõi {item.author.firstName}
-                </div>
-                <div className="hover:bg-gray-200 py-1 px-2 cursor-pointer">
-                  Báo cáo bài viết
-                </div>
-              </div>
+              )}
             </div>
           </div>
           {/* CONTENT */}
@@ -249,118 +325,57 @@ const PostComponent = ({ postsList }) => {
           </div>
 
           {/* MODAL */}
-          {modalDetailPostId === item._id && (
-            <div className="fixed inset-0 z-50 flex justify-center items-center bg-black/40">
-              <button
-                onClick={handleCloseModal}
-                className="absolute top-4 right-4 text-white dark:text-black text-lg font-bold cursor-pointer z-50"
-              >
-                X
-              </button>
-              <div className="bg-white w-15/18 h-5/6 rounded-lg overflow-hidden relative shadow-lg flex flex-col">
-                <div className="flex flex-1 overflow-hidden">
-                  {/* Left Column */}
-                  <div className="flex-1 p-4 border-r border-gray-200 flex flex-col">
-                    <h2 className="text-xl font-semibold mb-4">
-                      Nội dung bài viết
-                    </h2>
-                    <div className="overflow-auto flex-1 scrollbar-hide">
-                      <p className="mb-4">{item.content}</p>
-                      {/* Media carousel */}
-                      {item.medias && item.medias.length > 0 && (
-                        <MediaCarousel medias={item.medias} />
-                      )}
-                      <div className="mt-4">
-                        {item.documents?.map((f, i) => (
-                          <div key={i} className="my-3">
-                            <FileItem file={f} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  {/* Right Column */}
-                  <div className="w-120 flex flex-col">
-                    <div className="border-b border-gray-200 p-2 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 overflow-hidden">
-                          <img
-                            className="w-full h-full object-cover"
-                            src={item.author.userAvatar || LogoCTUT}
-                            alt=""
-                          />
-                        </div>
-                        <div>
-                          {item.author.lastName} {item.author.firstName}
-                        </div>
-                      </div>
-                      <div>more</div>
-                    </div>
-                    <div className="flex-1 overflow-auto">
-                      <div className="h-screen">test</div>
-                    </div>
-                    <div className="mt-auto flex flex-col gap-2 border-t border-gray-200 pt-2 px-4">
-                      test
-                    </div>
-                    <div className="mt-auto flex items-center justify-between gap-2 border-t border-gray-200 py-2 px-4">
-                      <div className="flex gap-2 items-center">
-                        <label
-                          htmlFor="medias"
-                          className="cursor-pointer p-1 text-3xl rounded-full text-green-600"
-                        >
-                          <PiImagesSquareLight />
-                        </label>
-                        <input id="medias" type="file" className="hidden" />
-                        <label
-                          htmlFor="files"
-                          className="cursor-pointer p-1 text-3xl rounded-full text-indigo-500"
-                        >
-                          <PiFilesLight />
-                        </label>
-                        <input id="files" type="file" className="hidden" />
-                      </div>
-                      <div className="flex gap-2 items-center w-full">
-                        <input
-                          type="text"
-                          placeholder="Viết bình luận..."
-                          className="flex-1 border border-gray-300 rounded px-2 py-1 outline-0"
-                        />
-                        <button className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600">
-                          Đăng
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <ModalDetailPost
+            modalDetailPostId={modalDetailPostId}
+            commentsList={commentsList}
+            item={item}
+            handleCloseModal={() => setModalDetailPostId(null)}
+          />
+
           {/* ACTIONS */}
           <div className="flex justify-around items-center text-2xl pt-4 mt-6 border-t border-gray-300 dark:border-0">
             <button
-              className="flex gap-2 items-center cursor-pointer"
+              className={`flex gap-1.5 items-end cursor-pointer hover:bg-gray-100 py-1.5 ${
+                item.heartsCount ? "pl-2 pr-2.5" : "pl-2 pr-0.5"
+              } rounded-full`}
               onClick={() => handleHeartPost(item._id)}
             >
-              {heartedPosts[item._id] ||
-              item.hearts.some((h) => h.author === user.id) ? (
-                <PiHeartFill className="text-red-500 transition" />
+              {heartedPosts[item._id] ? (
+                <PiHeartFill className="text-red-500" />
               ) : (
-                <PiHeartLight className="transition" />
+                <PiHeartLight />
               )}
-              <div className="text-[16px]">{item.heart}</div>
+
+              <div className="text-[14px]">
+                {item.heartsCount !== 0 ? item.heartsCount : ""}
+              </div>
             </button>
 
             <button
-              className="flex gap-2 items-center cursor-pointer"
+              className={`flex gap-1.5 items-end cursor-pointer hover:bg-gray-100 py-1.5 ${
+                item.comment ? "pl-2 pr-2.5" : "pl-2 pr-0.5"
+              } rounded-full`}
               onClick={() => handleOpenModal(item._id)}
             >
-              <PiChatCenteredTextLight />
-              <div className="text-[16px]">{item.comment}</div>
+              <PiChatCenteredDotsLight />
+              <div className="text-[14px]">
+                {item.comment !== 0 ? item.comment : ""}
+              </div>
             </button>
 
-            <button className="flex gap-2 items-center cursor-pointer">
-              <PiArrowSquareInLight />
-              <div className="text-[16px]">{item.share}</div>
+            <button
+              className={`flex gap-1.5 items-end cursor-pointer hover:bg-gray-100 py-1.5 ${
+                item.share ? "pl-1 pr-2" : "pl-2 pr-0.5"
+              } rounded-full`}
+            >
+              <PiArrowsClockwiseLight />
+              <div className="text-[14px]">
+                {item.share !== 0 ? item.share : ""}
+              </div>
+            </button>
+
+            <button className="cursor-pointer hover:bg-gray-100 py-1.5 pl-1.5 pr-2 rounded-full">
+              <CiLocationArrow1 />
             </button>
           </div>
         </div>

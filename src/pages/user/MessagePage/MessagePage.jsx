@@ -1,7 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import LogoCTUT from "../../../assets/logo/logo-ctut.png";
-import { BsPencilSquare } from "react-icons/bs";
-import { RiSearchLine } from "react-icons/ri";
 import { CiCircleInfo } from "react-icons/ci";
 import { VscSend } from "react-icons/vsc";
 import { PiFilesLight, PiImagesSquareLight } from "react-icons/pi";
@@ -42,11 +40,6 @@ const MessagePage = () => {
     }
   };
 
-  useEffect(() => {
-    fetchFriends();
-  }, []);
-
-  // --- Fetch chat list ---
   const fetchChatList = async () => {
     try {
       const accessToken = await ValidateToken.getValidAccessToken();
@@ -58,6 +51,7 @@ const MessagePage = () => {
   };
 
   useEffect(() => {
+    fetchFriends();
     fetchChatList();
   }, []);
 

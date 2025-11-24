@@ -38,11 +38,11 @@ const InputComponent = ({
       />
       <label
         htmlFor={id}
-        className={`absolute left-3 bg-white px-1 text-gray-500 transition-all duration-200
+        className={`absolute left-2 bg-white px-1 text-gray-500 transition-all duration-200
           ${
             isFilled
               ? "-top-2 text-blue-600 text-[12px]"
-              : "top-3 text-gray-400 text-[14px]"
+              : "top-2.5 text-gray-400 text-[14px]"
           }
           peer-focus:-top-2 peer-focus:text-blue-600 peer-focus:text-[12px]
         `}

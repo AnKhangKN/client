@@ -1,18 +1,23 @@
 import React, { useState, useEffect, useRef } from "react";
 import bgTest from "../../../assets/bgTest/bgTest.jpg";
 import logoCTUT from "../../../assets/logo/logo-ctut.png";
-import { RiCameraLensFill } from "react-icons/ri";
+import { RiCameraLensFill, RiSettings4Fill } from "react-icons/ri";
 import ButtonComponent from "../../../components/shared/ButtonComponent/ButtonComponent";
 import PostCreateComponent from "../../../components/user/PostCreateComponent/PostCreateComponent";
 import PostComponent from "../../../components/user/Post/PostComponent/PostComponent";
 import * as ValidateToken from "../../../utils/token.utils";
 import * as UserServices from "../../../services/user/UserServices";
 import * as ChatServices from "../../../services/shared/ChatServices";
+import * as AuthServices from "../../../services/shared/AuthServices";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { updateFollowingList } from "../../../features/user/userSlice";
 import useClickOutside from "../../../hooks/useClickOutside";
+import { socket } from "../../../utils/socket";
 import MessageBoxComponent from "../../../components/user/MessageBoxComponent/MessageBoxComponent";
+import ResourcesComponent from "../../../components/user/ResourcesProfileComponent/ResourcesProfileComponent";
+import MessageComponent from "../../../components/shared/MessageComponent/MessageComponent";
+import { IoSettingsOutline } from "react-icons/io5";
 
 const ProfilePage = () => {
   const { userName } = useParams();
@@ -36,6 +41,12 @@ const ProfilePage = () => {
   const [messageBox, setMessageBox] = useState(false);
   const [chatId, setChatId] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [settingModal, setSettingModal] = useState(false);
+  const [message, setMessage] = useState({
+    text: "",
+    type: "",
+    key: 1,
+  });
 
   useClickOutside(modalFollowListRef, modalFollowList, () =>
     setModalFollowList(false)
@@ -179,8 +190,44 @@ const ProfilePage = () => {
     setMessageBox(false);
   };
 
+  const handleLogout = async () => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      await AuthServices.logoutServices(accessToken);
+
+      localStorage.removeItem("accessToken");
+      socket.emit("logout", user.id);
+      socket.disconnect();
+
+      setMessage({
+        text: "Đăng xuất thành công!",
+        type: "success",
+        key: Date.now(),
+      });
+      setTimeout(() => navigate("/login"), 2000);
+    } catch (error) {
+      setMessage({
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Đăng xuất thất bại",
+        type: "error",
+        key: Date.now(),
+      });
+    }
+  };
+
   return (
-    <div className="flex justify-center">
+    <div className="flex justify-center bg-white dark:bg-[#1c1c1d] dark:text-white">
+      {message.text && (
+        <MessageComponent
+          key={message.key}
+          type={message.type}
+          message={message.text}
+        />
+      )}
+
       <div className="w-full max-w-[940px] p-4">
         {/* Ảnh bìa */}
         <div className="relative">
@@ -188,7 +235,7 @@ const ProfilePage = () => {
             className="relative w-full pb-[35%] bg-cover bg-center rounded-lg overflow-hidden"
             style={{ backgroundImage: `url(${previewCover || coverImage})` }}
           >
-            <label className="absolute flex items-center gap-2 right-4 bottom-4 bg-white px-4 py-2 rounded-lg cursor-pointer">
+            <label className="absolute flex items-center gap-2 right-4 bottom-4 bg-white dark:bg-gray-700 px-4 py-2 rounded-lg cursor-pointer">
               <RiCameraLensFill className="text-lg" />
               <span>Thêm ảnh</span>
               <input
@@ -230,7 +277,7 @@ const ProfilePage = () => {
                 />
               </div>
 
-              <label className="absolute bottom-1 right-1 p-2 rounded-full bg-gray-200 text-2xl cursor-pointer">
+              <label className="absolute bottom-1 right-1 p-2 rounded-full dark:bg-gray-700 bg-gray-200 text-2xl cursor-pointer">
                 <RiCameraLensFill />
                 <input
                   type="file"
@@ -311,15 +358,55 @@ const ProfilePage = () => {
             </div>
 
             {/* --- Tên, thông tin người dùng --- */}
-            <div className="flex flex-col justify-end gap-3 text-black">
-              <div className=" font-medium flex items-center gap-2">
-                <div className="text-2xl shrink-0">
-                  {userDetail.lastName} {userDetail.firstName}
+            <div className="flex flex-col justify-end gap-3">
+              <div className=" font-medium flex items-center gap-18">
+                <div className="flex items-center gap-2">
+                  <div className="text-2xl shrink-0">
+                    {userDetail.lastName} {userDetail.firstName}
+                  </div>
+
+                  <div className="w-1 h-1 rounded-full bg-gray-400 shrink-0"></div>
+
+                  <div className="text-lg">{userDetail.userName}</div>
                 </div>
 
-                <div className="w-1 h-1 rounded-full bg-gray-400 shrink-0"></div>
+                <button
+                  className="p-2 text-2xl cursor-pointer"
+                  onClick={() => setSettingModal(true)}
+                >
+                  <IoSettingsOutline />
+                </button>
 
-                <div className="text-lg">{userDetail.userName}</div>
+                {settingModal && (
+                  <div className="bg-black/40 fixed inset-0 flex items-center justify-center z-10">
+                    <div className="bg-white w-80 rounded-2xl text-center">
+                      <div
+                        onClick={() => navigate("/qr")}
+                        className="py-2 border-b border-gray-200 cursor-pointer"
+                      >
+                        Mã QR
+                      </div>
+                      <div
+                        className="py-2 border-b border-gray-200 cursor-pointer"
+                        onClick={() => navigate("/accounts/edit")}
+                      >
+                        Cài đặt và quyền riêng tư
+                      </div>
+                      <div
+                        className="py-2 border-b border-gray-200 cursor-pointer"
+                        onClick={handleLogout}
+                      >
+                        Đăng xuất
+                      </div>
+                      <div
+                        className="py-2 cursor-pointer"
+                        onClick={() => setSettingModal(false)}
+                      >
+                        Hủy
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-2">
@@ -459,13 +546,13 @@ const ProfilePage = () => {
 
               <div className="relative">
                 <div className="flex gap-3 items-center absolute text-[12px]">
-                  <div className="bg-gray-100 rounded-full px-3 py-1">
+                  <div className="bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1">
                     link 1
                   </div>
-                  <div className="bg-gray-100 rounded-full px-3 py-1">
+                  <div className="bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1">
                     link 2
                   </div>
-                  <div className="bg-gray-100 rounded-full px-3 py-1">
+                  <div className="bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1">
                     link 3
                   </div>
                 </div>
@@ -476,18 +563,14 @@ const ProfilePage = () => {
 
         {/* --- CONTENT & SIDEBAR --- */}
         <div className="mt-64 flex w-full gap-6">
-          <div className="flex-1">
+          <div className="flex-1 space-y-4">
             <div
-              className={`w-full mb-6 ${
-                userDetail._id != user.id ? "hidden" : "block"
-              }`}
+              className={`${userDetail._id != user.id ? "hidden" : "block"}`}
             >
               <PostCreateComponent />
             </div>
 
-            <div className="w-full">
-              <PostComponent postsList={posts} />
-            </div>
+            <PostComponent postsList={posts} />
 
             <div className="w-full flex justify-center">
               {posts.length === 0 ? (
@@ -503,30 +586,7 @@ const ProfilePage = () => {
               posts.length === 0 ? "hidden" : "hidden lg:block"
             }`}
           >
-            <div className="sticky top-4">
-              <div
-                className="h-[650px] flex flex-col gap-4 py-4 border border-gray-200 rounded-lg overflow-y-auto 
-              scrollbar-hide shadow"
-              >
-                <div>
-                  <div className="flex items-center justify-between px-4">
-                    <div className="font-semibold">Documents</div>
-                    <div className="text-blue-500 cursor-pointer">
-                      Xem tất cả
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between px-4">
-                    <div className="font-semibold">Medias</div>
-                    <div className="text-blue-500 cursor-pointer">
-                      Xem tất cả
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ResourcesComponent />
           </div>
         </div>
 

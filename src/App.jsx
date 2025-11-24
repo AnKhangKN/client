@@ -78,7 +78,6 @@ function App() {
     socket.emit("setup", user.id);
 
     socket.on("onlineFriends", (friends) => {
-      // console.log("✅ Mutual friends online:", friends);
 
       dispatch(updateOnlineFriends({ onlineFriends: friends }));
     });

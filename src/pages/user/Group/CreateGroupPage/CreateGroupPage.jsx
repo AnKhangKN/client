@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import logoCTUT from "../../../../assets/logo/logo-ctut.png";
 import ButtonComponent from "../../../../components/shared/ButtonComponent/ButtonComponent";
 import InputComponent from "../../../../components/shared/InputComponent/InputComponent";
+import TextareaComponent from "../../../../components/shared/TextareaComponent/TextareaComponent";
 
 const CreateGroupPage = () => {
   const navigate = useNavigate();
@@ -263,14 +264,7 @@ const CreateGroupPage = () => {
 
             {/* Description */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                Giới thiệu nhóm
-              </label>
-              <textarea
-                rows={4}
-                placeholder="Viết mô tả ngắn về nhóm..."
-                className="w-full border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-400 dark:bg-[#2a2a2a] dark:text-gray-100 shadow-sm resize-none"
-              />
+              <TextareaComponent label="Mô tả nhóm" />
             </div>
 
             {/* Create button */}

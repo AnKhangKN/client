@@ -11,7 +11,7 @@ const MediaLayout = ({ medias }) => {
         className="p-4 border border-gray-200 rounded-lg shadow-lg dark:border-0 
       dark:bg-[#333334] flex justify-center items-center"
       >
-        <RenderMedia media={medias[0]} />
+        <RenderMedia media={medias[0]} index={0} />
       </div>
     );
   }
@@ -28,14 +28,14 @@ const MediaLayout = ({ medias }) => {
             key={i}
             className="w-1/2 h-full flex justify-center items-center"
           >
-            <RenderMedia media={m} />
+            <RenderMedia media={m} index={i} />
           </div>
         ))}
       </div>
     );
   }
 
-  // 🖼️ 3 media → 1 bên trái, 2 bên phải chia đôi
+  // 3 media → 1 bên trái, 2 bên phải chia đôi
   if (medias.length === 3) {
     return (
       <div
@@ -43,7 +43,7 @@ const MediaLayout = ({ medias }) => {
         overflow-hidden dark:border-0 dark:bg-[#333334]"
       >
         <div className="w-1/2 flex justify-center items-center">
-          <RenderMedia media={medias[0]} />
+          <RenderMedia media={medias[0]} index={0} />
         </div>
 
         <div className="w-1/2 flex flex-col gap-2">
@@ -69,7 +69,7 @@ const MediaLayout = ({ medias }) => {
     >
       {/* Media đầu tiên (bên trái 50%) */}
       <div className="w-1/2 flex justify-center items-center">
-        <RenderMedia media={medias[0]} />
+        <RenderMedia media={medias[0]} index={0} />
       </div>
 
       {/* 2 media tiếp theo (bên phải xếp dọc) */}
@@ -79,7 +79,7 @@ const MediaLayout = ({ medias }) => {
             key={i}
             className="relative flex-1 flex justify-center items-center"
           >
-            <RenderMedia media={m} />
+            <RenderMedia media={m} index={i} />
             {i === 1 && medias.length > 3 && (
               <div className="absolute inset-0 bg-black/60 rounded-lg flex items-center justify-center">
                 <span className="text-white text-2xl font-semibold">

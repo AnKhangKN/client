@@ -60,7 +60,7 @@ const BottomNavbarComponent = () => {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-md py-2 z-50">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-[#1c1c1d] shadow-md py-2 z-50">
       <div className="flex justify-around items-center">
         {listNavigate.map((item, index) => {
           const isActive = location.pathname === item.nav;
@@ -69,7 +69,9 @@ const BottomNavbarComponent = () => {
               key={index}
               onClick={() => navigate(item.nav)}
               className={`flex flex-col items-center text-2xl cursor-pointer ${
-                isActive ? "text-gray-600" : "text-gray-700 hover:text-gray-400"
+                isActive
+                  ? "text-gray-600 dark:text-white"
+                  : "text-gray-700 dark:text-gray-100 hover:text-gray-400"
               }`}
             >
               {item.icon}

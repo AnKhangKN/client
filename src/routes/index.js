@@ -21,6 +21,13 @@ import SecurityPage from "../pages/admin/SecurityPage/SecurityPage";
 import PostManagementPage from "../pages/admin/PostManagementPage/PostManagementPage";
 import FeedDePartmentPage from "../pages/user/Department/FeedPage/FeedPage";
 import CreateGroupPage from "../pages/user/Group/CreateGroupPage/CreateGroupPage";
+import PostDetail from "../pages/user/PostDetail/PostDetail";
+import EditPage from "../pages/user/EditPage/EditPage";
+import BlockedAccounts from "../pages/user/BlockedAccounts/BlockedAccounts";
+import TagsAndMentions from "../pages/user/TagsAndMentions/TagsAndMentions";
+import DeleteAccount from "../pages/user/DeleteAccount/DeleteAccount";
+import ActivitiesPage from "../pages/user/ActivitiesPage/ActivitiesPage";
+import QrPage from "../pages/user/QrPage/QrPage";
 
 export const routes = [
   // auth
@@ -41,6 +48,11 @@ export const routes = [
   {
     path: "/",
     page: HomePage,
+    isShowSidebarUser: true,
+  },
+  {
+    path: "/post/:postId",
+    page: PostDetail,
     isShowSidebarUser: true,
   },
   {
@@ -80,6 +92,40 @@ export const routes = [
   {
     path: "/profile/:userName",
     page: ProfilePage,
+    isShowSidebarUser: true,
+  },
+  {
+    path: "/qr",
+    page: QrPage,
+  },
+  {
+    path: "/accounts/edit",
+    page: EditPage,
+    isShowSidebarUser: true,
+  },
+  {
+    path: "/accounts/blocked_accounts",
+    page: BlockedAccounts,
+    isShowSidebarUser: true,
+  },
+  {
+    path: "/accounts/activities",
+    page: ActivitiesPage,
+    isShowSidebarUser: true,
+  },
+  {
+    path: "/accounts/security",
+    page: SecurityPage,
+    isShowSidebarUser: true,
+  },
+  {
+    path: "/accounts/tags_and_mentions",
+    page: TagsAndMentions,
+    isShowSidebarUser: true,
+  },
+  {
+    path: "/accounts/delete_account",
+    page: DeleteAccount,
     isShowSidebarUser: true,
   },
 

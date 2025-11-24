@@ -14,7 +14,7 @@ const MediaCarousel = ({ medias }) => {
   const currentMedia = medias[currentIndex];
 
   return (
-    <div className="relative w-full h-96 flex items-center justify-center bg-gray-100">
+    <div className="relative w-full h-96 flex items-center h-full justify-center bg-gray-100">
       {currentMedia.type === "image" ? (
         <img
           src={currentMedia.url}
@@ -22,7 +22,11 @@ const MediaCarousel = ({ medias }) => {
           className="object-contain max-h-full"
         />
       ) : (
-        <video controls className="object-contain max-h-full">
+        <video
+          key={currentIndex}
+          controls
+          className="object-contain max-h-full"
+        >
           <source src={currentMedia.url} type="video/mp4" />
         </video>
       )}
@@ -32,15 +36,16 @@ const MediaCarousel = ({ medias }) => {
         <>
           <button
             onClick={handlePrev}
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full
-            cursor-pointer"
+            className="absolute z-50 left-2 top-1/2 transform -translate-y-1/2 
+             bg-black/50 text-white p-2 rounded-full cursor-pointer"
           >
             Prev
           </button>
+
           <button
             onClick={handleNext}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full
-            cursor-pointer"
+            className="absolute z-50 right-2 top-1/2 transform -translate-y-1/2 
+             bg-black/50 text-white p-2 rounded-full cursor-pointer"
           >
             Next
           </button>

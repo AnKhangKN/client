@@ -38,21 +38,19 @@ export const getPosts = async (accessToken) => {
   }
 };
 
-export const heartPost = async (accessToken, data) => {
+export const getPostById = async (accessToken, postId) => {
   try {
-    const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_API}/user/posts/hearts`,
-      data,
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_API}/user/posts/${postId}`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       }
     );
-
+    
     return res.data;
   } catch (error) {
     console.log(error);
-    throw error;
   }
 };

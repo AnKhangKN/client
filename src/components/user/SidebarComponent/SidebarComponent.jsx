@@ -20,7 +20,7 @@ import { MdOutlineClose } from "react-icons/md";
 import "./style.css";
 import { useDispatch, useSelector } from "react-redux";
 import { IoSettingsOutline } from "react-icons/io5";
-import { BsAppIndicator } from "react-icons/bs";
+import { BsActivity, BsAppIndicator } from "react-icons/bs";
 import useClickOutside from "../../../hooks/useClickOutside";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import MessageComponent from "../../../components/shared/MessageComponent/MessageComponent";
@@ -115,6 +115,21 @@ const SidebarComponent = () => {
       nav: "/notification",
       label: "Thông báo",
     },
+  ];
+
+  const activities = [
+    {
+      label: "Cài đặt",
+      icon: <IoSettingsOutline />,
+      action: () => navigate("/accounts/edit"),
+    },
+    { label: "Hoạt động của bạn", icon: <BsActivity /> },
+    {
+      label: theme === "light" ? "Chuyển chế độ tối" : "Chuyển chế độ sáng",
+      icon: theme === "light" ? <PiMoonLight /> : <PiCloudSunThin />,
+      action: () => dispatch(toggleTheme()),
+    },
+    { label: "Báo cáo sự cố", icon: <GoReport /> },
   ];
 
   const handleLogout = async () => {
@@ -320,58 +335,25 @@ const SidebarComponent = () => {
             <div
               ref={moreRef}
               className="absolute bottom-13 w-60 shadow-lg flex flex-col gap-1 overflow-hidden 
-              rounded-xl bg-gray-200 dark:bg-[#353535] z-10"
+                        rounded-xl bg-gray-200 dark:bg-[#353535] z-10"
             >
               <div className="bg-white dark:bg-[#262626] rounded-t-xl">
-                <div
-                  className="flex items-center gap-3 cursor-pointer hover:bg-gray-200 
-                dark:hover:bg-[#3c3c3c] py-3 px-4"
-                >
-                  <div className="w-5 h-5 flex items-center justify-center">
-                    <IoSettingsOutline />
+                {activities.map((item, i) => (
+                  <div
+                    key={i}
+                    onClick={item.action}
+                    className="flex items-center gap-3 cursor-pointer hover:bg-gray-200
+                              dark:hover:bg-[#3c3c3c] py-3 px-3.5"
+                  >
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      {item.icon}
+                    </div>
+                    <div>{item.label}</div>
                   </div>
-                  <div>Cài đặt</div>
-                </div>
-
-                <div className="flex items-center cursor-pointer hover:bg-gray-200 dark:hover:bg-[#3c3c3c] gap-3 py-3 px-4">
-                  <div className="w-5 h-5 flex items-center justify-center">
-                    <BsAppIndicator />
-                  </div>
-                  <div>Hoạt động của bạn</div>
-                </div>
-
-                <div
-                  onClick={() => dispatch(toggleTheme())}
-                  className="flex items-center cursor-pointer hover:bg-gray-200 dark:hover:bg-[#3c3c3c] gap-3 py-3 px-3.5"
-                >
-                  <div className="w-5 h-5 flex items-center justify-center">
-                    {theme === "light" ? <PiMoonLight /> : <PiCloudSunThin />}
-                  </div>
-                  <div>
-                    {theme === "light"
-                      ? "Chuyển chế độ tối"
-                      : "Chuyển chế độ sáng"}
-                  </div>
-                </div>
-
-                <div
-                  className="flex items-center cursor-pointer hover:bg-gray-200 dark:hover:bg-[#3c3c3c] 
-                gap-3 py-3 px-4"
-                >
-                  <div className="w-5 h-5 flex items-center justify-center">
-                    <GoReport />
-                  </div>
-                  <div>Báo cáo sự cố</div>
-                </div>
+                ))}
               </div>
 
               <div className="flex flex-col bg-white dark:bg-[#262626] rounded-b-xl">
-                <div
-                  className="border-b border-[#3c3c3c] py-3 px-4 cursor-pointer hover:bg-gray-200 
-                dark:hover:bg-[#3c3c3c]"
-                >
-                  Chuyển đổi tài khoản
-                </div>
                 <div
                   onClick={handleLogout}
                   className="p-3 px-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-[#3c3c3c]"

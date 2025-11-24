@@ -176,7 +176,7 @@ const PostCreateComponent = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-[#252728] shadow-md p-4 rounded-md border border-gray-200 mb-3">
+    <div className="bg-white dark:bg-[#252728] shadow-md p-4 rounded-md dark:border-0 border border-gray-200 mb-3">
       {message.text && (
         <MessageComponent
           key={message.key}
