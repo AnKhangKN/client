@@ -25,8 +25,27 @@ const EditPage = () => {
       <div className="flex flex-col gap-4">
         <InputComponent label="Họ" value={user.lastName} />
         <InputComponent label="Tên" value={user.firstName} />
+        <InputComponent label="Tên người dùng" value={user.userName} />
+        <div>
+          <div>
+            <input type="radio" name="" id="" /> <label htmlFor="">Nam</label>
+          </div>
+
+          <div>
+            <input type="radio" name="" id="" /> <label htmlFor="">Nữ</label>
+          </div>
+
+          <div>
+            <input type="radio" name="" id="" /> <label htmlFor="">Khác</label>
+          </div>
+        </div>
+        <InputComponent label="Mã số sinh viên" value={user.studentId} />
+        <InputComponent label="Khóa" value={user.courses} />
+        <InputComponent label="Chuyên ngành" value={user.major} />
 
         <TextAreaComponent label="Tiểu sử" value={user.bio} />
+
+        <div>Mạng xã hội</div>
 
         <ButtonComponent text="Đổi thông tin" />
       </div>

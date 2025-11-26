@@ -14,11 +14,6 @@ const SidebarAccountComponent = () => {
       nav: "/accounts/edit",
     },
     {
-      label: "Thẻ và lượt nhắc",
-      icon: <VscMention />,
-      nav: "/accounts/tags_and_mentions",
-    },
-    {
       label: "Hoạt động của bạn",
       icon: <BsActivity />,
       nav: "/accounts/activities",

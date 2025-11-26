@@ -371,7 +371,7 @@ const ProfilePage = () => {
                 </div>
 
                 <button
-                  className="p-2 text-2xl cursor-pointer"
+                  className={`p-2 text-2xl cursor-pointer `}
                   onClick={() => setSettingModal(true)}
                 >
                   <IoSettingsOutline />

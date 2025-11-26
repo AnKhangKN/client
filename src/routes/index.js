@@ -10,24 +10,25 @@ import RegisterPage from "../pages/auth/RegisterPage/RegisterPage";
 import DashboardPage from "../pages/admin/DashboardPage/DashboardPage";
 import GroupManagementPage from "../pages/admin/GroupManagementPage/GroupManagementPage";
 import DepartmentManagementPage from "../pages/admin/DepartmentManagementPage/DepartmentManagementPage";
-import MessageManagementPage from "../pages/admin/MessageMamagementPage/MessageManagementPage";
+import MessageManagementPage from "../pages/admin/MessageManagementPage/MessageManagementPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage/ForgotPasswordPage";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 import UserManagementPage from "../pages/admin/UserManagementPage/UserManagementPage";
 import NotificationPageAdmin from "../pages/admin/NotificationPage/NotificationPage";
 import ProfilePageAdmin from "../pages/admin/ProfilePage/ProfilePage";
 import EditProfilePage from "../pages/admin/EditProfilePage/EditProfilePage";
-import SecurityPage from "../pages/admin/SecurityPage/SecurityPage";
+import SecurityAdminPage from "../pages/admin/SecurityPage/SecurityPage";
 import PostManagementPage from "../pages/admin/PostManagementPage/PostManagementPage";
 import FeedDePartmentPage from "../pages/user/Department/FeedPage/FeedPage";
 import CreateGroupPage from "../pages/user/Group/CreateGroupPage/CreateGroupPage";
 import PostDetail from "../pages/user/PostDetail/PostDetail";
 import EditPage from "../pages/user/EditPage/EditPage";
 import BlockedAccounts from "../pages/user/BlockedAccounts/BlockedAccounts";
-import TagsAndMentions from "../pages/user/TagsAndMentions/TagsAndMentions";
 import DeleteAccount from "../pages/user/DeleteAccount/DeleteAccount";
 import ActivitiesPage from "../pages/user/ActivitiesPage/ActivitiesPage";
 import QrPage from "../pages/user/QrPage/QrPage";
+import SecurityPage from "../pages/user/SecurityPage/SecurityPage";
+import DepartmentDetailPage from "../pages/user/Department/DepartmentDetailPage/DepartmentDetailPage";
 
 export const routes = [
   // auth
@@ -80,6 +81,16 @@ export const routes = [
     isShowSidebarUser: true,
   },
   {
+    path: "/department/feed/:departmentName/:departmentId",
+    page: DepartmentDetailPage,
+    isShowSidebarUser: true,
+  },
+  {
+    path: "/department/discover",
+    page: DiscoverPage,
+    isShowSidebarUser: true,
+  },
+  {
     path: "/message",
     page: MessagePage,
     isShowSidebarUser: true,
@@ -116,11 +127,6 @@ export const routes = [
   {
     path: "/accounts/security",
     page: SecurityPage,
-    isShowSidebarUser: true,
-  },
-  {
-    path: "/accounts/tags_and_mentions",
-    page: TagsAndMentions,
     isShowSidebarUser: true,
   },
   {
@@ -178,7 +184,7 @@ export const routes = [
   },
   {
     path: "/admin/profile/security",
-    page: SecurityPage,
+    page: SecurityAdminPage,
     isShowSidebarAdmin: true,
   },
 

@@ -123,7 +123,11 @@ const SidebarComponent = () => {
       icon: <IoSettingsOutline />,
       action: () => navigate("/accounts/edit"),
     },
-    { label: "Hoạt động của bạn", icon: <BsActivity /> },
+    {
+      label: "Hoạt động của bạn",
+      icon: <BsActivity />,
+      action: () => navigate("/accounts/activities"),
+    },
     {
       label: theme === "light" ? "Chuyển chế độ tối" : "Chuyển chế độ sáng",
       icon: theme === "light" ? <PiMoonLight /> : <PiCloudSunThin />,
@@ -163,12 +167,7 @@ const SidebarComponent = () => {
   return (
     <div
       className={`hidden md:flex flex-col justify-between bg-white dark:bg-[#1c1c1d] dark:text-white ${
-        location.pathname === "/message" ||
-        location.pathname === "/groups/feed" ||
-        location.pathname === "/groups/discover" ||
-        location.pathname === "/groups/join"
-          ? "w-20"
-          : "xl:w-1/6 w-20"
+        location.pathname === "/message" ? "w-20" : "xl:w-1/6 w-20"
       } p-4 border-r border-gray-300 dark:border-0 relative`}
     >
       {message.text && (
@@ -182,10 +181,7 @@ const SidebarComponent = () => {
       {/* Logo */}
       <div
         className={`flex items-center h-10 ${
-          location.pathname === "/message" ||
-          location.pathname === "/groups/feed" ||
-          location.pathname === "/groups/discover" ||
-          location.pathname === "/groups/join"
+          location.pathname === "/message"
             ? "justify-center"
             : "justify-center xl:justify-start"
         } gap-2`}
@@ -194,22 +190,12 @@ const SidebarComponent = () => {
           src={LogoCTUT}
           alt="Logo"
           className={`w-10 ${
-            location.pathname === "/message" ||
-            location.pathname === "/groups/feed" ||
-            location.pathname === "/groups/discover" ||
-            location.pathname === "/groups/join"
-              ? "block"
-              : "xl:hidden block"
+            location.pathname === "/message" ? "block" : "xl:hidden block"
           } rounded-full`}
         />
         <span
           className={`text-3xl text_logo ${
-            location.pathname === "/message" ||
-            location.pathname === "/groups/feed" ||
-            location.pathname === "/groups/discover" ||
-            location.pathname === "/groups/join"
-              ? "hidden"
-              : "xl:block hidden"
+            location.pathname === "/message" ? "hidden" : "xl:block hidden"
           } font-semibold`}
         >
           CTUT Connect
@@ -232,12 +218,7 @@ const SidebarComponent = () => {
             </div>
             <div
               className={`${
-                location.pathname === "/message" ||
-                location.pathname === "/groups/feed" ||
-                location.pathname === "/groups/discover" ||
-                location.pathname === "/groups/join"
-                  ? "hidden"
-                  : "xl:block hidden"
+                location.pathname === "/message" ? "hidden" : "xl:block hidden"
               }`}
             >
               {item.label}
@@ -296,12 +277,7 @@ const SidebarComponent = () => {
           />
           <div
             className={`${
-              location.pathname === "/message" ||
-              location.pathname === "/groups/feed" ||
-              location.pathname === "/groups/discover" ||
-              location.pathname === "/groups/join"
-                ? "hidden"
-                : "xl:block hidden"
+              location.pathname === "/message" ? "hidden" : "xl:block hidden"
             }`}
           >
             {user.firstName}
@@ -319,12 +295,7 @@ const SidebarComponent = () => {
             </div>
             <div
               className={`${
-                location.pathname === "/message" ||
-                location.pathname === "/groups/feed" ||
-                location.pathname === "/groups/discover" ||
-                location.pathname === "/groups/join"
-                  ? "hidden"
-                  : "xl:block hidden"
+                location.pathname === "/message" ? "hidden" : "xl:block hidden"
               }`}
             >
               Xem thêm
