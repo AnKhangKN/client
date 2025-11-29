@@ -87,3 +87,56 @@ export const getAllChatList = async (accessToken) => {
     console.log(error);
   }
 };
+
+export const addNewPasswordChat = async (accessToken, data) => {
+  try {
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_API}/shared/chatPassword`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getChatPassword = async (accessToken, chatId) => {
+  try {
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_API}/shared/chatPassword/${chatId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const verifyChatPassword = async (accessToken, data) => {
+  try {
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_API}/shared/verifyChatPassword`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+  }
+};

@@ -213,7 +213,12 @@ const PostComponent = ({ postsList }) => {
                   </>
                 ) : (
                   <>
-                    <div className="flex gap-2 items-center">
+                    <div
+                      onClick={() =>
+                        navigate(`/profile/${item.author.userName}`)
+                      }
+                      className="flex gap-2 items-center cursor-pointer"
+                    >
                       {item.author.lastName} {item.author.firstName}
                     </div>
                     <div className="text-sm text-gray-500 flex items-center gap-2">

@@ -2,9 +2,16 @@ import React, { useEffect, useRef, useState } from "react";
 import LogoCTUT from "../../../assets/logo/logo-ctut.png";
 import { CiCircleInfo } from "react-icons/ci";
 import { VscSend } from "react-icons/vsc";
-import { PiFilesLight, PiImagesSquareLight } from "react-icons/pi";
+import {
+  PiFilesLight,
+  PiHeartFill,
+  PiImagesSquareLight,
+  PiNotePencilLight,
+} from "react-icons/pi";
+import { RxDotsHorizontal } from "react-icons/rx";
 import * as ValidateToken from "../../../utils/token.utils";
 import * as ChatServices from "../../../services/shared/ChatServices";
+import * as HeartServices from "@/services/user/HeartServices";
 import { useSelector } from "react-redux";
 import { socket } from "../../../utils/socket";
 import { SiGitconnected } from "react-icons/si";
@@ -12,6 +19,7 @@ import InputComponent from "../../../components/shared/InputComponent/InputCompo
 import SidebarMessageComponent from "../../../components/user/SidebarMessageComponent/SidebarMessageComponent";
 import ButtonComponent from "../../../components/shared/ButtonComponent/ButtonComponent";
 import * as UserServices from "../../../services/user/UserServices";
+import { IoIosShareAlt } from "react-icons/io";
 
 const MessagePage = () => {
   const user = useSelector((state) => state.user);
@@ -27,6 +35,20 @@ const MessagePage = () => {
   const messageEndRef = useRef(null);
   const mediaRefs = useRef({}); // lưu ref cho mỗi media mới
   const [friends, setFriends] = useState([]);
+  const [modalNewPassword, setModalNewPassword] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [heartedMessages, setHeartedMessages] = useState({});
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [modalPasswordPrompt, setModalPasswordPrompt] = useState(false);
+  const [hasPassword, setHasPassword] = useState(false);
+  const [enteredPassword, setEnteredPassword] = useState("");
+  const [authenticatedChats, setAuthenticatedChats] = useState(() => {
+    // Lấy từ sessionStorage
+    const saved = sessionStorage.getItem("authenticatedChats");
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [cancelPassword, setCancelPassword] = useState(false);
 
   const fetchFriends = async () => {
     try {
@@ -79,8 +101,64 @@ const MessagePage = () => {
 
     try {
       const accessToken = await ValidateToken.getValidAccessToken();
+
+      const res = await ChatServices.getChatPassword(accessToken, chatId);
+
+      setHasPassword(res.hasPassword);
+
+      if (res.hasPassword && !authenticatedChats[chatId]) {
+        // Chat có mật khẩu nhưng chưa xác thực
+        setModalPasswordPrompt(true);
+      } else {
+        // Chat không có mật khẩu hoặc đã xác thực
+        await loadMessages(chatId);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleConfirmPassword = async () => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+      const res = await ChatServices.verifyChatPassword(accessToken, {
+        chatId: selectUser.chatId,
+        password: enteredPassword,
+      });
+
+      if (res.success) {
+        // Lưu vào session
+        const updated = {
+          ...authenticatedChats,
+          [selectUser.chatId]: true,
+        };
+        setAuthenticatedChats(updated);
+        sessionStorage.setItem("authenticatedChats", JSON.stringify(updated));
+
+        setModalPasswordPrompt(false);
+        setEnteredPassword("");
+        await loadMessages(selectUser.chatId);
+      } else {
+        alert("Mật khẩu không đúng!");
+      }
+    } catch (error) {
+      console.log(error);
+      alert("Lỗi xác thực mật khẩu!");
+    }
+  };
+
+  const loadMessages = async (chatId) => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
       const res = await ChatServices.getMessageHistory(accessToken, chatId);
       setMessages(res.data);
+
+      const initialHearted = {};
+      res.data.forEach((msg) => {
+        initialHearted[msg._id] =
+          msg.hearts?.some((h) => h.author === userId) || false;
+      });
+      setHeartedMessages(initialHearted);
     } catch (error) {
       console.log(error);
     }
@@ -243,6 +321,99 @@ const MessagePage = () => {
     setModalChatDetail(false);
   };
 
+  const handleHeartMessage = async (messageId) => {
+    console.log(messageId);
+
+    const accessToken = await ValidateToken.getValidAccessToken();
+    const targetType = "Message";
+
+    const willHeart = !heartedMessages[messageId];
+
+    // Cập nhật UI tạm thời
+    setMessages((prev) =>
+      prev.map((m) =>
+        m._id === messageId
+          ? {
+              ...m,
+              heartsCount: willHeart ? m.heartsCount + 1 : m.heartsCount - 1,
+              hearts: willHeart
+                ? [...m.hearts, { author: user.id }]
+                : m.hearts.filter((h) => h.author !== user.id),
+            }
+          : m
+      )
+    );
+
+    setHeartedMessages((prev) => ({
+      ...prev,
+      [messageId]: willHeart,
+    }));
+
+    try {
+      const res = await HeartServices.heartTarget(
+        accessToken,
+        messageId,
+        targetType
+      );
+
+      // Đồng bộ lại với server
+      setMessages((prev) =>
+        prev.map((m) =>
+          m._id === messageId
+            ? {
+                ...m,
+                heartsCount: res.heartsCount,
+                hearts: res.isHearted
+                  ? [...m.hearts, { author: user.id }]
+                  : m.hearts.filter((h) => h.author !== user.id),
+              }
+            : m
+        )
+      );
+
+      setHeartedMessages((prev) => ({
+        ...prev,
+        [messageId]: res.isHearted,
+      }));
+    } catch (error) {
+      console.log(error);
+      // Nếu lỗi, rollback UI
+      setMessages((prev) =>
+        prev.map((m) =>
+          m._id === messageId
+            ? {
+                ...m,
+                heartsCount: willHeart ? m.heartsCount - 1 : m.heartsCount + 1,
+                hearts: willHeart
+                  ? m.hearts.filter((h) => h.author !== user.id)
+                  : [...m.hearts, { author: user.id }],
+              }
+            : m
+        )
+      );
+      setHeartedMessages((prev) => ({
+        ...prev,
+        [messageId]: !willHeart,
+      }));
+    }
+  };
+
+  const handleAddPassword = async () => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const data = { chatId, newPassword, confirmPassword };
+
+      const res = await ChatServices.addNewPasswordChat(accessToken, data);
+
+      if (res) {
+        alert("Đã cập nhật mật khẩu mới thành công!");
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="flex h-screen dark:bg-[#1c1c1d] dark:text-white">
       {/* Sidebar */}
@@ -295,25 +466,123 @@ const MessagePage = () => {
                     selectUser.members.length <= 2 ? "justify-between" : "gap-6"
                   }  md:h-[620px] h-[calc(100vh-110px)] overflow-y-auto`}
                 >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="pr-4 py-3 border-r border-gray-200">
+                        Mật khẩu
+                      </span>
+                      <span className="pl-4">• • • • • • • • • •</span>
+                    </div>
+
+                    <button
+                      onClick={() => setModalNewPassword(true)}
+                      className="text-2xl hover:bg-gray-200 p-2 rounded-full transition"
+                    >
+                      <PiNotePencilLight />
+                    </button>
+                  </div>
+
                   {/* Cài đặt mật khẩu */}
                   <div className="p-4 bg-gray-50 dark:bg-[#2a2a2a]">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className=" text-gray-700 dark:text-gray-200">
-                        Cài đặt mật khẩu
-                      </span>
+                    {modalNewPassword && (
+                      <div className="fixed inset-0 z-10 bg-black/40 flex justify-center items-center">
+                        <div className="bg-white p-4 rounded-lg flex flex-col space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div>Mật khẩu đoạn chat</div>
+                            <button
+                              className="cursor-pointer"
+                              onClick={() => {
+                                setModalNewPassword(false);
+                                setIsForgotPassword(false);
+                              }}
+                            >
+                              x
+                            </button>
+                          </div>
 
-                      <div className="flex gap-4">
-                        <ButtonComponent text="Thêm mật khẩu" width="w-40" />
-                        <ButtonComponent
-                          text="Bỏ mật khẩu"
-                          width="w-40"
-                          bgColor="bg-white"
-                          textColor="text-gray-800"
-                          hoverColor="hover:bg-gray-200"
-                        />
+                          <div className="flex flex-col space-y-3">
+                            {hasPassword ? (
+                              <div className="flex flex-col space-y-3">
+                                <InputComponent label="Mật khẩu cũ" />
+
+                                <InputComponent label="Mật khẩu mới" />
+
+                                <InputComponent label="Xác nhận mật khẩu" />
+                              </div>
+                            ) : (
+                              <div className="flex flex-col space-y-3">
+                                <InputComponent
+                                  label="Mật khẩu mới"
+                                  value={newPassword}
+                                  onChange={(e) =>
+                                    setNewPassword(e.target.value)
+                                  }
+                                  placeholder="Hãy nhập mật khẩu mới"
+                                />
+
+                                <InputComponent
+                                  label="Xác nhận mật khẩu"
+                                  value={confirmPassword}
+                                  onChange={(e) =>
+                                    setConfirmPassword(e.target.value)
+                                  }
+                                  placeholder="Hãy nhập lại xác nhận mật khẩu"
+                                />
+                              </div>
+                            )}
+
+                            <div className="flex justify-between items-center space-x-4">
+                              {hasPassword && (
+                                <>
+                                  <ButtonComponent
+                                    text="Bỏ mật khẩu"
+                                    width="w-60"
+                                    bgColor="bg-white"
+                                    hoverColor="hover:bg-gray-200"
+                                    textColor="text-black"
+                                    onClick={() => {
+                                      setCancelPassword(true);
+                                    }}
+                                  />
+
+                                  {cancelPassword && (
+                                    <div className="fixed z-10 bg-black/40 inset-0 flex items-center justify-center">
+                                      <div className="bg-white p-4 rounded-lg flex flex-col space-y-4">
+                                        <div className="flex items-center justify-between">
+                                          <div>Bỏ mật khẩu</div>
+                                          <div
+                                            onClick={() =>
+                                              setCancelPassword(false)
+                                            }
+                                          >
+                                            close
+                                          </div>
+                                        </div>
+
+                                        <div className="flex flex-col space-y-4">
+                                          <InputComponent label="Nhập lại mật khẩu" />
+
+                                          <ButtonComponent text="Xác định xóa mật khẩu" />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+
+                              {hasPassword ? (
+                                <ButtonComponent text="Cập nhật" />
+                              ) : (
+                                <ButtonComponent
+                                  text="Thêm mới"
+                                  onClick={handleAddPassword}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <InputComponent label="Nhập mật khẩu" type="password" />
+                    )}
                   </div>
 
                   {/* Chỉ hiển thị với group */}
@@ -407,6 +676,61 @@ const MessagePage = () => {
             </div>
           )}
 
+          {modalPasswordPrompt && (
+            <div className="fixed inset-0 z-50 bg-black/40 flex justify-center items-center">
+              <div className="bg-white p-6 rounded-lg w-96 flex flex-col space-y-4">
+                <h2 className="text-lg font-semibold mb-4">
+                  Nhập mật khẩu chat
+                </h2>
+
+                {isForgotPassword ? (
+                  <div className="flex flex-col space-y-4">
+                    <InputComponent
+                      type="password"
+                      label="Mật khẩu tài khoản"
+                    />
+                    <InputComponent type="password" label="Mật khẩu mới" />
+                    <InputComponent type="password" label="Nhập lại mật khẩu" />
+                  </div>
+                ) : (
+                  <InputComponent
+                    type="password"
+                    value={enteredPassword}
+                    onChange={(e) => setEnteredPassword(e.target.value)}
+                    label="Mật khẩu"
+                    placeholder="Nhập mật khẩu đoạn chat"
+                  />
+                )}
+
+                {hasPassword && (
+                  <div
+                    className="text-end cursor-pointer"
+                    onClick={() => setIsForgotPassword(true)}
+                  >
+                    Quên mật khẩu?
+                  </div>
+                )}
+                <div className="flex justify-end gap-2">
+                  <ButtonComponent
+                    text="Hủy"
+                    textColor="black"
+                    bgColor="bg-white"
+                    hoverColor="hover:bg-gray-200"
+                    onClick={() => {
+                      setModalPasswordPrompt(false),
+                        setSelectUser(null),
+                        setIsForgotPassword(false);
+                    }}
+                  />
+                  <ButtonComponent
+                    text="Xác nhận"
+                    onClick={handleConfirmPassword}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Chat messages */}
           <div className="flex-1 flex flex-col md:mb-0 mb-10 overflow-hidden h-screen">
             <div className="overflow-y-auto flex-1 flex flex-col gap-2 p-4">
@@ -477,7 +801,7 @@ const MessagePage = () => {
                       )}
 
                       <div
-                        className={`px-3 py-1.5 ml-10 text-sm max-w-[70%] ${
+                        className={`px-3 py-1.5 ml-10 text-sm max-w-[70%] rounded-md relative group ${
                           isMe
                             ? "bg-indigo-500 text-white"
                             : "bg-gray-100 dark:bg-[#303030] text-gray-800"
@@ -553,6 +877,31 @@ const MessagePage = () => {
                               </span>
                             </div>
                           )}
+                        </div>
+
+                        <div
+                          className={`group-hover:flex absolute hidden px-4 py-1 top-1/3 ${
+                            isMe ? "-left-28" : "-right-28"
+                          } text-lg text-gray-600 items-center space-x-1`}
+                        >
+                          <div
+                            className="hover:bg-gray-100 p-1 rounded-full cursor-pointer"
+                            onClick={() => handleHeartMessage(msg._id)}
+                          >
+                            {heartedMessages[msg._id] ? (
+                              <PiHeartFill className="text-red-500" />
+                            ) : (
+                              <PiHeartFill />
+                            )}
+                          </div>
+
+                          <div className="hover:bg-gray-100 p-1 rounded-full cursor-pointer">
+                            <IoIosShareAlt />
+                          </div>
+
+                          <div className="hover:bg-gray-100 p-1 rounded-full cursor-pointer">
+                            <RxDotsHorizontal />
+                          </div>
                         </div>
                       </div>
                     </div>

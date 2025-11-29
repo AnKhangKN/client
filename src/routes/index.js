@@ -29,6 +29,7 @@ import ActivitiesPage from "../pages/user/ActivitiesPage/ActivitiesPage";
 import QrPage from "../pages/user/QrPage/QrPage";
 import SecurityPage from "../pages/user/SecurityPage/SecurityPage";
 import DepartmentDetailPage from "../pages/user/Department/DepartmentDetailPage/DepartmentDetailPage";
+import PostManagementDetailPage from "@/pages/admin/PostManagementDetailPage/PostManagementDetailPage";
 
 export const routes = [
   // auth
@@ -149,6 +150,11 @@ export const routes = [
   {
     path: "/admin/posts",
     page: PostManagementPage,
+    isShowSidebarAdmin: true,
+  },
+  {
+    path: "/admin/posts/:detailName",
+    page: PostManagementDetailPage,
     isShowSidebarAdmin: true,
   },
   {

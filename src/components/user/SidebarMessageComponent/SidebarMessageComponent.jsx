@@ -15,6 +15,7 @@ const SidebarMessageComponent = ({
   const [modalCreateGroupChat, setModalCreateGroupChat] = useState(false);
   const [members, setMembers] = useState([]);
   const [groupName, setGroupName] = useState("");
+  const [selectedChatId, setSelectedChatId] = useState(null);
 
   // Mở modal tạo nhóm
   const handleOpenCreateGroupChat = () => setModalCreateGroupChat(true);
@@ -123,12 +124,15 @@ const SidebarMessageComponent = ({
             return (
               <div
                 key={chat._id}
-                className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition"
+                className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition ${
+                  selectedChatId === chat._id
+                    ? "bg-gray-200 dark:bg-gray-700"
+                    : "hover:bg-gray-100 dark:hover:bg-[#2a2a2a]"
+                }`}
                 onClick={() => {
-                  const chatName = getChatName(chat);
-                  const members = chat.members;
-                  const admins = chat.groupAdmin;
+                  setSelectedChatId(chat._id);
 
+                  const friend = chat.members.find((m) => m._id !== user.id);
                   friend &&
                     handleSelectUser(
                       friend.userAvatar,
@@ -136,9 +140,9 @@ const SidebarMessageComponent = ({
                       friend.firstName,
                       friend.userName,
                       chat._id,
-                      chatName,
-                      members,
-                      admins
+                      getChatName(chat),
+                      chat.members,
+                      chat.groupAdmin
                     );
                 }}
               >

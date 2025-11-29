@@ -9,6 +9,7 @@ import * as ValidateToken from "../../../utils/token.utils";
 import * as UserServices from "../../../services/user/UserServices";
 import * as ChatServices from "../../../services/shared/ChatServices";
 import * as AuthServices from "../../../services/shared/AuthServices";
+import * as UserServicesShared from "@/services/shared/UserServices";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { updateFollowingList } from "../../../features/user/userSlice";
@@ -27,11 +28,12 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const [coverImage, setCoverImage] = useState(bgTest);
-  const [avatarImage, setAvatarImage] = useState(logoCTUT);
+  const [coverImage, setCoverImage] = useState(user.userCover || bgTest);
+  const [avatarImage, setAvatarImage] = useState(user.userAvatar || logoCTUT);
   const [loading, setLoading] = useState(false);
   const [followerCount, setFollower] = useState();
-
+  const [userAvatarFile, setUserAvatarFile] = useState(null);
+  const [userCoverFile, setUserCoverFile] = useState(null);
   const [previewCover, setPreviewCover] = useState(null);
   const [previewAvatar, setPreviewAvatar] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -97,16 +99,10 @@ const ProfilePage = () => {
     if (!file) return;
     const reader = new FileReader();
     reader.onloadend = () => setPreview(reader.result);
+    setUserAvatarFile(file);
+    setUserCoverFile(file);
     reader.readAsDataURL(file);
     e.target.value = "";
-  };
-
-  const handleConfirm = (preview, setMain, setPreview) => {
-    if (preview) {
-      setMain(preview);
-      setPreview(null);
-      // TODO: Gửi API cập nhật ảnh server
-    }
   };
 
   const handleCancel = (setPreview) => {
@@ -218,6 +214,52 @@ const ProfilePage = () => {
     }
   };
 
+  // --- Upload avatar ---
+  const handleConfirmUserAvatar = async () => {
+    if (!userAvatarFile) return;
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+      const formData = new FormData();
+      formData.append("userAvatar", userAvatarFile);
+
+      const res = await UserServicesShared.updateUserAvatar(
+        accessToken,
+        formData
+      );
+      if (res.success) {
+        setAvatarImage(previewAvatar);
+        setUserAvatarFile(null);
+        setPreviewAvatar(null);
+      }
+    } catch (error) {
+      console.error(error);
+      setPreviewAvatar(null);
+    }
+  };
+
+  // --- Upload cover ---
+  const handleConfirmUserCover = async () => {
+    if (!userCoverFile) return;
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+      const formData = new FormData();
+      formData.append("userCover", userCoverFile);
+
+      const res = await UserServicesShared.updateUserCover(
+        accessToken,
+        formData
+      );
+      if (res.success) {
+        setCoverImage(previewCover);
+        setUserCoverFile(null);
+        setPreviewCover(null);
+      }
+    } catch (error) {
+      console.error(error);
+      setPreviewCover(null);
+    }
+  };
+
   return (
     <div className="flex justify-center bg-white dark:bg-[#1c1c1d] dark:text-white">
       {message.text && (
@@ -251,9 +293,7 @@ const ProfilePage = () => {
                 <ButtonComponent
                   text="OK"
                   width="w-28"
-                  onClick={() =>
-                    handleConfirm(previewCover, setCoverImage, setPreviewCover)
-                  }
+                  onClick={handleConfirmUserCover}
                 />
                 <ButtonComponent
                   text="Hủy"
@@ -292,13 +332,7 @@ const ProfilePage = () => {
                   <ButtonComponent
                     text="OK"
                     width="w-28"
-                    onClick={() =>
-                      handleConfirm(
-                        previewAvatar,
-                        setAvatarImage,
-                        setPreviewAvatar
-                      )
-                    }
+                    onClick={handleConfirmUserAvatar}
                   />
                   <ButtonComponent
                     text="Hủy"

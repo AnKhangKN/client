@@ -33,3 +33,39 @@ export const getDetailUser = async (accessToken) => {
     throw error;
   }
 };
+
+export const updateUserAvatar = async (accessToken, data) => {
+  try {
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_API}/shared/userAvatar`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const updateUserCover = async (accessToken, data) => {
+  try {
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_API}/shared/userCover`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+  }
+};

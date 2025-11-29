@@ -272,7 +272,7 @@ const SidebarComponent = () => {
         >
           <img
             className="w-6 h-6 rounded-full bg-white xl:me-3"
-            src={LogoCTUT}
+            src={user.userAvatar || LogoCTUT}
             alt="Logo"
           />
           <div
