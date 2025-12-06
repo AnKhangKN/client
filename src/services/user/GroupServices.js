@@ -1,14 +1,13 @@
 import axios from "axios";
 
-export const createNewPost = async (accessToken, data) => {
+export const createGroup = async (accessToken, data) => {
   try {
     const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_API}/user/posts`,
+      `${import.meta.env.VITE_BACKEND_API}/user/groups`,
       data,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "multipart/form-data",
         },
       }
     );
@@ -20,10 +19,10 @@ export const createNewPost = async (accessToken, data) => {
   }
 };
 
-export const getPosts = async (accessToken) => {
+export const getGroupsJoin = async (accessToken) => {
   try {
     const res = await axios.get(
-      `${import.meta.env.VITE_BACKEND_API}/user/posts`,
+      `${import.meta.env.VITE_BACKEND_API}/user/groups`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -38,10 +37,10 @@ export const getPosts = async (accessToken) => {
   }
 };
 
-export const getPostById = async (accessToken, postId) => {
+export const getGroupDetail = async (accessToken, groupName) => {
   try {
     const res = await axios.get(
-      `${import.meta.env.VITE_BACKEND_API}/user/posts/${postId}`,
+      `${import.meta.env.VITE_BACKEND_API}/user/groups/${groupName}`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -52,5 +51,6 @@ export const getPostById = async (accessToken, postId) => {
     return res.data;
   } catch (error) {
     console.log(error);
+    throw error;
   }
 };

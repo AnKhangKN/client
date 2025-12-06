@@ -54,6 +54,23 @@ export const sendMessage = async (accessToken, data) => {
   }
 };
 
+export const deleteMessage = async (accessToken, messageId) => {
+  try {
+    const res = await axios.delete(
+      `${import.meta.env.VITE_BACKEND_API}/shared/messages/${messageId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 export const getMessageHistory = async (accessToken, chatId) => {
   try {
     const res = await axios.get(

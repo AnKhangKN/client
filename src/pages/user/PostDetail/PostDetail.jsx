@@ -27,6 +27,8 @@ const PostDetail = () => {
   const [heartedComments, setHeartedComments] = useState({});
   const [postDetails, setPostDetails] = useState(null);
   const [showPostMenu, setShowPostMenu] = useState(false);
+  const [visibleReplies, setVisibleReplies] = useState({});
+  const [replyingTo, setReplyingTo] = useState(null);
 
   const user = useSelector((state) => state.user);
   const { postId } = useParams();
@@ -132,36 +134,44 @@ const PostDetail = () => {
   };
 
   const handleSendComment = async () => {
-    if (!postDetails) return;
     try {
-      const token = await ValidateToken.getValidAccessToken();
+      const accessToken = await ValidateToken.getValidAccessToken();
+
       const formData = new FormData();
       formData.append("post", postDetails._id);
-      formData.append("content", content.trim() || "");
+      formData.append("content", content.trim());
+
+      if (replyingTo) {
+        formData.append("parentComment", replyingTo._id);
+      }
+
       selectedMedia.forEach((m) => formData.append("mediaComments", m.file));
       selectedFiles.forEach((f) => formData.append("documentComments", f));
 
-      const res = await CommentServices.addComment(token, formData);
-      console.log("Comment added:", res);
+      const response = await CommentServices.addComment(accessToken, formData);
 
-      // Reset
+      if (!replyingTo) {
+        setComments((prev) => [response, ...prev]);
+      }
+
+      // reset form
       setContent("");
-      selectedMedia.forEach((m) => m.url && URL.revokeObjectURL(m.url));
+      setReplyingTo(null);
       setSelectedMedia([]);
       setSelectedFiles([]);
-
-      // Reload comments
-      fetchComments(postDetails._id);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error("Error adding comment:", error);
     }
   };
 
   const handleHeartComment = async (commentId) => {
     try {
       const token = await ValidateToken.getValidAccessToken();
-      const res = await HeartServices.heartTarget(token, commentId, "Comment");
+      const targetType = "Comment";
 
+      const res = await HeartServices.heartTarget(token, commentId, targetType);
+
+      // Cập nhật comment cha
       setComments((prev) =>
         prev.map((c) =>
           c._id === commentId
@@ -176,15 +186,190 @@ const PostDetail = () => {
         )
       );
 
-      setHeartedComments((prev) => ({ ...prev, [commentId]: res.isHearted }));
-    } catch (err) {
-      console.error(err);
+      // Cập nhật reply nếu nó đang hiển thị
+      setVisibleReplies((prev) => {
+        const newReplies = { ...prev };
+        Object.keys(newReplies).forEach((parentId) => {
+          newReplies[parentId] = newReplies[parentId].map((r) =>
+            r._id === commentId
+              ? {
+                  ...r,
+                  heartsCount: res.heartsCount,
+                  hearts: res.isHearted
+                    ? [...r.hearts, { author: user.id }]
+                    : r.hearts.filter((h) => h.author !== user.id),
+                }
+              : r
+          );
+        });
+        return newReplies;
+      });
+
+      // Cập nhật trạng thái tim
+      setHeartedComments((prev) => ({
+        ...prev,
+        [commentId]: res.isHearted,
+      }));
+    } catch (error) {
+      console.error(error);
     }
   };
 
-  const handleOpenModalComment = (comment) =>
-    setSelectedCommentForMenu(comment);
-  const handleCloseModalComment = () => setSelectedCommentForMenu(null);
+  const handleOpenModalComment = (comment) => {
+    // nếu comment đã được mở menu rồi thì đóng
+    if (selectedCommentForMenu?._id === comment._id) {
+      setSelectedCommentForMenu(null);
+    } else {
+      setSelectedCommentForMenu(comment);
+    }
+  };
+
+  const handleRepliesComment = async (parentId) => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+      const res = await CommentServices.getCommentsReplyByCommentId(
+        accessToken,
+        parentId
+      );
+
+      setVisibleReplies((prev) => ({
+        ...prev,
+        [parentId]: res || [],
+      }));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const renderReplies = (replies) => {
+    return replies.map((reply) => (
+      <div key={reply._id} className="ml-0 mt-2 space-y-2">
+        <div className="flex gap-2">
+          <div className="w-6 h-6 overflow-hidden rounded-full">
+            <img
+              src={reply.author?.userAvatar || LogoCTUT}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold">
+                {reply.author?.lastName ||
+                  reply.author?.userName ||
+                  "Người dùng"}{" "}
+                {reply.author?.firstName}
+              </div>
+              <div className="text-xs text-gray-400">
+                {formatVietnamTime(reply.createdAt)}
+              </div>
+            </div>
+
+            <div className="flex space-x-8 justify-between items-center bg-gray-100 rounded-sm px-2 py-1 mt-2">
+              <div className="text-sm text-gray-800">{reply.content}</div>
+
+              <button
+                onClick={() => handleHeartComment(reply._id)}
+                className="flex items-center gap-2"
+              >
+                {heartedComments[reply._id] ||
+                reply.hearts.some((h) => h.author === user.id) ? (
+                  <PiHeartFill className="text-red-500" />
+                ) : (
+                  <PiHeartLight />
+                )}
+
+                <div className="text-[16px]">{reply.heartsCount}</div>
+              </button>
+            </div>
+
+            {reply.medias && reply.medias.length > 0 && (
+              <div className="flex gap-2 mt-2">
+                {reply.medias.map((m, i) => (
+                  <div key={i} className="w-24 h-16 overflow-hidden rounded">
+                    {m.type && m.type.startsWith("image") ? (
+                      <img
+                        src={m.url}
+                        alt="media"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <video
+                        src={m.url}
+                        className="w-full h-full object-cover"
+                        controls
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {reply.documents && reply.documents.length > 0 && (
+              <div className="mt-2">
+                {reply.documents.map((d, i) => (
+                  <div key={i} className="my-1">
+                    <FileItem file={d} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between p-2">
+              <div className="text-sm text-gray-500 flex gap-2 items-center">
+                <div
+                  className="cursor-pointer"
+                  onClick={() => setReplyingTo(reply)}
+                >
+                  Reply
+                </div>
+
+                <div
+                  onClick={() => handleOpenModalComment(reply)}
+                  className="hover:bg-gray-100 p-1 rounded-full cursor-pointer relative"
+                >
+                  <RiMoreLine />
+
+                  {selectedCommentForMenu &&
+                    selectedCommentForMenu._id === reply._id && (
+                      <div
+                        className="absolute bg-white shadow-lg rounded p-2 t-0 z-50
+                                        w-24"
+                      >
+                        <div className="cursor-pointer p-1 hover:bg-gray-100">
+                          Chỉnh sửa
+                        </div>
+                        <div className="cursor-pointer p-1 hover:bg-gray-100">
+                          Xóa
+                        </div>
+                      </div>
+                    )}
+                </div>
+              </div>
+
+              {reply.repliesCount > 0 && (
+                <>
+                  <div
+                    className="cursor-pointer text-sm text-blue-500"
+                    onClick={() => handleRepliesComment(reply._id)}
+                  >
+                    Xem thêm {reply.repliesCount} trả lời
+                  </div>
+                </>
+              )}
+            </div>
+
+            {visibleReplies[reply._id] &&
+              visibleReplies[reply._id].length > 0 && (
+                <div className="ml-0 mt-2 space-y-2">
+                  {renderReplies(visibleReplies[reply._id])}
+                </div>
+              )}
+          </div>
+        </div>
+      </div>
+    ));
+  };
 
   if (!postDetails) return <div>Loading...</div>;
 
@@ -260,156 +445,140 @@ const PostDetail = () => {
         {/* Comments */}
         <div className="flex-1 overflow-auto p-2">
           <div className="space-y-3">
-            {comments.length > 0 ? (
+            {comments && comments.length > 0 ? (
               comments.map((c) => (
-                <div key={c._id} className="flex gap-3">
-                  <div className="w-8 h-8 overflow-hidden rounded-full">
-                    <img
-                      className="w-full h-full object-cover"
-                      src={c.author?.userAvatar || LogoCTUT}
-                      alt=""
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm font-semibold">
-                        {c.author?.lastName ||
-                          c.author?.userName ||
-                          "Người dùng"}{" "}
-                        {c.author?.firstName}
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        {formatVietnamTime(c.createdAt)}
-                      </div>
+                <div key={c._id}>
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 overflow-hidden rounded-full">
+                      <img
+                        className="w-full h-full object-cover"
+                        src={c.author?.userAvatar || LogoCTUT}
+                        alt=""
+                      />
                     </div>
-
-                    <div className="flex space-x-8 justify-between mt-1">
-                      <div className="text-sm text-gray-800">{c.content}</div>
-                      <button
-                        onClick={() => handleHeartComment(c._id)}
-                        className="flex items-center gap-2 mt-2"
-                      >
-                        {heartedComments[c._id] ||
-                        c.hearts.some((h) => h.author === user.id) ? (
-                          <PiHeartFill className="text-red-500" />
-                        ) : (
-                          <PiHeartLight />
-                        )}
-                        <div className="text-[16px]">{c.heartsCount}</div>
-                      </button>
-                    </div>
-
-                    {c.medias?.length > 0 && (
-                      <div className="flex gap-2 mt-2">
-                        {c.medias.map((m, i) => (
-                          <div
-                            key={i}
-                            className="w-24 h-16 overflow-hidden rounded"
-                          >
-                            {m.type?.startsWith("image") ? (
-                              <img
-                                src={m.url}
-                                alt="media"
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <video
-                                src={m.url}
-                                className="w-full h-full object-cover"
-                                controls
-                              />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {c.documents?.length > 0 && (
-                      <div className="mt-2">
-                        {c.documents.map((d, i) => (
-                          <div key={i} className="my-1">
-                            <FileItem file={d} />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="text-sm text-gray-500 flex gap-2 items-center">
-                        <div className="cursor-pointer">reply</div>
-                        <div
-                          onClick={() => handleOpenModalComment(c)}
-                          className="hover:bg-gray-100 p-1 rounded-full cursor-pointer"
-                        >
-                          <RiMoreLine />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-semibold">
+                          {c.author?.lastName ||
+                            c.author?.userName ||
+                            "Người dùng"}
+                          {c.author?.firstName}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {formatVietnamTime(c.createdAt)}
                         </div>
                       </div>
 
-                      {selectedCommentForMenu?._id === c._id && (
-                        <div className="fixed inset-0 bg-black/20 z-50 flex justify-center items-center">
-                          <div className="bg-white p-4 rounded shadow-lg flex flex-col gap-4 w-72">
-                            {String(selectedCommentForMenu.author?._id) ===
-                            String(user.id) ? (
-                              <>
-                                <div
-                                  className="px-3 py-2 text-red-600 font-medium cursor-pointer hover:bg-gray-100 rounded"
-                                  onClick={async () => {
-                                    const ok = confirm(
-                                      "Xác nhận xóa bình luận?"
-                                    );
-                                    if (!ok) return handleCloseModalComment();
-                                    try {
-                                      const token =
-                                        await ValidateToken.getValidAccessToken();
-                                      await CommentServices.deleteComment(
-                                        token,
-                                        selectedCommentForMenu._id
-                                      );
-                                      setComments((prev) =>
-                                        prev.filter(
-                                          (x) =>
-                                            x._id !== selectedCommentForMenu._id
-                                        )
-                                      );
-                                    } catch (err) {
-                                      console.error(err);
-                                      alert("Xóa thất bại");
-                                    } finally {
-                                      handleCloseModalComment();
-                                    }
-                                  }}
-                                >
-                                  Xóa bình luận
-                                </div>
-                                <div
-                                  className="px-3 py-2 cursor-pointer hover:bg-gray-100 rounded"
-                                  onClick={handleCloseModalComment}
-                                >
-                                  Hủy
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <div
-                                  className="px-3 py-2 text-red-600 cursor-pointer hover:bg-gray-100 rounded"
-                                  onClick={() => {
-                                    alert("Đã gửi báo cáo tới quản trị viên");
-                                    handleCloseModalComment();
-                                  }}
-                                >
-                                  Báo cáo
-                                </div>
-                                <div
-                                  className="px-3 py-2 cursor-pointer hover:bg-gray-100 rounded"
-                                  onClick={handleCloseModalComment}
-                                >
-                                  Hủy
-                                </div>
-                              </>
-                            )}
-                          </div>
+                      <div
+                        className="flex space-x-8 items-center justify-between bg-gray-100 rounded-sm px-2 py-1
+                              mt-2"
+                      >
+                        <div className="text-sm text-gray-800 mt-1">
+                          {c.content}
+                        </div>
+
+                        <button
+                          onClick={() => handleHeartComment(c._id)}
+                          className="flex items-center gap-2"
+                        >
+                          {heartedComments[c._id] ||
+                          c.hearts.some((h) => h.author === user.id) ? (
+                            <PiHeartFill className="text-red-500" />
+                          ) : (
+                            <PiHeartLight />
+                          )}
+
+                          <div className="text-[16px]">{c.heartsCount}</div>
+                        </button>
+                      </div>
+
+                      {c.medias && c.medias.length > 0 && (
+                        <div className="flex gap-2 mt-2">
+                          {c.medias.map((m, i) => (
+                            <div
+                              key={i}
+                              className="w-24 h-16 overflow-hidden rounded"
+                            >
+                              {m.type && m.type.startsWith("image") ? (
+                                <img
+                                  src={m.url}
+                                  alt="media"
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <video
+                                  src={m.url}
+                                  className="w-full h-full object-cover"
+                                  controls
+                                />
+                              )}
+                            </div>
+                          ))}
                         </div>
                       )}
+
+                      {c.documents && c.documents.length > 0 && (
+                        <div className="mt-2">
+                          {c.documents.map((d, i) => (
+                            <div key={i} className="my-1">
+                              <FileItem file={d} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between p-2">
+                        <div className="text-sm text-gray-500 flex gap-2 items-center">
+                          <div
+                            className="cursor-pointer"
+                            onClick={() => setReplyingTo(c)}
+                          >
+                            Reply
+                          </div>
+
+                          <div
+                            onClick={() => handleOpenModalComment(c)}
+                            className="hover:bg-gray-100 p-1 rounded-full cursor-pointer  relative"
+                          >
+                            <RiMoreLine />
+
+                            {selectedCommentForMenu &&
+                              selectedCommentForMenu._id === c._id && (
+                                <div
+                                  className="absolute bg-white shadow-lg rounded p-2 t-0 z-50
+                                        w-24"
+                                >
+                                  <div className="cursor-pointer p-1 hover:bg-gray-100">
+                                    Chỉnh sửa
+                                  </div>
+                                  <div className="cursor-pointer p-1 hover:bg-gray-100">
+                                    Xóa
+                                  </div>
+                                </div>
+                              )}
+                          </div>
+                        </div>
+
+                        {c.repliesCount > 0 && (
+                          <>
+                            <div>
+                              <div
+                                className="cursor-pointer text-sm text-blue-500"
+                                onClick={() => {
+                                  handleRepliesComment(c._id);
+                                }}
+                              >
+                                Xem thêm {c.repliesCount} trả lời
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {visibleReplies[c._id] &&
+                        visibleReplies[c._id].length > 0 && (
+                          <div>{renderReplies(visibleReplies[c._id])}</div>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -480,51 +649,79 @@ const PostDetail = () => {
         )}
 
         {/* Comment input */}
-        <div className="mt-auto flex items-center justify-between gap-2 border-t border-gray-200 py-2 px-4">
-          <div className="flex gap-2 items-center">
-            <label
-              htmlFor="medias"
-              className="cursor-pointer p-1 text-3xl rounded-full text-green-600"
-            >
-              <PiImagesSquareLight />
-            </label>
-            <input
-              id="medias"
-              type="file"
-              className="hidden"
-              multiple
-              accept="image/*,video/*"
-              onChange={handleMediaChange}
-            />
-            <label
-              htmlFor="files"
-              className="cursor-pointer p-1 text-3xl rounded-full text-indigo-500"
-            >
-              <PiFilesLight />
-            </label>
-            <input
-              id="files"
-              type="file"
-              className="hidden"
-              multiple
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z"
-              onChange={handleFilesChange}
-            />
-          </div>
-          <div className="flex gap-2 items-center w-full">
-            <input
-              type="text"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Viết bình luận..."
-              className="flex-1 border border-gray-300 rounded px-2 py-1 outline-0"
-            />
-            <ButtonComponent
-              text="Bình luận"
-              onClick={handleSendComment}
-              py="py-1"
-              width="w-26"
-            />
+        <div className="flex flex-col gap-2 border-t border-gray-200 py-2 px-4">
+          {replyingTo && (
+            <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded mb-2">
+              <div className="text-sm">
+                Đang trả lời:
+                <span className="font-semibold ml-1">
+                  {replyingTo.author?.lastName} {replyingTo.author?.firstName}
+                </span>
+                <div className="text-xs text-gray-500 mt-1">
+                  {replyingTo.content}
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setReplyingTo(null);
+                }}
+                className="text-red-500 text-lg"
+              >
+                ×
+              </button>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <div className="flex gap-2 items-center">
+              <label
+                htmlFor="medias"
+                className="cursor-pointer p-1 text-3xl rounded-full text-green-600"
+              >
+                <PiImagesSquareLight />
+              </label>
+              <input
+                id="medias"
+                type="file"
+                className="hidden"
+                multiple
+                accept="image/*,video/*"
+                onChange={handleMediaChange}
+              />
+              <label
+                htmlFor="files"
+                className="cursor-pointer p-1 text-3xl rounded-full text-indigo-500"
+              >
+                <PiFilesLight />
+              </label>
+              <input
+                id="files"
+                type="file"
+                className="hidden"
+                multiple
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z"
+                onChange={handleFilesChange}
+              />
+            </div>
+            <div className="flex gap-2 items-center w-full">
+              <input
+                type="text"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder={
+                  replyingTo
+                    ? `Trả lời ${replyingTo.author?.firstName}...`
+                    : "Viết bình luận..."
+                }
+                className="flex-1 border border-gray-300 rounded px-2 py-1 outline-0"
+              />
+              <ButtonComponent
+                text="Bình luận"
+                onClick={handleSendComment}
+                py="py-1"
+                width="w-26"
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -23,6 +23,7 @@ import { useSelector } from "react-redux";
 import ModalDetailPost from "../ModalDetailPost/ModalDetailPost";
 import * as CommentServices from "../../../../services/user/CommentServices";
 import * as HeartServices from "../../../../services/user/HeartServices";
+import * as ReportServices from "@/services/shared/ReportServices";
 import { useNavigate } from "react-router-dom";
 
 const PostComponent = ({ postsList }) => {
@@ -33,7 +34,10 @@ const PostComponent = ({ postsList }) => {
   const menuRefs = useRef({});
   const [commentsList, setCommentsList] = useState([]);
   const navigate = useNavigate();
-  const [actionPostModal, setActionPostModal] = useState(false);
+  const [actionPostModal, setActionPostModal] = useState(null);
+  const [reportModal, setReportModal] = useState(null);
+  const [selectedReason, setSelectedReason] = useState("");
+  const [otherReason, setOtherReason] = useState("");
 
   useEffect(() => {
     setPosts(postsList || []);
@@ -133,6 +137,40 @@ const PostComponent = ({ postsList }) => {
       setCommentsList(comments);
     } catch (error) {
       console.error("Error fetching comments:", error);
+    }
+  };
+
+  const handleOpenReportModal = (post) => {
+    setReportModal(post);
+  };
+
+  const handleSendReport = async () => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const data = {
+        reportType: "Post",
+        reportModels: reportModal?._id,
+        reason: selectedReason,
+        reportContent: otherReason,
+      };
+
+      const report = await ReportServices.createReport(accessToken, data);
+
+      if (report) {
+        setReportModal(null);
+        setOtherReason("");
+        setSelectedReason("");
+        setActionPostModal(false);
+      }
+    } catch (error) {
+      const msg =
+        error.response?.data?.message || error.message || "Đã xảy ra lỗi";
+      setReportModal(null);
+      setOtherReason("");
+      setSelectedReason("");
+      setActionPostModal(false);
+      console.log("Lỗi", msg);
     }
   };
 
@@ -261,36 +299,126 @@ const PostComponent = ({ postsList }) => {
             >
               <div
                 className="hover:bg-gray-200 p-1.5 rounded-full group cursor-pointer"
-                onClick={() => setActionPostModal(true)}
+                onClick={() => setActionPostModal(item._id)}
               >
                 <HiOutlineDotsHorizontal size={20} />
               </div>
 
-              {actionPostModal && (
-                <div className="bg-black/40 inset-0 z-50 flex justify-center items-center fixed">
-                  <div className="bg-white rounded-lg flex flex-col gap-2 text-center w-80">
-                    <div className="cursor-pointer font-bold text-red-500 border-b border-gray-200 py-1.5">
-                      Báo cáo
-                    </div>
-                    <div className="cursor-pointer font-bold text-red-500 border-b border-gray-200 py-1.5">
-                      Bỏ theo dõi Khang
-                    </div>
+              {actionPostModal === item._id && (
+                <div className="bg-black/40 inset-0 z-10 flex justify-center items-center fixed">
+                  <div className="bg-white rounded-lg flex flex-col text-center w-80">
+                    {user.id !== item.author._id && (
+                      <div className="flex flex-col">
+                        <div
+                          onClick={() => handleOpenReportModal(item)}
+                          className="cursor-pointer font-bold text-red-500 border-b border-gray-200 py-2.5"
+                        >
+                          Báo cáo
+                        </div>
+
+                        <div className="cursor-pointer font-bold text-red-500 border-b border-gray-200 py-2.5">
+                          Bỏ theo dõi Khang
+                        </div>
+                      </div>
+                    )}
+
                     <div
-                      className="cursor-pointer border-b border-gray-200 py-1.5"
+                      className="cursor-pointer border-b border-gray-200 py-2.5"
                       onClick={() => navigate(`/post/${item._id}`)}
                     >
                       Đi tới bài viết
                     </div>
-                    <div className="cursor-pointer border-b border-gray-200 py-1.5">
+                    <div className="cursor-pointer border-b border-gray-200 py-2.5">
                       Chia sẽ lên...
                     </div>
 
                     <div
-                      className="cursor-pointer py-1.5"
+                      className="cursor-pointer py-2.5"
                       onClick={() => setActionPostModal(false)}
                     >
                       Hủy
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {reportModal && (
+                <div className="fixed inset-0 z-20 bg-black/40 flex items-center justify-center">
+                  <div className="bg-white p-4 rounded-lg w-[400px]">
+                    {/* Header */}
+                    <div className="flex justify-between items-center mb-3">
+                      <div className="font-bold text-lg">Báo cáo</div>
+                      <div
+                        onClick={() => setReportModal(null)}
+                        className="cursor-pointer text-xl"
+                      >
+                        ×
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="mb-3">
+                      Đang báo cáo bài viết của tác giả:{" "}
+                      <b>
+                        {item.author.lastName} {item.author.firstName}
+                      </b>
+                    </div>
+
+                    {/* Reason select */}
+                    <div className="mb-3">
+                      <label className="font-medium">Lý do báo cáo:</label>
+                      <select
+                        className="w-full mt-1 border p-2 rounded"
+                        value={selectedReason}
+                        onChange={(e) => setSelectedReason(e.target.value)}
+                      >
+                        <option value="">-- Chọn lý do --</option>
+                        <option value="hate">
+                          Nội dung thù địch, công kích cá nhân
+                        </option>
+                        <option value="violence">Kích động bạo lực</option>
+                        <option value="spam">Spam hoặc quảng cáo</option>
+                        <option value="nudity">
+                          Nội dung nhạy cảm / khiêu dâm
+                        </option>
+                        <option value="illegal">
+                          Nội dung vi phạm pháp luật
+                        </option>
+                        <option value="misinformation">
+                          Thông tin sai sự thật
+                        </option>
+                        <option value="harassment">
+                          Quấy rối hoặc bắt nạt
+                        </option>
+                        <option value="disturbing">
+                          Nội dung gây khó chịu
+                        </option>
+                        <option value="scam">Lừa đảo / gây nguy hiểm</option>
+                        <option value="other">Khác...</option>
+                      </select>
+                    </div>
+
+                    {/* Show textarea when reason = other */}
+                    {selectedReason === "other" && (
+                      <div className="mb-3">
+                        <label className="font-medium">Nhập lý do khác:</label>
+                        <textarea
+                          className="w-full mt-1 border p-2 rounded"
+                          rows="3"
+                          placeholder="Nhập lý do báo cáo..."
+                          value={otherReason}
+                          onChange={(e) => setOtherReason(e.target.value)}
+                        ></textarea>
+                      </div>
+                    )}
+
+                    {/* Submit */}
+                    <button
+                      className="bg-red-500 text-white px-4 py-2 rounded w-full mt-2"
+                      onClick={handleSendReport}
+                    >
+                      Gửi báo cáo
+                    </button>
                   </div>
                 </div>
               )}

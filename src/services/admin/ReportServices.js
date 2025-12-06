@@ -1,14 +1,31 @@
 import axios from "axios";
 
-export const createNewPost = async (accessToken, data) => {
+export const getReports = async (accessToken, reportType) => {
+  try {
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_API}/admin/reports/${reportType}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+export const confirmReport = async (accessToken, data) => {
   try {
     const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_API}/user/posts`,
+      `${import.meta.env.VITE_BACKEND_API}/admin/reports`,
       data,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "multipart/form-data",
         },
       }
     );
@@ -20,10 +37,11 @@ export const createNewPost = async (accessToken, data) => {
   }
 };
 
-export const getPosts = async (accessToken) => {
+export const cancelReport = async (accessToken, data) => {
   try {
-    const res = await axios.get(
-      `${import.meta.env.VITE_BACKEND_API}/user/posts`,
+    const res = await axios.put(
+      `${import.meta.env.VITE_BACKEND_API}/admin/reports`,
+      data,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -35,22 +53,5 @@ export const getPosts = async (accessToken) => {
   } catch (error) {
     console.log(error);
     throw error;
-  }
-};
-
-export const getPostById = async (accessToken, postId) => {
-  try {
-    const res = await axios.get(
-      `${import.meta.env.VITE_BACKEND_API}/user/posts/${postId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-    return res.data;
-  } catch (error) {
-    console.log(error);
   }
 };

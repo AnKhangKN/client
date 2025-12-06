@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { MdSettings } from "react-icons/md";
 import { PiNewspaperClippingFill, PiUserCircleCheckFill } from "react-icons/pi";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -7,99 +7,12 @@ import { HiLightBulb, HiOutlineLightBulb } from "react-icons/hi2";
 import { RiSearchLine } from "react-icons/ri";
 import { GoPlus } from "react-icons/go";
 import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import * as ValidateToken from "@/utils/token.utils";
+import * as GroupServices from "@/services/user/GroupServices";
+import { formatVietnamTime } from "@/utils/formatVietnamTime";
 
 const SidebarGroupComponent = () => {
-  const listGroup = [
-    {
-      id: "1",
-      groupAvatar: LogoCTUT,
-      groupName:
-        "Nhóm công nghệ thông tin (nếu tên nhóm quá dài vượt qua 1 dòng hiện ...)",
-      member: 30000,
-      creatAt: "10/10/2024",
-    },
-    {
-      id: "2",
-      groupAvatar: LogoCTUT,
-      groupName: "Nhóm công nghệ thông tin",
-      member: 30000,
-      creatAt: "10/10/2024",
-    },
-    {
-      id: "3",
-      groupAvatar: LogoCTUT,
-      groupName: "Nhóm công nghệ thông tin",
-      member: 30000,
-      creatAt: "10/10/2024",
-    },
-    {
-      id: "4",
-      groupAvatar: LogoCTUT,
-      groupName: "Nhóm công nghệ thông tin",
-      member: 30000,
-      creatAt: "10/10/2024",
-    },
-    {
-      id: "5",
-      groupAvatar: LogoCTUT,
-      groupName: "Nhóm công nghệ thông tin",
-      member: 30000,
-      creatAt: "10/10/2024",
-    },
-    {
-      id: "6",
-      groupAvatar: LogoCTUT,
-      groupName: "Nhóm công nghệ thông tin",
-      member: 30000,
-      creatAt: "10/10/2024",
-    },
-    {
-      id: "7",
-      groupAvatar: LogoCTUT,
-      groupName: "Nhóm công nghệ thông tin",
-      member: 30000,
-      creatAt: "10/10/2024",
-    },
-    {
-      id: "8",
-      groupAvatar: LogoCTUT,
-      groupName: "Nhóm công nghệ thông tin",
-      member: 30000,
-      creatAt: "10/10/2024",
-    },
-    {
-      id: "9",
-      groupAvatar: LogoCTUT,
-      groupName: "Nhóm công nghệ thông tin",
-      member: 30000,
-      creatAt: "10/10/2024",
-    },
-    {
-      id: "10",
-      groupAvatar: LogoCTUT,
-      groupName: "Nhóm công nghệ thông tin",
-      member: 30000,
-      creatAt: "10/10/2024",
-    },
-    {
-      id: "11",
-      groupAvatar: LogoCTUT,
-      groupName: "Nhóm công nghệ thông tin",
-      member: 30000,
-      creatAt: "10/10/2024",
-    },
-    {
-      id: "12",
-      groupAvatar: LogoCTUT,
-      groupName: "Nhóm công nghệ thông tin",
-      member: 30000,
-      creatAt: "10/10/2024",
-    },
-  ];
-
   const location = useLocation();
-  const navigate = useNavigate();
-
   const listNavigate = [
     {
       icon:
@@ -121,17 +34,25 @@ const SidebarGroupComponent = () => {
       label: "Khám phá",
       nav: "/groups/discover",
     },
-    {
-      icon:
-        location.pathname === "/groups/join" ? (
-          <PiUserCircleCheckFill />
-        ) : (
-          <PiUserCircleCheck />
-        ),
-      label: "Nhóm của bạn",
-      nav: "/groups/join",
-    },
   ];
+
+  const navigate = useNavigate();
+  const [groups, setGroups] = useState([]);
+
+  useEffect(() => {
+    const fetchGroupJoin = async () => {
+      try {
+        const accessToken = await ValidateToken.getValidAccessToken();
+
+        const groups = await GroupServices.getGroupsJoin(accessToken);
+        setGroups(groups);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchGroupJoin();
+  }, []);
 
   return (
     <div
@@ -182,14 +103,15 @@ const SidebarGroupComponent = () => {
         </button>
 
         {/* List group */}
-        {listGroup.map((group) => (
+        {groups.map((group) => (
           <div
-            key={group.id}
+            key={group._id}
+            onClick={() => navigate(`/groups/${group.groupName}/${group._id}`)}
             className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded-lg"
           >
             <img
               className="w-10 h-10 dark:bg-white rounded-full"
-              src={group.groupAvatar}
+              src={group.groupAvatar || LogoCTUT}
               alt="logo"
             />
 
@@ -199,8 +121,8 @@ const SidebarGroupComponent = () => {
               </div>
 
               <div className="flex justify-between items-center text-gray-600 text-sm">
-                <div>{group.member}</div>
-                <div>{group.creatAt}</div>
+                <div>{group.groupMember.length}</div>
+                <div>{formatVietnamTime(group.createdAt)}</div>
               </div>
             </div>
           </div>

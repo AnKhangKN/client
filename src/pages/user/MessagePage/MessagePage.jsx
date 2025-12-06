@@ -42,7 +42,9 @@ const MessagePage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [modalPasswordPrompt, setModalPasswordPrompt] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
   const [enteredPassword, setEnteredPassword] = useState("");
+  const [modalEditMessages, setModalEditMessages] = useState(null);
   const [authenticatedChats, setAuthenticatedChats] = useState(() => {
     // Lấy từ sessionStorage
     const saved = sessionStorage.getItem("authenticatedChats");
@@ -178,7 +180,19 @@ const MessagePage = () => {
       }
     });
 
-    return () => socket.off("receiveMessage");
+    socket.on("messageDeleted", (messageId) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === messageId
+            ? { ...msg, text: "Tin nhắn đã bị xóa", medias: [], documents: [] }
+            : msg
+        )
+      );
+    });
+
+    return () => {
+      socket.off("receiveMessage"), socket.off("messageDeleted");
+    };
   }, [chatId]);
 
   // --- Scroll xuống cuối mỗi khi messages thay đổi ---
@@ -290,6 +304,11 @@ const MessagePage = () => {
       formData.append("chatId", chatId);
       formData.append("text", inputValue.trim() || "");
 
+      if (replyingTo) {
+        formData.append("parentMessage", replyingTo._id);
+        formData.append("parentText", replyingTo.text);
+      }
+
       selectedMedia.forEach((file) => formData.append("mediaMessages", file));
       selectedFiles.forEach((file) =>
         formData.append("documentMessages", file)
@@ -300,9 +319,41 @@ const MessagePage = () => {
 
       if (res) {
         setInputValue("");
+        setReplyingTo(null);
         setSelectedMedia([]);
         setSelectedFiles([]);
         socket.emit("sendMessage", res.message);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const res = await ChatServices.deleteMessage(accessToken, messageId);
+
+      if (res) {
+        setModalEditMessages(null);
+
+        // Chỉ cập nhật UI: đổi text thành "Tin nhắn đã bị xóa"
+        setMessages((prev) =>
+          prev.map((m) =>
+            m._id === messageId
+              ? {
+                  ...m,
+                  text: "Tin nhắn đã bị xóa",
+                  medias: [],
+                  documents: [],
+                }
+              : m
+          )
+        );
+
+        // Emit socket nếu muốn đồng bộ với người khác
+        socket.emit("deleteMessage", { _id: messageId, chatId });
       }
     } catch (error) {
       console.log(error);
@@ -412,6 +463,12 @@ const MessagePage = () => {
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const handleOpenModalEditMessages = (message) => {
+    setModalEditMessages((prev) =>
+      prev && prev._id === message._id ? null : message
+    );
   };
 
   return (
@@ -801,18 +858,33 @@ const MessagePage = () => {
                       )}
 
                       <div
-                        className={`px-3 py-1.5 ml-10 text-sm max-w-[70%] rounded-md relative group ${
+                        className={`pb-1.5 ml-10 text-sm max-w-[70%] rounded-md relative group ${
                           isMe
                             ? "bg-indigo-500 text-white"
                             : "bg-gray-100 dark:bg-[#303030] text-gray-800"
                         }`}
                         style={{ wordBreak: "break-word" }}
                       >
-                        {msg.text && <div>{msg.text}</div>}
+                        {(msg.parentMessage?.text || msg.parentText) && (
+                          <div
+                            className={`z-10 py-1.5 rounded-t-lg px-2 ${
+                              isMe ? "bg-indigo-700" : "bg-gray-400"
+                            }`}
+                          >
+                            <span>Đã trả lời: </span>
+                            <span>
+                              {msg.parentMessage?.text || msg.parentText}
+                            </span>
+                          </div>
+                        )}
+
+                        {msg.text && (
+                          <div className="px-2 py-1.5">{msg.text}</div>
+                        )}
 
                         {/* Media: luôn hiển thị dưới cùng */}
                         {msg.medias?.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-2">
+                          <div className="mt-2 px-2 py-1.5 flex flex-wrap gap-2">
                             {msg.medias.map((media, i) =>
                               media.type === "image" ? (
                                 <img
@@ -840,7 +912,7 @@ const MessagePage = () => {
 
                         {/* Documents */}
                         {msg.documents?.length > 0 && (
-                          <div className="mt-2 flex flex-col gap-1">
+                          <div className="mt-2 px-2 py-1.5 flex flex-col gap-1">
                             {msg.documents.map((doc, i) => (
                               <div key={i} className="flex items-center gap-2">
                                 <PiFilesLight className="text-xl text-gray-600" />
@@ -850,11 +922,27 @@ const MessagePage = () => {
                           </div>
                         )}
 
-                        <div className="flex gap-1 items-center mt-1">
+                        <div
+                          className={`absolute -bottom-1  px-1 rounded-full ${
+                            isMe
+                              ? "-left-7 bg-indigo-400"
+                              : "-right-7 bg-gray-200"
+                          } flex items-center gap-1`}
+                        >
+                          {heartedMessages[msg._id] ? (
+                            <PiHeartFill className="text-red-500" />
+                          ) : msg.heartsCount > 0 ? (
+                            <PiHeartFill className="text-gray-400" />
+                          ) : null}
+
+                          {msg.heartsCount > 0 && <div>{msg.heartsCount}</div>}
+                        </div>
+
+                        <div className="flex px-2 pb-1.5 gap-1 items-center mt-1">
                           {/* Thời gian */}
                           {!showFullTime && (
                             <div
-                              className={`text-[10px] ${
+                              className={`text-[10px] shrink-0 ${
                                 isMe
                                   ? "text-gray-200 text-end"
                                   : "text-gray-400 text-start"
@@ -864,23 +952,26 @@ const MessagePage = () => {
                             </div>
                           )}
 
-                          <div></div>
-
                           {!isMe && showSenderName && (
-                            <div className="text-[10px] flex gap-2 items-center text-gray-400">
+                            <div className="text-[10px] shrink-0 flex gap-2 items-center text-gray-400">
                               <div className="mb-0.5">
                                 <SiGitconnected size={14} />
                               </div>
 
-                              <span>
-                                {msg.senderId.lastName} {msg.senderId.firstName}
-                              </span>
+                              <div className="shrink-0">
+                                {msg.senderId.lastName}
+                                {msg.senderId.firstName}
+                              </div>
                             </div>
                           )}
                         </div>
 
                         <div
-                          className={`group-hover:flex absolute hidden px-4 py-1 top-1/3 ${
+                          className={`absolute ${
+                            modalEditMessages?._id === msg._id
+                              ? "flex"
+                              : "hidden group-hover:flex"
+                          } px-4 py-1 top-1/3 ${
                             isMe ? "-left-28" : "-right-28"
                           } text-lg text-gray-600 items-center space-x-1`}
                         >
@@ -895,12 +986,29 @@ const MessagePage = () => {
                             )}
                           </div>
 
-                          <div className="hover:bg-gray-100 p-1 rounded-full cursor-pointer">
+                          <div
+                            onClick={() => setReplyingTo(msg)}
+                            className="hover:bg-gray-100 p-1 rounded-full cursor-pointer"
+                          >
                             <IoIosShareAlt />
                           </div>
 
-                          <div className="hover:bg-gray-100 p-1 rounded-full cursor-pointer">
-                            <RxDotsHorizontal />
+                          <div className="hover:bg-gray-100 p-1 rounded-full cursor-pointer relative">
+                            <RxDotsHorizontal
+                              onClick={() => handleOpenModalEditMessages(msg)}
+                            />
+
+                            {modalEditMessages?._id === msg._id && (
+                              <div className="absolute z-10 bg-white text-[12px] w-20 right-0 px-2 py-1">
+                                <div className="cursor-pointer">Chỉnh sửa</div>
+                                <div
+                                  onClick={() => handleDeleteMessage(msg._id)}
+                                  className="cursor-pointer"
+                                >
+                                  Xóa
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -973,45 +1081,71 @@ const MessagePage = () => {
             )}
 
             {/* Input */}
-            <div className="flex items-center gap-2 border-t border-gray-200 p-4 bg-white">
+            <div className="flex flex-col gap-2 border-t border-gray-200 p-4 bg-white">
+              {replyingTo && (
+                <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded mb-2">
+                  <div className="text-sm">
+                    Đang trả lời:
+                    <span className="ml-1">
+                      {replyingTo.senderId.lastName || "Chính mình"}
+                      {replyingTo.senderId.firstName}
+                    </span>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {replyingTo.text}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setReplyingTo(null);
+                    }}
+                    className="text-red-500 text-lg"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+
               <div className="flex items-center gap-2">
-                <label className="text-green-600 p-1 text-4xl hover:bg-gray-200 rounded-full cursor-pointer">
-                  <PiImagesSquareLight />
-                  <input
-                    type="file"
-                    accept="image/*,video/*"
-                    multiple
-                    className="hidden"
-                    onChange={handleMediaChange}
-                  />
-                </label>
+                <div className="flex items-center gap-2">
+                  <label className="text-green-600 p-1 text-4xl hover:bg-gray-200 rounded-full cursor-pointer">
+                    <PiImagesSquareLight />
+                    <input
+                      type="file"
+                      accept="image/*,video/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleMediaChange}
+                    />
+                  </label>
 
-                <label className="text-indigo-600 p-1 text-4xl hover:bg-gray-200 rounded-full cursor-pointer">
-                  <PiFilesLight />
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z"
-                    multiple
-                    className="hidden"
-                    onChange={handleFilesChange}
-                  />
-                </label>
-              </div>
+                  <label className="text-indigo-600 p-1 text-4xl hover:bg-gray-200 rounded-full cursor-pointer">
+                    <PiFilesLight />
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z"
+                      multiple
+                      className="hidden"
+                      onChange={handleFilesChange}
+                    />
+                  </label>
+                </div>
 
-              <div className="flex items-center gap-4 border border-gray-200 w-full rounded-full px-4">
-                <input
-                  type="text"
-                  placeholder="Nhập tin nhắn..."
-                  className="flex-1 outline-none text-lg py-2"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                />
-                <div
-                  className="text-indigo-600 p-1 text-3xl cursor-pointer hover:text-indigo-800"
-                  onClick={handleSendMessage}
-                >
-                  <VscSend />
+                <div className="flex items-center gap-4 border border-gray-200 w-full rounded-full px-4">
+                  <input
+                    type="text"
+                    placeholder="Nhập tin nhắn..."
+                    className="flex-1 outline-none text-lg py-2"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                  />
+                  <div
+                    className="text-indigo-600 p-1 text-3xl cursor-pointer hover:text-indigo-800"
+                    onClick={handleSendMessage}
+                  >
+                    <VscSend />
+                  </div>
                 </div>
               </div>
             </div>

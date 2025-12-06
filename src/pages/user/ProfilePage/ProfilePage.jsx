@@ -10,6 +10,7 @@ import * as UserServices from "../../../services/user/UserServices";
 import * as ChatServices from "../../../services/shared/ChatServices";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import * as UserServicesShared from "@/services/shared/UserServices";
+import * as ReportServices from "@/services/shared/ReportServices";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { updateFollowingList } from "../../../features/user/userSlice";
@@ -22,14 +23,14 @@ import { IoSettingsOutline } from "react-icons/io5";
 
 const ProfilePage = () => {
   const { userName } = useParams();
-  const [userDetail, setUserDetail] = useState([]);
+  const [userDetail, setUserDetail] = useState({});
   const [posts, setPosts] = useState([]);
   const user = useSelector((state) => state.user);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const [coverImage, setCoverImage] = useState(user.userCover || bgTest);
-  const [avatarImage, setAvatarImage] = useState(user.userAvatar || logoCTUT);
+  const [coverImage, setCoverImage] = useState(bgTest);
+  const [avatarImage, setAvatarImage] = useState(logoCTUT);
   const [loading, setLoading] = useState(false);
   const [followerCount, setFollower] = useState();
   const [userAvatarFile, setUserAvatarFile] = useState(null);
@@ -49,6 +50,9 @@ const ProfilePage = () => {
     type: "",
     key: 1,
   });
+  const [reportModal, setReportModal] = useState(null);
+  const [selectedReason, setSelectedReason] = useState("");
+  const [otherReason, setOtherReason] = useState("");
 
   useClickOutside(modalFollowListRef, modalFollowList, () =>
     setModalFollowList(false)
@@ -63,7 +67,11 @@ const ProfilePage = () => {
         const res = await UserServices.getProfile(accessToken, userName);
 
         setUserDetail(res.data.user);
+        setAvatarImage(res.data.user.userAvatar || logoCTUT);
+        setCoverImage(res.data.user.userCover || bgTest);
         setPosts(res.data.posts);
+        setFollower(res.data.user.followers?.length || 0);
+        setFollowingCount(res.data.user.following?.length || 0);
 
         // Kiểm tra xem người đăng nhập có đang follow user này không
         if (res.data.user.followers?.includes(user.id)) {
@@ -83,16 +91,6 @@ const ProfilePage = () => {
 
     fetchProfile();
   }, [userName, user.id, navigate]);
-
-  useEffect(() => {
-    setFollower(userDetail.followers?.length || 0);
-    setFollowingCount(userDetail.following?.length || 0);
-  }, [userDetail]);
-
-  useEffect(() => {
-    if (userDetail.coverImage) setCoverImage(userDetail.coverImage);
-    if (userDetail.avatarImage) setAvatarImage(userDetail.avatarImage);
-  }, [userDetail.coverImage, userDetail.avatarImage]);
 
   const handleSelectFile = (e, setPreview) => {
     const file = e.target.files[0];
@@ -134,10 +132,10 @@ const ProfilePage = () => {
 
       // Cập nhật Redux
       dispatch(updateFollowingList({ friendId, isFollowing: res.isFollowing }));
+
+      setLoading(false);
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -260,6 +258,42 @@ const ProfilePage = () => {
     }
   };
 
+  const handleOpenReportModal = (user) => {
+    setReportModal(user);
+  };
+
+  const handleSendReport = async () => {
+    setLoading(true);
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const data = {
+        reportType: "User",
+        reportModels: reportModal?._id,
+        reason: selectedReason,
+        reportContent: otherReason,
+      };
+
+      const report = await ReportServices.createReport(accessToken, data);
+
+      if (report) {
+        setLoading(false);
+        setSettingModal(false);
+        setReportModal(null);
+        setOtherReason("");
+        setSelectedReason("");
+      }
+    } catch (error) {
+      const msg =
+        error.response?.data?.message || error.message || "Đã xảy ra lỗi";
+      setSettingModal(false);
+      setReportModal(null);
+      setOtherReason("");
+      setSelectedReason("");
+      console.log("Lỗi", msg);
+    }
+  };
+
   return (
     <div className="flex justify-center bg-white dark:bg-[#1c1c1d] dark:text-white">
       {message.text && (
@@ -277,16 +311,18 @@ const ProfilePage = () => {
             className="relative w-full pb-[35%] bg-cover bg-center rounded-lg overflow-hidden"
             style={{ backgroundImage: `url(${previewCover || coverImage})` }}
           >
-            <label className="absolute flex items-center gap-2 right-4 bottom-4 bg-white dark:bg-gray-700 px-4 py-2 rounded-lg cursor-pointer">
-              <RiCameraLensFill className="text-lg" />
-              <span>Thêm ảnh</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => handleSelectFile(e, setPreviewCover)}
-              />
-            </label>
+            {userDetail._id === user._id && (
+              <label className="absolute flex items-center gap-2 right-4 bottom-4 bg-white dark:bg-gray-700 px-4 py-2 rounded-lg cursor-pointer">
+                <RiCameraLensFill className="text-lg" />
+                <span>Thêm ảnh</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleSelectFile(e, setPreviewCover)}
+                />
+              </label>
+            )}
 
             {previewCover && (
               <div className="absolute flex gap-2 right-4 bottom-4 bg-white p-4 rounded-lg">
@@ -317,15 +353,17 @@ const ProfilePage = () => {
                 />
               </div>
 
-              <label className="absolute bottom-1 right-1 p-2 rounded-full dark:bg-gray-700 bg-gray-200 text-2xl cursor-pointer">
-                <RiCameraLensFill />
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleSelectFile(e, setPreviewAvatar)}
-                />
-              </label>
+              {userDetail._id === user.id && (
+                <label className="absolute bottom-1 right-1 p-2 rounded-full dark:bg-gray-700 bg-gray-200 text-2xl cursor-pointer">
+                  <RiCameraLensFill />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleSelectFile(e, setPreviewAvatar)}
+                  />
+                </label>
+              )}
 
               {previewAvatar && (
                 <div className="absolute flex items-center gap-2 -bottom-6 -right-44 bg-white shadow p-4 rounded-lg">
@@ -414,24 +452,158 @@ const ProfilePage = () => {
                 {settingModal && (
                   <div className="bg-black/40 fixed inset-0 flex items-center justify-center z-10">
                     <div className="bg-white w-80 rounded-2xl text-center">
-                      <div
-                        onClick={() => navigate("/qr")}
-                        className="py-2 border-b border-gray-200 cursor-pointer"
-                      >
-                        Mã QR
-                      </div>
-                      <div
-                        className="py-2 border-b border-gray-200 cursor-pointer"
-                        onClick={() => navigate("/accounts/edit")}
-                      >
-                        Cài đặt và quyền riêng tư
-                      </div>
-                      <div
-                        className="py-2 border-b border-gray-200 cursor-pointer"
-                        onClick={handleLogout}
-                      >
-                        Đăng xuất
-                      </div>
+                      {user.id === userDetail._id ? (
+                        <div>
+                          <div
+                            onClick={() => navigate("/qr")}
+                            className="py-2 border-b border-gray-200 cursor-pointer"
+                          >
+                            Mã QR
+                          </div>
+                          <div
+                            className="py-2 border-b border-gray-200 cursor-pointer"
+                            onClick={() => navigate("/accounts/edit")}
+                          >
+                            Cài đặt và quyền riêng tư
+                          </div>
+                          <div
+                            className="py-2 border-b border-gray-200 cursor-pointer"
+                            onClick={handleLogout}
+                          >
+                            Đăng xuất
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="py-2 border-b border-gray-200 cursor-pointer text-red-500 font-bold">
+                            Chặn
+                          </div>
+
+                          <div
+                            onClick={() => handleOpenReportModal(userDetail)}
+                            className="py-2 border-b border-gray-200 cursor-pointer text-red-500 font-bold"
+                          >
+                            Báo cáo tài khoản
+                          </div>
+
+                          {reportModal && (
+                            <div className="fixed inset-0 z-20 bg-black/40 flex items-center justify-center">
+                              <div className="bg-white p-4 rounded-lg w-[400px]">
+                                {/* Header */}
+                                <div className="flex justify-between items-center mb-3">
+                                  <div className="font-bold text-lg">
+                                    Báo cáo
+                                  </div>
+                                  <div
+                                    onClick={() => setReportModal(null)}
+                                    className="cursor-pointer text-xl"
+                                  >
+                                    ×
+                                  </div>
+                                </div>
+
+                                {/* Info */}
+                                <div className="mb-3">
+                                  Đang báo cáo người dùng:{" "}
+                                  <b>
+                                    {userDetail.lastName} {userDetail.firstName}
+                                  </b>
+                                </div>
+
+                                {/* Reason select */}
+                                <div className="mb-3">
+                                  <label className="font-medium">
+                                    Lý do báo cáo:
+                                  </label>
+                                  <select
+                                    className="w-full mt-1 border p-2 rounded"
+                                    value={selectedReason}
+                                    onChange={(e) =>
+                                      setSelectedReason(e.target.value)
+                                    }
+                                  >
+                                    <option value="">-- Chọn lý do --</option>
+                                    <option
+                                      className="cursor-pointer"
+                                      value="fake_account"
+                                    >
+                                      Tài khoản giả mạo
+                                    </option>
+                                    {!userDetail.isTeacher && (
+                                      <>
+                                        <option
+                                          className="cursor-pointer"
+                                          value="spam"
+                                        >
+                                          Gửi spam hoặc quảng cáo
+                                        </option>
+                                        <option
+                                          className="cursor-pointer"
+                                          value="harassment"
+                                        >
+                                          Quấy rối / bắt nạt
+                                        </option>
+                                        <option
+                                          className="cursor-pointer"
+                                          value="hate"
+                                        >
+                                          Ngôn từ thù địch / công kích cá nhân
+                                        </option>
+                                        <option
+                                          className="cursor-pointer"
+                                          value="misinformation"
+                                        >
+                                          Phát tán thông tin sai sự thật
+                                        </option>
+                                        <option
+                                          className="cursor-pointer"
+                                          value="impersonation"
+                                        >
+                                          Mạo danh người khác
+                                        </option>
+                                        <option
+                                          className="cursor-pointer"
+                                          value="scam"
+                                        >
+                                          Lừa đảo / gây nguy hiểm
+                                        </option>
+                                        <option value="other">Khác...</option>
+                                      </>
+                                    )}
+                                  </select>
+                                </div>
+
+                                {/* Show textarea when reason = other */}
+                                {selectedReason === "other" && (
+                                  <div className="mb-3">
+                                    <label className="font-medium">
+                                      Nhập lý do khác:
+                                    </label>
+                                    <textarea
+                                      className="w-full mt-1 border p-2 rounded"
+                                      rows="3"
+                                      placeholder="Nhập lý do báo cáo..."
+                                      value={otherReason}
+                                      onChange={(e) =>
+                                        setOtherReason(e.target.value)
+                                      }
+                                    ></textarea>
+                                  </div>
+                                )}
+
+                                {/* Submit */}
+                                <button
+                                  className="bg-red-500 text-white px-4 py-2 rounded w-full mt-2"
+                                  disabled={loading}
+                                  onClick={handleSendReport}
+                                >
+                                  Gửi báo cáo
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <div
                         className="py-2 cursor-pointer"
                         onClick={() => setSettingModal(false)}

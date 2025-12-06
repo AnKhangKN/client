@@ -9,7 +9,10 @@ const UserQRCode = ({ value, fgColor, logoImage, qrStyle = "dots" }) => {
         value={value}
         level="H"
         fgColor={fgColor}
-        logoImage={logoImage}
+        logoImage={logoImage || ViteLogo}
+        logoWidth={60}
+        logoHeight={60}
+        enableCORS={true}
         ecLevel="H"
         qrStyle={qrStyle}
         quietZone={30}

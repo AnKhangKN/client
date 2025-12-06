@@ -19,8 +19,8 @@ const HomePage = () => {
   ];
 
   const [posts, setPosts] = useState([]);
-  const firstFivePosts = posts.slice(0, 1);
-  const remainingPosts = posts.slice(1);
+  const firstFivePosts = posts.slice(0, 5);
+  const remainingPosts = posts.slice(5);
 
   const [friendsSuggest, setFriendsSuggest] = useState([]);
   const online = useSelector((state) => state.online || []);

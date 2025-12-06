@@ -1,67 +1,46 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { IoIosArrowRoundBack } from "react-icons/io";
 import { AiOutlineCamera, AiOutlineCloseCircle } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
 import logoCTUT from "../../../../assets/logo/logo-ctut.png";
 import ButtonComponent from "../../../../components/shared/ButtonComponent/ButtonComponent";
 import InputComponent from "../../../../components/shared/InputComponent/InputComponent";
+import * as UserServices from "@/services/user/UserServices";
+import * as ValidateToken from "@/utils/token.utils";
+import * as GroupServices from "@/services/user/GroupServices";
 import TextareaComponent from "../../../../components/shared/TextareaComponent/TextareaComponent";
+import { useSelector } from "react-redux";
 
 const CreateGroupPage = () => {
   const navigate = useNavigate();
-
+  const user = useSelector((state) => state.user);
+  const [introduction, setIntroduction] = useState("");
   const [avatarFile, setAvatarFile] = useState(null);
   const [coverFile, setCoverFile] = useState(null);
-
+  const [groupName, setGroupName] = useState("");
   const [inviteText, setInviteText] = useState("");
   const [isInviteFocused, setIsInviteFocused] = useState(false);
-
+  const [friendsList, setFriendsList] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
+  const [privacy, setPrivacy] = useState("public");
+  const [loading, setLoading] = useState(false);
 
-  const friendsList = [
-    {
-      _id: 1,
-      userAvatar: logoCTUT,
-      firstName: "Phan",
-      lastName: "Khang",
-      userName: "pkhang",
-    },
-    {
-      _id: 2,
-      userAvatar: logoCTUT,
-      firstName: "Nguyen",
-      lastName: "Huy",
-      userName: "huynguyen",
-    },
-    {
-      _id: 3,
-      userAvatar: logoCTUT,
-      firstName: "Tran",
-      lastName: "Linh",
-      userName: "linhtran",
-    },
-    {
-      _id: 4,
-      userAvatar: logoCTUT,
-      firstName: "Pham",
-      lastName: "Minh",
-      userName: "minhpn",
-    },
-    {
-      _id: 5,
-      userAvatar: logoCTUT,
-      firstName: "Do",
-      lastName: "Quang",
-      userName: "quangdo",
-    },
-    {
-      _id: 6,
-      userAvatar: logoCTUT,
-      firstName: "Le",
-      lastName: "Son",
-      userName: "sonle",
-    },
-  ];
+  useEffect(() => {
+    const fetchFriend = async () => {
+      try {
+        const accessToken = await ValidateToken.getValidAccessToken();
+
+        const res = await UserServices.getFriends(accessToken);
+        setFriendsList(res);
+
+        console.log(res);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchFriend();
+  }, []);
 
   const avatarPreview = avatarFile ? URL.createObjectURL(avatarFile) : logoCTUT;
   const coverPreview = coverFile ? URL.createObjectURL(coverFile) : null;
@@ -81,8 +60,34 @@ const CreateGroupPage = () => {
     setInviteText("");
   };
 
-  const handleCreateGroup = () => {
-    navigate("/groups/feed");
+  const handleCreateGroup = async () => {
+    if (!groupName) {
+      alert("Thiếu tên nhóm");
+      return;
+    }
+    setLoading(true);
+
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const formData = new FormData();
+      formData.append("groupName", groupName);
+      formData.append("groupAvatar", avatarFile);
+      formData.append("groupCoverImage", coverFile);
+      formData.append("groupPrivacy", privacy || "public");
+      formData.append("introduction", introduction);
+      const memberIds = selectedMembers.map((m) => m._id);
+      memberIds.forEach((id) => formData.append("groupMember", id));
+
+      const group = await GroupServices.createGroup(accessToken, formData);
+
+      setLoading(false);
+      navigate("/groups/feed");
+
+      console.log(group);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -107,7 +112,9 @@ const CreateGroupPage = () => {
           <div className="flex items-center gap-3">
             <img className="w-12 h-12 rounded-full" src={logoCTUT} alt="" />
             <div>
-              <div className="font-semibold dark:text-white">Phan An Khang</div>
+              <div className="font-semibold dark:text-white">
+                {user.lastName} {user.firstName}
+              </div>
               <div className="text-sm text-gray-500 dark:text-gray-400">
                 Quản trị viên
               </div>
@@ -117,10 +124,18 @@ const CreateGroupPage = () => {
           {/* FORM INPUT */}
           <div className="space-y-6">
             {/* Group Name */}
-            <InputComponent label="Tên nhóm" />
+            <InputComponent
+              label="Tên nhóm"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+            />
 
             {/* Group Type */}
-            <select className="w-full border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-400 dark:bg-[#2a2a2a] dark:text-gray-100 shadow-sm">
+            <select
+              value={privacy}
+              onChange={(e) => setPrivacy(e.target.value)}
+              className="w-full border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-400 dark:bg-[#2a2a2a] dark:text-gray-100 shadow-sm"
+            >
               <option value="public">Công khai</option>
               <option value="private">Cần kiểm duyệt</option>
             </select>
@@ -151,7 +166,7 @@ const CreateGroupPage = () => {
                       className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-[#3a3a3a] transition"
                     >
                       <img
-                        src={friend.userAvatar}
+                        src={friend.userAvatar || logoCTUT}
                         className="w-10 h-10 rounded-full"
                       />
                       <div>
@@ -180,7 +195,7 @@ const CreateGroupPage = () => {
                 {selectedMembers.map((member) => (
                   <div key={member._id} className="flex items-center gap-3">
                     <img
-                      src={member.userAvatar}
+                      src={member.userAvatar || logoCTUT}
                       className="w-10 h-10 rounded-full"
                     />
                     <div>
@@ -264,13 +279,18 @@ const CreateGroupPage = () => {
 
             {/* Description */}
             <div className="space-y-2">
-              <TextareaComponent label="Mô tả nhóm" />
+              <TextareaComponent
+                label="Giới thiệu nhóm"
+                value={introduction}
+                onChange={(e) => setIntroduction(e.target.value)}
+              />
             </div>
 
             {/* Create button */}
             <div className="flex justify-end">
               <ButtonComponent
                 text="Tạo nhóm"
+                loading={loading}
                 onClick={handleCreateGroup}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg transition"
               />

@@ -1,7 +1,6 @@
 import HomePage from "../pages/user/HomePage/HomePage";
 import FeedPage from "../pages/user/Group/FeedPage/FeedPage";
 import DiscoverPage from "../pages/user/Group/DiscoverPage/DiscoverPage";
-import JoinPage from "../pages/user/Group/JoinPage/JoinPage";
 import MessagePage from "../pages/user/MessagePage/MessagePage";
 import NotificationPage from "../pages/user/NotificationPage/NotificationPage";
 import ProfilePage from "../pages/user/ProfilePage/ProfilePage";
@@ -30,6 +29,7 @@ import QrPage from "../pages/user/QrPage/QrPage";
 import SecurityPage from "../pages/user/SecurityPage/SecurityPage";
 import DepartmentDetailPage from "../pages/user/Department/DepartmentDetailPage/DepartmentDetailPage";
 import PostManagementDetailPage from "@/pages/admin/PostManagementDetailPage/PostManagementDetailPage";
+import GroupDetailPage from "@/pages/user/Group/GroupDetailPage/GroupDetailPage";
 
 export const routes = [
   // auth
@@ -68,9 +68,8 @@ export const routes = [
     isShowSidebarUser: true,
   },
   {
-    path: "/groups/join",
-    page: JoinPage,
-    isShowSidebarUser: true,
+    path: "/groups/:groupName/:groupId",
+    page: GroupDetailPage,
   },
   {
     path: "/groups/create",

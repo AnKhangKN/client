@@ -20,13 +20,14 @@ import { MdOutlineClose } from "react-icons/md";
 import "./style.css";
 import { useDispatch, useSelector } from "react-redux";
 import { IoSettingsOutline } from "react-icons/io5";
-import { BsActivity, BsAppIndicator } from "react-icons/bs";
+import { BsActivity } from "react-icons/bs";
 import useClickOutside from "../../../hooks/useClickOutside";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import MessageComponent from "../../../components/shared/MessageComponent/MessageComponent";
 import * as TokenUtils from "../../../utils/token.utils";
 import { toggleTheme } from "../../../features/theme/themeSlice";
 import { socket } from "../../../utils/socket";
+import SearchModal from "./SearchModal/SearchModal";
 
 const SidebarComponent = () => {
   const navigate = useNavigate();
@@ -44,9 +45,8 @@ const SidebarComponent = () => {
     key: 1,
   });
 
-  // Mở / Đóng modal tìm kiếm
-  const handleOpenSearchContainer = () => setSearchContainer(true);
-  const handleCloseSearchContainer = () => setSearchContainer(false);
+  const handleOpenSearchModal = () => setSearchContainer(true);
+  const handleCloseSearchModal = () => setSearchContainer(false);
 
   const handleOpenModalMore = () => {
     setModalMore(true);
@@ -64,7 +64,7 @@ const SidebarComponent = () => {
     {
       icon: <RiSearchLine />,
       label: "Tìm kiếm",
-      onClick: handleOpenSearchContainer,
+      onClick: handleOpenSearchModal,
     },
     {
       icon: ["/groups/feed", "/groups/discover", "/groups/join"].includes(
@@ -168,7 +168,7 @@ const SidebarComponent = () => {
     <div
       className={`hidden md:flex flex-col justify-between bg-white dark:bg-[#1c1c1d] dark:text-white ${
         location.pathname === "/message" ? "w-20" : "xl:w-1/6 w-20"
-      } p-4 border-r border-gray-300 dark:border-0 relative`}
+      } p-4 dark:border-0 relative`}
     >
       {message.text && (
         <MessageComponent
@@ -228,37 +228,12 @@ const SidebarComponent = () => {
       </div>
 
       {/* Modal tìm kiếm */}
+
       {searchContainer && (
-        <div className="fixed inset-0 bg-black/30 flex justify-start items-center z-50">
-          <div
-            ref={searchRef}
-            className="bg-white h-full w-[600px] shadow-lg p-6 animate-slide-in-left"
-          >
-            <div className="flex justify-between items-center mb-6">
-              <div className="text-xl font-semibold text-gray-800">
-                Tìm kiếm
-              </div>
-
-              {/* Nút đóng */}
-              <button
-                onClick={handleCloseSearchContainer}
-                className="flex justify-center items-center cursor-pointer text-xl text-gray-500 hover:text-black"
-              >
-                <MdOutlineClose />
-              </button>
-            </div>
-
-            <input
-              type="text"
-              placeholder="Nhập nội dung tìm kiếm..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none"
-            />
-
-            <div className="mt-4 text-gray-500 text-sm">
-              Gợi ý tìm kiếm sẽ hiển thị tại đây...
-            </div>
-          </div>
-        </div>
+        <SearchModal
+          closeSearchModal={handleCloseSearchModal}
+          searchRef={searchRef}
+        />
       )}
 
       {/* Bottom section */}
