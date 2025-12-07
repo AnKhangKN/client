@@ -16,6 +16,7 @@ const PostManagementPage = () => {
         const res = await ReportServices.getReports(accessToken, reportType);
 
         setReportList(res.data);
+        console.log(res.data);
       } catch (error) {
         console.log(error);
       }
@@ -25,43 +26,36 @@ const PostManagementPage = () => {
   }, []);
 
   const columns = [
-    { title: "ID báo cáo", dataIndex: "_id", key: "_id" },
-    { title: "Bài viết ID", dataIndex: "reportModels", key: "reportModels" },
+    { title: "STT", render: (_, __, index) => index + 1 },
+    { title: "Bài viết ID", dataIndex: ["reportModels", "_id"] },
     {
       title: "Người báo cáo",
       dataIndex: ["reportUser", "email"],
-      key: "reportUser",
     },
-    { title: "Lý do", dataIndex: "reason", key: "reason" },
+    { title: "Lý do", dataIndex: "reason" },
     {
       title: "Nội dung báo cáo",
       dataIndex: "reportContent",
-      key: "reportContent",
     },
     {
-      title: "Trạng thái xác nhận",
-      key: "isConfirm",
-      render: (text, record) =>
-        record.isConfirm ? "Đã xác nhận" : "Chưa xác nhận",
-    },
-    {
-      title: "Trạng thái hủy",
-      key: "isCancel",
-      render: (text, record) => (record.isCancel ? "Đã hủy" : "Chưa hủy"),
-    },
-    {
-      title: "Ngày tạo",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      render: (text) => new Date(text).toLocaleString("vi-VN"),
+      title: "Trạng thái",
+      render: (_, record) => {
+        if (record.isConfirm)
+          return (
+            <span className="text-green-500 p-2 bg-green-100">Đã xử lý</span>
+          );
+
+        if (record.isCancel)
+          return <span className="text-red-500 p-2 bg-red-100">Đã hủy</span>;
+
+        return <span className="text-blue-500 p-2 bg-blue-100">Xử lý</span>;
+      },
     },
   ];
 
   const handleOpenModal = (record) => {
     setSelectedPost(record);
   };
-
-  console.log(selectedPost);
 
   const handleCloseModal = () => {
     setSelectedPost(null);
@@ -109,34 +103,44 @@ const PostManagementPage = () => {
           onClick={handleCloseModal}
         >
           <div
-            className="bg-white p-6 rounded-lg w-[400px] shadow-lg"
+            className="bg-white p-6 rounded-xl w-[450px] shadow-2xl max-w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="text-lg font-semibold mb-4">Thông tin chi tiết</h2>
+            <h2 className="text-2xl font-semibold mb-6 text-center">
+              Thông tin chi tiết báo cáo
+            </h2>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
+            <div className="space-y-4">
+              <div className="flex justify-between">
                 <span className="font-medium text-gray-700">
                   Email người báo cáo:
                 </span>
                 <span>{selectedPost.reportUser?.email || "Chưa có"}</span>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between">
                 <span className="font-medium text-gray-700">Lý do:</span>
                 <span>{selectedPost.reason}</span>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between">
                 <span className="font-medium text-gray-700">
                   Nội dung báo cáo:
                 </span>
                 <span>{selectedPost.reportContent || "-"}</span>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between">
                 <span className="font-medium text-gray-700">Trạng thái:</span>
-                <span>
+                <span
+                  className={`font-semibold ${
+                    selectedPost.isConfirm
+                      ? "text-green-600"
+                      : selectedPost.isCancel
+                      ? "text-red-600"
+                      : "text-gray-600"
+                  }`}
+                >
                   {selectedPost.isConfirm
                     ? "Đã xác nhận"
                     : selectedPost.isCancel
@@ -146,17 +150,16 @@ const PostManagementPage = () => {
               </div>
             </div>
 
-            <div className="mt-5 flex justify-between items-center gap-4">
+            <div className="mt-6 flex justify-end gap-4">
               <ButtonComponent
-                text={`Cancel report`}
+                text="Hủy báo cáo"
                 onClick={handleCancelReport}
                 bgColor="white"
                 hoverColor="hover:bg-gray-200"
                 textColor="text-gray-800"
               />
-
               <ButtonComponent
-                text={`Confirm report`}
+                text="Xác nhận báo cáo"
                 onClick={handleConfirmReport}
               />
             </div>

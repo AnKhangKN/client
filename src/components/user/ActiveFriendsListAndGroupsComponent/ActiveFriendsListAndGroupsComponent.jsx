@@ -11,7 +11,7 @@ import GroupChatCreateComponent from "../GroupChatCreateComponent/GroupChatCreat
 
 const ActiveFriendsListAndGroupsListComponent = ({
   activeFriendsList,
-  groupsList,
+  // groupsList,
 }) => {
   const [messageBox, setMessageBox] = useState(false);
   const [chatId, setChatId] = useState(null);
@@ -40,17 +40,17 @@ const ActiveFriendsListAndGroupsListComponent = ({
     setMessageBox(false);
   };
 
-  const handleOpenMessageGroupBox = () => {
-    setMessageGroupBox(true);
-  };
+  // const handleOpenMessageGroupBox = () => {
+  //   setMessageGroupBox(true);
+  // };
 
   const handleCloseMessageGroupBox = () => {
     setMessageGroupBox(false);
   };
 
-  const handleOpenGroupChatCreate = () => {
-    setGroupChatCreate(true);
-  };
+  // const handleOpenGroupChatCreate = () => {
+  //   setGroupChatCreate(true);
+  // };
 
   const handleCloseGroupChatCreate = () => {
     setGroupChatCreate(false);
@@ -62,14 +62,14 @@ const ActiveFriendsListAndGroupsListComponent = ({
       <div>
         <div className="flex py-4 px-2 justify-between items-center">
           <div>Bạn bè hoạt động</div>
-          <div className="flex items-center gap-4">
+          {/* <div className="flex items-center gap-4">
             <div>
               <RiSearchLine />
             </div>
             <div>
               <HiOutlineDotsHorizontal />
             </div>
-          </div>
+          </div> */}
         </div>
 
         {activeFriendsList.map((friend) => (
@@ -96,7 +96,7 @@ const ActiveFriendsListAndGroupsListComponent = ({
       </div>
 
       {/* List group */}
-      <div>
+      {/* <div>
         <div className="flex py-4 px-2 border-t border-gray-400 justify-between items-center">
           <div>Nhóm chat</div>
 
@@ -130,7 +130,7 @@ const ActiveFriendsListAndGroupsListComponent = ({
             </div>
           </div>
         ))}
-      </div>
+      </div> */}
 
       {messageBox ? (
         <MessageBoxComponent

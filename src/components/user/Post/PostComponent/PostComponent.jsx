@@ -179,7 +179,7 @@ const PostComponent = ({ postsList }) => {
       {posts.map((item) => (
         <div
           key={item._id}
-          className="p-4 shadow rounded-md dark:bg-[#252728] dark:border-0 border border-gray-200"
+          className="p-4 shadow rounded-md dark:text-white bg-white dark:bg-[#252728] dark:border-0 border border-gray-200"
         >
           {/* HEADER */}
           <div className="flex justify-between items-center">
@@ -190,15 +190,15 @@ const PostComponent = ({ postsList }) => {
                   <div className="w-10 h-10 overflow-hidden rounded-sm bg-white">
                     <img
                       className="w-full h-full"
-                      src={item.group.groupAvatar}
+                      src={item.group.groupAvatar || LogoCTUT}
                       alt="groupAvatar"
                     />
                   </div>
                 )}
                 <div
                   className={`${
-                    item.group?.groupAvatar
-                      ? "absolute top-2 left-2 border-3 dark:border-black border-white"
+                    item.group
+                      ? "absolute top-2 left-2 z-10 border-3 dark:border-black border-white"
                       : ""
                   } w-10 h-10 rounded-full bg-white overflow-hidden`}
                 >
@@ -211,7 +211,7 @@ const PostComponent = ({ postsList }) => {
               </div>
 
               {/* Info */}
-              <div className="flex flex-col ">
+              <div className="flex flex-col">
                 {item.group ? (
                   <>
                     <div>{item.group.groupName}</div>

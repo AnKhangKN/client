@@ -14,6 +14,7 @@ const initialState = {
   follower: [],
   bio: "",
   isAdmin: false,
+  isTeacher: true,
 };
 
 export const userSlice = createSlice({
@@ -34,6 +35,7 @@ export const userSlice = createSlice({
         follower,
         bio,
         isAdmin,
+        isTeacher,
       } = action.payload;
 
       state.id = _id;
@@ -48,6 +50,7 @@ export const userSlice = createSlice({
       state.follower = follower || [];
       state.bio = bio;
       state.isAdmin = isAdmin;
+      state.isTeacher = isTeacher;
     },
 
     updateFollowingList: (state, action) => {

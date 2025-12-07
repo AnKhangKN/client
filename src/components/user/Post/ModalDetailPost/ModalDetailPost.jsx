@@ -25,6 +25,7 @@ const ModalDetailPost = ({
   const [morePostModal, setMorePostModal] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
   const [visibleReplies, setVisibleReplies] = useState({});
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -134,6 +135,18 @@ const ModalDetailPost = ({
   };
 
   const handleSendComment = async () => {
+    setLoading(true);
+
+    if (
+      !content.trim() &&
+      selectedMedia.length === 0 &&
+      selectedFiles.length === 0
+    ) {
+      alert("Hãy nhập bình luận hoặc gửi file!");
+      setLoading(false);
+      return;
+    }
+
     try {
       const accessToken = await ValidateToken.getValidAccessToken();
 
@@ -161,6 +174,7 @@ const ModalDetailPost = ({
 
       // reset form
       setContent("");
+      setLoading(false);
       setReplyingTo(null);
       setSelectedMedia([]);
       setSelectedFiles([]);
@@ -180,19 +194,31 @@ const ModalDetailPost = ({
           >
             <VscClose />
           </button>
-          <div className="bg-white dark:bg-[#1c1c1d] dark:text-white w-15/18 h-5/6 rounded-lg overflow-hidden relative shadow-lg flex flex-col">
+          <div
+            className={`bg-white dark:bg-[#1c1c1d] dark:text-white ${
+              item.medias && item.medias.length > 0 ? "w-15/18" : "w-3/7"
+            } 
+             h-5/6 rounded-lg overflow-hidden 
+          relative shadow-lg flex flex-col`}
+          >
             <div className="flex md:flex-row flex-col overflow-hidden h-full">
               {/* Left Column */}
-              <div className="overflow-auto flex-1 p-4 scrollbar-hide">
-                {/* Media carousel */}
-                {item.medias && item.medias.length > 0 && (
-                  <MediaCarousel medias={item.medias} />
-                )}
-              </div>
+              {item.medias && item.medias.length > 0 && (
+                <div className="overflow-auto flex-1 p-4 scrollbar-hide">
+                  {/* Media carousel */}
+                  {item.medias && item.medias.length > 0 && (
+                    <MediaCarousel medias={item.medias} />
+                  )}
+                </div>
+              )}
 
               {/* Right Column */}
-              <div className="w-140 flex flex-col">
-                <div className="flex dark:border-0 border-b border-gray-200 p-2 items-center justify-between">
+              <div
+                className={`${
+                  item.medias && item.medias.length > 0 ? "w-140" : "w-full"
+                }  flex flex-col`}
+              >
+                <div className="flex dark:border-0 border-b border-gray-200 items-center justify-between p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 overflow-hidden">
                       <img
@@ -245,10 +271,18 @@ const ModalDetailPost = ({
                 </div>
 
                 {/* Khung comment */}
-                <div className="flex-1 overflow-auto p-2 space-y-8">
+                <div className="flex-1 overflow-auto p-4 space-y-8">
                   {/* Content */}
                   <div className="flex flex-col">
-                    <p>{item.content}</p>
+                    <div
+                      className={`${
+                        item.bgContent
+                          ? `${item.bgContent} flex items-center justify-center py-40 text-4xl text-white`
+                          : ""
+                      }`}
+                    >
+                      <p>{item.content}</p>
+                    </div>
 
                     <div>
                       {item.documents?.map((f, i) => (
@@ -270,7 +304,7 @@ const ModalDetailPost = ({
 
                 {/* Previews for selected media / files */}
                 {(selectedMedia.length > 0 || selectedFiles.length > 0) && (
-                  <div className="px-4 pb-2">
+                  <div className="px-4 py-2">
                     <div className="flex gap-3 items-start">
                       {selectedMedia.map((m, idx) => (
                         <div key={idx} className="relative">
@@ -293,7 +327,8 @@ const ModalDetailPost = ({
                                 prev.filter((_, i) => i !== idx)
                               )
                             }
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center"
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs
+                            cursor-pointer flex items-center justify-center"
                             title="Xóa media"
                           >
                             ×
@@ -353,37 +388,40 @@ const ModalDetailPost = ({
                     </div>
                   )}
 
-                  <div className="flex">
-                    <div className="flex gap-2 items-center">
-                      <label
-                        htmlFor="medias"
-                        className="cursor-pointer p-1 text-3xl rounded-full text-green-600"
-                      >
-                        <PiImagesSquareLight />
-                      </label>
-                      <input
-                        id="medias"
-                        type="file"
-                        className="hidden"
-                        multiple
-                        accept="image/*,video/*"
-                        onChange={handleMediaChange}
-                      />
-                      <label
-                        htmlFor="files"
-                        className="cursor-pointer p-1 text-3xl rounded-full text-indigo-500"
-                      >
-                        <PiFilesLight />
-                      </label>
-                      <input
-                        id="files"
-                        type="file"
-                        className="hidden"
-                        multiple
-                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z"
-                        onChange={handleFilesChange}
-                      />
-                    </div>
+                  <div className="flex border border-gray-300 rounded-xl px-2 py-1.5">
+                    {!content.trim() && (
+                      <div className="flex gap-2 items-center">
+                        <label
+                          htmlFor="medias"
+                          className="cursor-pointer p-1 text-3xl rounded-full text-green-600"
+                        >
+                          <PiImagesSquareLight />
+                        </label>
+                        <input
+                          id="medias"
+                          type="file"
+                          className="hidden"
+                          multiple
+                          accept="image/*,video/*"
+                          onChange={handleMediaChange}
+                        />
+
+                        <label
+                          htmlFor="files"
+                          className="cursor-pointer p-1 text-3xl rounded-full text-indigo-500"
+                        >
+                          <PiFilesLight />
+                        </label>
+                        <input
+                          id="files"
+                          type="file"
+                          className="hidden"
+                          multiple
+                          accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z"
+                          onChange={handleFilesChange}
+                        />
+                      </div>
+                    )}
                     <div className="flex gap-2 items-center w-full">
                       <input
                         type="text"
@@ -394,14 +432,21 @@ const ModalDetailPost = ({
                             ? `Trả lời ${replyingTo.author?.firstName}...`
                             : "Viết bình luận..."
                         }
-                        className="flex-1 border border-gray-300 rounded px-2 py-1 outline-0"
+                        className="flex-1 rounded px-2 py-1 outline-0"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault(); // tránh xuống dòng
+                            handleSendComment();
+                          }
+                        }}
                       />
 
                       <ButtonComponent
                         text="Bình luận"
+                        loading={loading}
                         onClick={handleSendComment}
-                        py="py-1"
-                        width="w-26"
+                        py="py-2"
+                        width="w-36"
                       />
                     </div>
                   </div>

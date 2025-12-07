@@ -44,8 +44,9 @@ const SidebarGroupComponent = () => {
       try {
         const accessToken = await ValidateToken.getValidAccessToken();
 
-        const groups = await GroupServices.getGroupsJoin(accessToken);
-        setGroups(groups);
+        const res = await GroupServices.getGroupsJoin(accessToken);
+
+        setGroups(res.groups);
       } catch (error) {
         console.log(error);
       }
@@ -103,30 +104,36 @@ const SidebarGroupComponent = () => {
         </button>
 
         {/* List group */}
-        {groups.map((group) => (
-          <div
-            key={group._id}
-            onClick={() => navigate(`/groups/${group.groupName}/${group._id}`)}
-            className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded-lg"
-          >
-            <img
-              className="w-10 h-10 dark:bg-white rounded-full"
-              src={group.groupAvatar || LogoCTUT}
-              alt="logo"
-            />
+        {groups && (
+          <div>
+            {groups.map((group) => (
+              <div
+                key={group._id}
+                onClick={() =>
+                  navigate(`/groups/public/${group.groupName}/${group._id}`)
+                }
+                className="flex items-center gap-2 p-3 hover:bg-gray-200 rounded-lg"
+              >
+                <img
+                  className="w-10 h-10 dark:bg-white rounded-full"
+                  src={group.groupAvatar || LogoCTUT}
+                  alt="logo"
+                />
 
-            <div className="flex-col w-full lg:flex hidden">
-              <div className="font-bold text-ellipsis overflow-hidden whitespace-nowrap max-w-[215px]">
-                {group.groupName}
-              </div>
+                <div className="flex-col w-full lg:flex hidden">
+                  <div className="font-bold text-ellipsis overflow-hidden whitespace-nowrap max-w-[215px]">
+                    {group.groupName}
+                  </div>
 
-              <div className="flex justify-between items-center text-gray-600 text-sm">
-                <div>{group.groupMember.length}</div>
-                <div>{formatVietnamTime(group.createdAt)}</div>
+                  <div className="flex justify-between items-center text-gray-600 text-sm">
+                    <div>{group.groupMember.length}</div>
+                    <div>{formatVietnamTime(group.createdAt)}</div>
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

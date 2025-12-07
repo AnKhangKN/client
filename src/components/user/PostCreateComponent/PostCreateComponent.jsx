@@ -15,11 +15,13 @@ import * as PostServices from "../../../services/user/PostServices";
 import * as ValidateToken from "../../../utils/token.utils";
 import MessageComponent from "../../shared/MessageComponent/MessageComponent";
 import ButtonComponent from "../../shared/ButtonComponent/ButtonComponent";
+import { useLocation } from "react-router-dom";
 
 const PostCreateComponent = () => {
   const user = useSelector((state) => state.user);
   const [modalNewPost, setModalNewPost] = useState(false);
-
+  const location = useLocation();
+  const currentPath = location.pathname;
   const [modalEmotion, setModalEmotion] = useState(false);
   const [modalSelectBgTextArea, setModalSelectBgTextArea] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,6 +35,7 @@ const PostCreateComponent = () => {
   const [message, setMessage] = useState({ text: "", type: "info", key: 0 });
   const [openPrivacyPost, setOpenPrivacyPost] = useState(false);
   const [privacy, setPrivacy] = useState(user.privacyPost);
+  const postGroup = currentPath.startsWith("/groups");
 
   const imageRef = useRef();
   const fileRef = useRef();
@@ -138,6 +141,9 @@ const PostCreateComponent = () => {
       setLoading(true);
       const formData = new FormData();
       formData.append("content", content);
+      if (postGroup) {
+        formData.append("group", currentPath.split("/").pop());
+      }
       formData.append("emotion", selectedEmotion?.label || "");
       formData.append("bgContent", selectedBgTextArea || "");
       formData.append("privacy", privacy || "public");
@@ -241,7 +247,7 @@ const PostCreateComponent = () => {
             {/* Header */}
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold dark:text-white">
-                Tạo bài viết
+                Tạo bài viết <span>{postGroup ? "của nhóm" : ""}</span>
               </h2>
               <button
                 onClick={() => setModalNewPost(false)}

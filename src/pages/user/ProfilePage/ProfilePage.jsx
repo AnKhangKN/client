@@ -311,7 +311,7 @@ const ProfilePage = () => {
             className="relative w-full pb-[35%] bg-cover bg-center rounded-lg overflow-hidden"
             style={{ backgroundImage: `url(${previewCover || coverImage})` }}
           >
-            {userDetail._id === user._id && (
+            {userDetail._id === user.id && (
               <label className="absolute flex items-center gap-2 right-4 bottom-4 bg-white dark:bg-gray-700 px-4 py-2 rounded-lg cursor-pointer">
                 <RiCameraLensFill className="text-lg" />
                 <span>Thêm ảnh</span>
@@ -787,13 +787,13 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          <div
+          {/* <div
             className={` w-[280px] shrink-0 ${
               posts.length === 0 ? "hidden" : "hidden lg:block"
             }`}
           >
             <ResourcesComponent />
-          </div>
+          </div> */}
         </div>
 
         {/* Message box */}

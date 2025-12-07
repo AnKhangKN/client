@@ -37,10 +37,28 @@ export const getGroupsJoin = async (accessToken) => {
   }
 };
 
-export const getGroupDetail = async (accessToken, groupName) => {
+export const getGroupDetail = async (accessToken, groupId) => {
   try {
     const res = await axios.get(
-      `${import.meta.env.VITE_BACKEND_API}/user/groups/${groupName}`,
+      `${import.meta.env.VITE_BACKEND_API}/user/groups/${groupId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+export const getGroupsNotJoined = async (accessToken) => {
+  try {
+    const res = await axios.get(
+      `${import.meta.env.VITE_BACKEND_API}/user/groups/notJoin`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,

@@ -9,45 +9,58 @@ const EditPage = () => {
   const user = useSelector((state) => state.user);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div className="w-20 h-20 overflow-hidden">
+    <div className="max-w-3xl mx-auto p-6 bg-white rounded-xl shadow-md flex flex-col gap-8">
+      {/* Avatar */}
+      <div className="flex items-center gap-6">
+        <div className="w-24 h-24 rounded-full overflow-hidden border border-gray-300">
           <img
             className="w-full h-full object-cover"
             src={user.userAvatar ? user.userAvatar : logoCTUT}
-            alt=""
+            alt="Avatar"
           />
         </div>
-
         <ButtonComponent text="Thay ảnh" width="w-40" />
       </div>
 
-      <div className="flex flex-col gap-4">
-        <InputComponent label="Họ" value={user.lastName} />
-        <InputComponent label="Tên" value={user.firstName} />
-        <InputComponent label="Tên người dùng" value={user.userName} />
-        <div>
-          <div>
-            <input type="radio" name="" id="" /> <label htmlFor="">Nam</label>
-          </div>
+      {/* Form */}
+      <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-2 gap-4">
+          <InputComponent label="Họ" value={user.lastName} />
+          <InputComponent label="Tên" value={user.firstName} />
+          <InputComponent label="Tên người dùng" value={user.userName} />
+          <InputComponent label="Mã số sinh viên" value={user.studentId} />
+          <InputComponent label="Khóa" value={user.courses} />
+          <InputComponent label="Chuyên ngành" value={user.major} />
+        </div>
 
-          <div>
-            <input type="radio" name="" id="" /> <label htmlFor="">Nữ</label>
-          </div>
-
-          <div>
-            <input type="radio" name="" id="" /> <label htmlFor="">Khác</label>
+        {/* Giới tính */}
+        <div className="flex flex-col gap-2">
+          <label className="font-medium">Giới tính</label>
+          <div className="flex gap-6">
+            <div className="flex items-center gap-2">
+              <input type="radio" name="gender" id="male" />
+              <label htmlFor="male">Nam</label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="radio" name="gender" id="female" />
+              <label htmlFor="female">Nữ</label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="radio" name="gender" id="other" />
+              <label htmlFor="other">Khác</label>
+            </div>
           </div>
         </div>
-        <InputComponent label="Mã số sinh viên" value={user.studentId} />
-        <InputComponent label="Khóa" value={user.courses} />
-        <InputComponent label="Chuyên ngành" value={user.major} />
 
+        {/* Tiểu sử */}
         <TextAreaComponent label="Tiểu sử" value={user.bio} />
 
-        <div>Mạng xã hội</div>
+        {/* Mạng xã hội */}
+        <div className="font-medium text-gray-700">Mạng xã hội</div>
 
-        <ButtonComponent text="Đổi thông tin" />
+        <div className="flex justify-end">
+          <ButtonComponent text="Đổi thông tin" width="w-40" />
+        </div>
       </div>
     </div>
   );

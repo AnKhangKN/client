@@ -82,7 +82,7 @@ const HeaderComponent = ({ toggleSidebar }) => {
   };
 
   return (
-    <div className="shrink-0 py-4 border-b border-gray-400 bg-white shadow">
+    <div className="shrink-0 py-4 border-b border-gray-200 bg-white shadow">
       {message.text && (
         <MessageComponent
           type={message.type}

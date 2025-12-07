@@ -34,7 +34,7 @@ const SidebarLayoutUser = ({ children }) => {
 
       {accountRoutes.includes(path) && <SidebarAccountComponent />}
 
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="flex-1 overflow-y-auto scrollbar-hide">{children}</main>
 
       {groupRoutes.includes(path) && <SidebarGroupComponent />}
 

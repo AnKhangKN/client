@@ -15,7 +15,12 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { RiDashboard3Fill, RiDashboard3Line } from "react-icons/ri";
 import "./style.css";
-import { IoNewspaperOutline, IoNewspaperSharp } from "react-icons/io5";
+import {
+  IoInformationCircleOutline,
+  IoInformationCircleSharp,
+  IoNewspaperOutline,
+  IoNewspaperSharp,
+} from "react-icons/io5";
 
 const SidebarComponent = ({ isShowSidebar }) => {
   const navigate = useNavigate();
@@ -80,12 +85,12 @@ const SidebarComponent = ({ isShowSidebar }) => {
     {
       icon:
         location.pathname === "/admin/message" ? (
-          <PiChatTeardropDotsFill />
+          <IoInformationCircleSharp />
         ) : (
-          <PiChatTeardropDots />
+          <IoInformationCircleOutline />
         ),
       nav: "/admin/message",
-      label: "Quản lý tin nhắn",
+      label: "Phản hồi và thông báo",
     },
     {
       icon:

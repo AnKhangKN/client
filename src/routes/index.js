@@ -30,6 +30,8 @@ import SecurityPage from "../pages/user/SecurityPage/SecurityPage";
 import DepartmentDetailPage from "../pages/user/Department/DepartmentDetailPage/DepartmentDetailPage";
 import PostManagementDetailPage from "@/pages/admin/PostManagementDetailPage/PostManagementDetailPage";
 import GroupDetailPage from "@/pages/user/Group/GroupDetailPage/GroupDetailPage";
+import GroupDetailMember from "@/pages/user/Group/GroupDetailMember/GroupDetailMember";
+import DiscoverDepartMentPage from "@/pages/user/Department/DiscoverPage/DiscoverPage";
 
 export const routes = [
   // auth
@@ -68,8 +70,12 @@ export const routes = [
     isShowSidebarUser: true,
   },
   {
-    path: "/groups/:groupName/:groupId",
+    path: "/groups/public/:groupName/:groupId",
     page: GroupDetailPage,
+  },
+  {
+    path: "/groups/members/:groupName/:groupId",
+    page: GroupDetailMember,
   },
   {
     path: "/groups/create",
@@ -87,7 +93,7 @@ export const routes = [
   },
   {
     path: "/department/discover",
-    page: DiscoverPage,
+    page: DiscoverDepartMentPage,
     isShowSidebarUser: true,
   },
   {
