@@ -28,7 +28,7 @@ const FeedPage = () => {
   }, [navigate]);
 
   return (
-    <div className="dark:bg-[#1c1c1d] dark:text-white flex justify-center">
+    <div className="dark:bg-[#1c1c1d] dark:text-white flex justify-center min-h-screen">
       {/* Bài viết */}
       <div className=" w-full max-w-[600px] flex flex-col space-y-4 py-4">
         <PostComponent postsList={posts} />

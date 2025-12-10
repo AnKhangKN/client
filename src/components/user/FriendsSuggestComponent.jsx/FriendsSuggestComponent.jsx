@@ -1,12 +1,13 @@
 import React, { useRef, useState, useEffect } from "react";
 import ButtonComponent from "../../shared/ButtonComponent/ButtonComponent";
 import { FiChevronRight, FiChevronLeft } from "react-icons/fi";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import * as UserServices from "../../../services/user/UserServices";
 import * as ValidateToken from "../../../utils/token.utils";
 import { useDispatch, useSelector } from "react-redux";
 import { updateFollowingList } from "../../../features/user/userSlice";
 import { useNavigate } from "react-router-dom";
+import * as NotificationServices from "@/services/shared/NotificationServices";
 
 const FriendsSuggestComponent = ({ friendsSuggest }) => {
   const scrollRef = useRef(null);
@@ -72,6 +73,16 @@ const FriendsSuggestComponent = ({ friendsSuggest }) => {
       const res = await UserServices.followFriend(accessToken, { friendId });
 
       const isFollowing = res.isFollowing; // từ BE trả về
+
+      if (isFollowing) {
+        const data = {
+          isAdmin: true,
+          type: "report",
+          message: "đã gửi report về người dùng.",
+        };
+
+        await NotificationServices.createNotification(accessToken, data);
+      }
 
       setFriends((prev) => {
         const updated = prev.map((f) =>
@@ -159,7 +170,7 @@ const FriendsSuggestComponent = ({ friendsSuggest }) => {
 
               <div className="w-full h-64 p-4 overflow-hidden shrink-0">
                 <img
-                  src={friend.userAvatar || LogoCTUT}
+                  src={friend.userAvatar || AvatarDefault}
                   alt={friend.userName}
                   className="w-full h-full object-cover"
                 />

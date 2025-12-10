@@ -5,25 +5,20 @@ import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import "./style.css";
 import MessageBoxComponent from "../MessageBoxComponent/MessageBoxComponent";
 import GroupMessageBoxComponent from "../GroupMessageBoxComponent/GroupMessageBoxComponent";
-import logoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 
-const ChatBoxComponent = ({ listFriends, listGroups }) => {
+const ChatBoxComponent = ({ listFriends }) => {
   const [modal, setModal] = useState(false);
   const [activeFriendId, setActiveFriendId] = useState(null);
-  const [activeGroupId, setActiveGroupId] = useState(null);
 
   const handleOpenModal = () => setModal(true);
   const handleCloseModal = () => {
     setModal(false);
     setActiveFriendId(null);
-    setActiveGroupId(null);
   };
 
   const handleOpenMessageBox = (friendId) => setActiveFriendId(friendId);
   const handleCloseMessageBox = () => setActiveFriendId(null);
-
-  const handleOpenMessageGroupBox = (groupId) => setActiveGroupId(groupId);
-  const handleCloseMessageGroupBox = () => setActiveGroupId(null);
 
   return (
     <div className="relative">
@@ -77,7 +72,7 @@ const ChatBoxComponent = ({ listFriends, listGroups }) => {
                     <div className="relative">
                       <img
                         className="w-10 h-10 rounded-full object-cover"
-                        src={friend.userAvatar || logoCTUT}
+                        src={friend.userAvatar || AvatarDefault}
                         alt={friend.userName}
                       />
                       <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
@@ -106,30 +101,6 @@ const ChatBoxComponent = ({ listFriends, listGroups }) => {
                   <HiOutlineDotsHorizontal className="cursor-pointer" />
                 </div>
               </div>
-
-              {listGroups.map((group) => (
-                <div key={group.id}>
-                  <div
-                    onClick={() => handleOpenMessageGroupBox(group.id)}
-                    className="flex items-center gap-3 py-2 hover:bg-gray-100 rounded-lg px-2 cursor-pointer transition"
-                  >
-                    <img
-                      className="w-10 h-10 rounded-full object-cover"
-                      src={group.groupAvatar}
-                      alt={group.groupName}
-                    />
-                    <div className="text-gray-800 text-sm font-medium">
-                      {group.groupName}
-                    </div>
-                  </div>
-
-                  {activeGroupId === group.id && (
-                    <GroupMessageBoxComponent
-                      handleCloseMessageGroupBox={handleCloseMessageGroupBox}
-                    />
-                  )}
-                </div>
-              ))}
             </div>
           </div>
         </div>

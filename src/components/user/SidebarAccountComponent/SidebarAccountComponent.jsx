@@ -1,6 +1,7 @@
 import React from "react";
 import { AiFillDelete } from "react-icons/ai";
 import { BsActivity, BsAppIndicator, BsPersonCircle } from "react-icons/bs";
+import { IoShareSocial } from "react-icons/io5";
 import { MdBlockFlipped } from "react-icons/md";
 import { PiShieldCheckLight } from "react-icons/pi";
 import { VscMention } from "react-icons/vsc";
@@ -12,6 +13,11 @@ const SidebarAccountComponent = () => {
       label: "Chỉnh sửa trang cá nhân",
       icon: <BsPersonCircle />,
       nav: "/accounts/edit",
+    },
+    {
+      label: "Mạng xã hội",
+      icon: <IoShareSocial />,
+      nav: "/accounts/social",
     },
     {
       label: "Hoạt động của bạn",

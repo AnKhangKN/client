@@ -14,7 +14,7 @@ const GroupIntroduction = ({ groupPrivacy = "public", introduction = "" }) => {
       : introduction || "Nhóm học tập chưa có giới thiệu.";
 
   return (
-    <div className="w-1/3 bg-white p-5 rounded-xl shadow flex flex-col gap-4 h-1/2">
+    <div className="w-1/3 bg-white dark:bg-[#252728] p-5 rounded-xl shadow flex flex-col gap-4 h-1/2">
       <h2 className="text-xl font-bold">Giới thiệu</h2>
 
       {groupPrivacy === "public" ? (

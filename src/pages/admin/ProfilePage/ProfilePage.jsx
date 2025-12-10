@@ -1,5 +1,5 @@
 import React from "react";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import { MdSettings } from "react-icons/md";
 import { useSelector } from "react-redux";
 import ButtonComponent from "../../../components/shared/ButtonComponent/ButtonComponent";
@@ -16,7 +16,7 @@ const ProfilePage = () => {
         <div className="relative group">
           <img
             className="w-36 h-36 rounded-full object-cover border-4 border-gray-200 shadow-sm"
-            src={user.userAvatar || LogoCTUT}
+            src={user.userAvatar || AvatarDefault}
             alt="User avatar"
           />
           <div className="absolute inset-0 bg-black/20 rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center text-white text-2xl cursor-pointer">

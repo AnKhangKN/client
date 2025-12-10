@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { IoIosArrowRoundBack } from "react-icons/io";
 import { AiOutlineCamera, AiOutlineCloseCircle } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
-import logoCTUT from "../../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../../assets/logo/avatar_default.webp";
 import ButtonComponent from "../../../../components/shared/ButtonComponent/ButtonComponent";
 import InputComponent from "../../../../components/shared/InputComponent/InputComponent";
 import * as UserServices from "@/services/user/UserServices";
@@ -42,7 +42,9 @@ const CreateGroupPage = () => {
     fetchFriend();
   }, []);
 
-  const avatarPreview = avatarFile ? URL.createObjectURL(avatarFile) : logoCTUT;
+  const avatarPreview = avatarFile
+    ? URL.createObjectURL(avatarFile)
+    : AvatarDefault;
   const coverPreview = coverFile ? URL.createObjectURL(coverFile) : null;
 
   // Lọc bạn bè
@@ -110,7 +112,11 @@ const CreateGroupPage = () => {
 
           {/* User */}
           <div className="flex items-center gap-3">
-            <img className="w-12 h-12 rounded-full" src={logoCTUT} alt="" />
+            <img
+              className="w-12 h-12 rounded-full"
+              src={AvatarDefault}
+              alt=""
+            />
             <div>
               <div className="font-semibold dark:text-white">
                 {user.lastName} {user.firstName}
@@ -166,7 +172,7 @@ const CreateGroupPage = () => {
                       className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-[#3a3a3a] transition"
                     >
                       <img
-                        src={friend.userAvatar || logoCTUT}
+                        src={friend.userAvatar || AvatarDefault}
                         className="w-10 h-10 rounded-full"
                       />
                       <div>
@@ -195,7 +201,7 @@ const CreateGroupPage = () => {
                 {selectedMembers.map((member) => (
                   <div key={member._id} className="flex items-center gap-3">
                     <img
-                      src={member.userAvatar || logoCTUT}
+                      src={member.userAvatar || AvatarDefault}
                       className="w-10 h-10 rounded-full"
                     />
                     <div>

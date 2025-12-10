@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import LogoCTUT from "@/assets/logo/logo-ctut.png";
+import AvatarDefault from "@/assets/logo/avatar_default.webp";
 import * as ValidateToken from "@/utils/token.utils";
 import * as CommentServices from "@/services/user/CommentServices";
 import * as HeartServices from "@/services/user/HeartServices";
@@ -19,7 +19,6 @@ const CommentPost = ({
   const [comments, setComments] = useState([]);
   const [heartedComments, setHeartedComments] = useState({});
   const [selectedCommentForMenu, setSelectedCommentForMenu] = useState(null);
-  const [showLoadMore, setShowLoadMore] = useState(true);
 
   // --- Sync comments + hearted state ---
   useEffect(() => {
@@ -72,7 +71,7 @@ const CommentPost = ({
   };
 
   // --- Load replies ---
-  const handleRepliesComment = async (parentId) => {
+  const loadRepliesComment = async (parentId) => {
     try {
       const token = await ValidateToken.getValidAccessToken();
       const res = await CommentServices.getCommentsReplyByCommentId(
@@ -80,7 +79,6 @@ const CommentPost = ({
         parentId
       );
       setVisibleReplies((prev) => ({ ...prev, [parentId]: res || [] }));
-      setShowLoadMore(false);
     } catch (error) {
       console.error(error);
     }
@@ -102,7 +100,7 @@ const CommentPost = ({
       <div className={`${isReply ? "ml-6" : ""} mt-3 space-y-2`}>
         <div className="flex gap-2">
           <img
-            src={c.author?.userAvatar || LogoCTUT}
+            src={c.author?.userAvatar || AvatarDefault}
             alt=""
             className="w-7 h-7 rounded-full object-cover"
           />
@@ -195,10 +193,10 @@ const CommentPost = ({
                 </div>
               </div>
 
-              {c.repliesCount > 0 && showLoadMore && (
+              {c.repliesCount > 0 && !visibleReplies[c._id] && (
                 <div
                   className="cursor-pointer text-blue-500 text-sm"
-                  onClick={() => handleRepliesComment(c._id)}
+                  onClick={() => loadRepliesComment(c._id)}
                 >
                   Xem thêm {c.repliesCount} trả lời
                 </div>

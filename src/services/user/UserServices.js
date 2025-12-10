@@ -126,3 +126,59 @@ export const getFriends = async (accessToken) => {
     console.log(error);
   }
 };
+
+export const updateInfoUser = async (accessToken, data) => {
+  try {
+    const res = await axios.post(
+      `${import.meta.env.VITE_BACKEND_API}/user/info_user`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const updateOrderConnect = async (token, orderConnect) => {
+  try {
+    const res = await axios.put(
+      `${import.meta.env.VITE_BACKEND_API}/user/order-connect`,
+      orderConnect,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+export const deleteUserHidden = async (accessToken, friendId) => {
+  try {
+    const res = await axios.delete(
+      `${import.meta.env.VITE_BACKEND_API}/user/friendHidden/${friendId}`,
+
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};

@@ -1,22 +1,19 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const SidebarDepartmentComponent = () => {
+const SidebarDepartmentComponent = ({ departments }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const path = location.pathname;
+  const [departmentList, setDepartmentList] = useState([]);
 
-  const departmentList = [
-    { _id: "1", departmentName: "Công nghệ thông tin" },
-    { _id: "2", departmentName: "Hệ thống thông tin" },
-    { _id: "3", departmentName: "Khoa học dữ liệu" },
-    { _id: "4", departmentName: "Mạng và an ninh" },
-  ];
+  useEffect(() => {
+    setDepartmentList(departments);
+  }, [departments]);
 
   // Tạo menu, encodeURIComponent để tránh lỗi URL với dấu tiếng Việt
   const menuItems = [
     { label: "Tổng quan", path: "/department/feed" },
-    { label: "Khám phá", path: "/department/discover" },
     ...departmentList.map((de) => ({
       label: de.departmentName,
       path: `/department/feed/${encodeURIComponent(de.departmentName)}/${

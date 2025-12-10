@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import LogoCTUT from "../../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../../assets/logo/avatar_default.webp";
 import MediaCarousel from "../MediaCarousel/MediaCarousel";
 import FileItem from "../FileItem/FileItem";
 import { PiFilesLight, PiImagesSquareLight } from "react-icons/pi";
@@ -11,6 +11,7 @@ import { RiMoreLine } from "react-icons/ri";
 import ButtonComponent from "../../../../components/shared/ButtonComponent/ButtonComponent";
 import { useNavigate } from "react-router-dom";
 import CommentPost from "./CommentPost/CommentPost";
+import * as NotificationServices from "@/services/shared/NotificationServices";
 
 const ModalDetailPost = ({
   modalDetailPostId,
@@ -172,6 +173,15 @@ const ModalDetailPost = ({
         handleAddReplyLocally(replyingTo, response);
       }
 
+      const data = {
+        user: item.author?._id, // chủ bài viết
+        type: "comment",
+        post: item?._id,
+        message: "đã bình luận bài viết",
+      };
+
+      await NotificationServices.createNotification(accessToken, data);
+
       // reset form
       setContent("");
       setLoading(false);
@@ -223,7 +233,7 @@ const ModalDetailPost = ({
                     <div className="w-8 h-8 overflow-hidden">
                       <img
                         className="w-full h-full object-cover"
-                        src={item.author.userAvatar || LogoCTUT}
+                        src={item.author.userAvatar || AvatarDefault}
                         alt=""
                       />
                     </div>
@@ -363,7 +373,10 @@ const ModalDetailPost = ({
                     </div>
                   </div>
                 )}
-                <div className="mt-auto flex flex-col justify-between gap-2 dark:border-0 border-t border-gray-200 py-2 px-4">
+                <div
+                  className="mt-auto flex flex-col justify-between gap-2 dark:border-0 border-t border-gray-200
+                 py-2 px-4"
+                >
                   {replyingTo && (
                     <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded mb-2">
                       <div className="text-sm">

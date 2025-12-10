@@ -1,5 +1,5 @@
 import React from "react";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import {
   HiMiniUserGroup,
   HiOutlineUser,
@@ -69,13 +69,13 @@ const SidebarComponent = ({ isShowSidebar }) => {
         location.pathname === "/admin/department" ? (
           <img
             className="w-6 h-6 shrink-0 rounded-full border border-gray-900 bg-white"
-            src={LogoCTUT}
+            src={AvatarDefault}
             alt="logo"
           />
         ) : (
           <img
             className="w-6 h-6 rounded-full shrink-0 bg-white"
-            src={LogoCTUT}
+            src={AvatarDefault}
             alt="logo"
           />
         ),
@@ -113,7 +113,7 @@ const SidebarComponent = ({ isShowSidebar }) => {
     >
       {/* Logo */}
       <div className="flex items-center h-10 gap-2 px-1 pt-5 py-14">
-        <img src={LogoCTUT} alt="Logo" className="w-10 rounded-full" />
+        <img src={AvatarDefault} alt="Logo" className="w-10 rounded-full" />
         <span
           className={`text-3xl text_logo font-semibold overflow-hidden transition-all duration-1000 ease-in-out
           xl:block hidden

@@ -1,61 +1,75 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { HiBars3, HiBars3BottomLeft } from "react-icons/hi2";
 import { useLocation, useNavigate } from "react-router-dom";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import { PiBellSimpleRingingLight, PiMoonLight } from "react-icons/pi";
 import ButtonComponent from "../../../components/shared/ButtonComponent/ButtonComponent";
-import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import useClickOutsideForPosition from "../../../hooks/useClickOutsideForPosition";
 import * as TokenUtils from "../../../utils/token.utils";
 import * as AuthServices from "../../../services/shared/AuthServices";
+import * as NotificationServices from "@/services/shared/NotificationServices";
 import MessageComponent from "../../shared/MessageComponent/MessageComponent";
+import { HiOutlineDotsHorizontal } from "react-icons/hi";
 
 const HeaderComponent = ({ toggleSidebar }) => {
-  const [isOpen, setIsOpen] = useState(true);
-  const [isSubModal, setSubModal] = useState(false);
+  const [isOpenSidebar, setIsOpenSidebar] = useState(true);
+  const [isSubModal, setIsSubModal] = useState(false);
   const [modalLogout, setModalLogout] = useState(false);
   const [isOpenNotify, setIsOpenNotify] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-  const [message, setMessage] = useState({
-    type: "",
-    text: "",
-    key: 0,
-  });
+  const [message, setMessage] = useState({ type: "", text: "", key: 0 });
+  const [notifications, setNotifications] = useState([]);
 
   const notifyRef = useRef(null);
   const subModalRef = useRef(null);
+  const navigate = useNavigate();
   const location = useLocation();
 
   const listLocation = [
-    { label: location.pathname === "/admin" && "Tổng quan" },
-    { label: location.pathname === "/admin/user" && "Quản lý người dùng" },
-    { label: location.pathname === "/admin/groups" && "Quản lý nhóm" },
-    { label: location.pathname === "/admin/department" && "Quản lý đoàn khoa" },
-    { label: location.pathname === "/admin/message" && "Quản lý tin nhắn" },
+    { path: "/admin", text: "Tổng quan" },
+    { path: "/admin/user", text: "Quản lý người dùng" },
+    { path: "/admin/groups", text: "Quản lý nhóm" },
+    { path: "/admin/department", text: "Quản lý đoàn khoa" },
+    { path: "/admin/message", text: "Quản lý tin nhắn" },
   ];
 
-  const handleClick = () => {
-    setIsOpen(!isOpen);
+  // Lấy thông báo
+  const fetchNotification = async () => {
+    try {
+      const accessToken = await TokenUtils.getValidAccessToken();
+      if (!accessToken) return;
+
+      const res = await NotificationServices.getNotificationAdmin(accessToken);
+      setNotifications(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotification();
+  }, []);
+
+  const handleToggleSidebar = () => {
+    setIsOpenSidebar((prev) => !prev);
     toggleSidebar();
   };
 
-  const handleOpenSubModal = () => setSubModal((prev) => !prev);
+  const handleOpenSubModal = () => setIsSubModal((prev) => !prev);
+  const handleToggleNotify = () => setIsOpenNotify((prev) => !prev);
   const handleOpenModalLogout = () => setModalLogout(true);
   const handleCloseModalLogout = () => setModalLogout(false);
-  const handleToggleNotify = () => setIsOpenNotify((prev) => !prev);
 
   useClickOutsideForPosition(notifyRef, () => setIsOpenNotify(false));
-  useClickOutsideForPosition(subModalRef, () => setSubModal(false));
+  useClickOutsideForPosition(subModalRef, () => setIsSubModal(false));
 
   const handleLogout = async () => {
     setIsLoading(true);
     try {
       const accessToken = await TokenUtils.getValidAccessToken();
+      if (!accessToken) throw new Error("Token không tồn tại");
 
       await AuthServices.logoutServices(accessToken);
-
       localStorage.removeItem("accessToken");
 
       setMessage({
@@ -65,19 +79,41 @@ const HeaderComponent = ({ toggleSidebar }) => {
       });
 
       setTimeout(() => navigate("/login"), 2000);
-
-      setIsSuccess(true);
     } catch (error) {
       setMessage({
-        text:
-          error?.response?.data?.message ||
-          error?.message ||
-          "Đăng xuất thất bại",
         type: "error",
+        text: error?.message || "Đăng xuất thất bại",
         key: Date.now(),
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const readNotification = async (notificationId, noti) => {
+    try {
+      const accessToken = await TokenUtils.getValidAccessToken();
+      if (!accessToken) return;
+
+      await NotificationServices.readNotification(accessToken, notificationId);
+
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === notificationId ? { ...n, isRead: true } : n))
+      );
+
+      if (noti.type === "message") {
+        navigate("/admin/message");
+      } else if (noti.user) {
+        navigate("/admin/user");
+      } else if (noti.group) {
+        navigate("/admin/group");
+      } else if (noti.post) {
+        navigate("/admin/post");
+      }
+
+      setIsOpenNotify(false);
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -92,129 +128,136 @@ const HeaderComponent = ({ toggleSidebar }) => {
       )}
 
       <div className="flex justify-between items-center px-4">
-        {/* Left: Toggle + Page Title */}
-        <div className="flex items-center">
+        {/* Left */}
+        <div className="flex items-center gap-4">
           <div
-            className="text-2xl cursor-pointer me-4 p-2 rounded-full hover:bg-gray-200 transition-all duration-300 ease-in-out active:scale-90"
-            onClick={handleClick}
+            className="text-2xl cursor-pointer p-2 rounded-full hover:bg-gray-200 transition-all duration-300 active:scale-90"
+            onClick={handleToggleSidebar}
           >
-            {isOpen ? <HiBars3 /> : <HiBars3BottomLeft />}
+            {isOpenSidebar ? <HiBars3 /> : <HiBars3BottomLeft />}
           </div>
+
           {listLocation.map(
-            (item, index) =>
-              item.label && (
-                <div
-                  key={index}
-                  className="text-lg transition-opacity duration-300"
-                >
-                  {item.label}
+            (item, idx) =>
+              item.path === location.pathname && (
+                <div key={idx} className="text-lg font-medium">
+                  {item.text}
                 </div>
               )
           )}
         </div>
 
-        {/* Right: Icons + Avatar */}
+        {/* Right */}
         <div className="flex items-center gap-4 relative">
-          <div className="text-2xl cursor-pointer hover:bg-gray-200 p-2 rounded-full transition-all duration-300 active:scale-90">
+          {/* Dark mode icon */}
+          <div className="text-2xl cursor-pointer hover:bg-gray-200 p-2 rounded-full">
             <PiMoonLight />
           </div>
 
-          {/* Notification */}
+          {/* Notifications */}
           <div className="relative" ref={notifyRef}>
             <div
               onClick={handleToggleNotify}
-              className="text-2xl cursor-pointer hover:bg-gray-200 p-2 rounded-full transition-all duration-300 active:scale-90 relative"
+              className="text-2xl cursor-pointer hover:bg-gray-200 p-2 rounded-full relative"
             >
               <PiBellSimpleRingingLight />
-              <div className="absolute top-0 right-0 bg-blue-600 rounded-full w-5 h-5 flex justify-center items-center">
-                <span className="text-[10px] text-white">1</span>
-              </div>
+              {notifications.filter((n) => !n.isRead).length > 0 && (
+                <div className="absolute top-0 right-0 bg-blue-600 rounded-full w-5 h-5 flex justify-center items-center">
+                  <span className="text-[10px] text-white">
+                    {notifications.filter((n) => !n.isRead).length}
+                  </span>
+                </div>
+              )}
             </div>
 
-            {/* Modal Notification */}
+            {/* Modal notifications */}
             <div
-              className={`absolute top-12 w-[360px] flex flex-col gap-4 rounded-sm border border-gray-200
-                right-0 bg-white shadow-lg p-4 transform transition-all duration-200 ease-in-out z-10 
+              className={`absolute top-12 w-[360px] z-10 rounded-sm border border-gray-200
+              right-0 bg-white shadow-lg p-4 transition-all duration-200
               ${
                 isOpenNotify
                   ? "opacity-100 translate-y-0 visible"
                   : "opacity-0 -translate-y-2 invisible"
               }`}
             >
-              <div className="flex justify-between items-center">
-                <div>Thông báo cho bạn.</div>
-                <div>
-                  <HiOutlineDotsHorizontal className="cursor-pointer" />
-                </div>
+              <div className="flex justify-between items-center mb-2">
+                <div>Thông báo cho bạn</div>
+                <HiOutlineDotsHorizontal className="cursor-pointer" />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <div className="hover:bg-gray-100 p-2 rounded cursor-pointer">
-                  Thông báo 1
-                </div>
-                <div className="hover:bg-gray-100 p-2 rounded cursor-pointer">
-                  Thông báo 2
-                </div>
-                <div className="hover:bg-gray-100 p-2 rounded cursor-pointer">
-                  Thông báo 3
-                </div>
+              <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="text-gray-500 text-sm">
+                    Không có thông báo
+                  </div>
+                ) : (
+                  notifications.map((noti) => (
+                    <div
+                      key={noti._id}
+                      onClick={() => readNotification(noti._id, noti)}
+                      className={`hover:bg-gray-100 p-2 rounded cursor-pointer ${
+                        !noti.isRead ? "bg-gray-200" : "bg-white"
+                      }`}
+                    >
+                      {noti.sender.lastName} {noti.sender.firstName}{" "}
+                      {noti.message || "Thông báo mới"}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
 
-          {/* Avatar + Menu */}
-          <div className="relative ms-8" ref={subModalRef}>
+          {/* Avatar */}
+          <div className="relative" ref={subModalRef}>
             <img
-              src={LogoCTUT}
+              src={AvatarDefault}
               onClick={handleOpenSubModal}
-              className="w-8 h-8 cursor-pointer rounded-full hover:ring-2 hover:ring-gray-300 transition-all duration-300"
-              alt="Logo_info"
+              className="w-8 h-8 cursor-pointer rounded-full hover:ring-2 hover:ring-gray-300 transition"
             />
 
-            {/* Sub Modal */}
+            {/* Sub menu */}
             <div
-              className={`absolute flex border border-gray-200 z-10 flex-col w-52 end-0 top-11 bg-white rounded-lg 
-                shadow-lg overflow-hidden transform transition-all duration-200 ease-in-out p-2
-              ${
-                isSubModal
-                  ? "opacity-100 translate-y-0 visible"
-                  : "opacity-0 -translate-y-2 invisible"
-              }`}
+              className={`absolute flex flex-col w-52 end-0 top-11 bg-white border border-gray-200 rounded-lg shadow-lg p-2 transition-all duration-200
+                ${
+                  isSubModal
+                    ? "opacity-100 translate-y-0 visible"
+                    : "opacity-0 -translate-y-2 invisible"
+                }`}
             >
               <div
                 onClick={() => navigate("/admin/profile")}
-                className="p-2 hover:bg-gray-200 rounded-sm cursor-pointer transition-all"
+                className="p-2 hover:bg-gray-200 rounded cursor-pointer"
               >
                 Trang cá nhân
               </div>
               <div
                 onClick={handleOpenModalLogout}
-                className="p-2 hover:bg-gray-200 rounded-sm cursor-pointer transition-all"
+                className="p-2 hover:bg-gray-200 rounded cursor-pointer"
               >
                 Đăng xuất
               </div>
             </div>
 
-            {/* Modal confirm logout */}
+            {/* Modal Logout */}
             {modalLogout && (
-              <div className="fixed z-10 top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-black/50">
-                <div className="bg-white flex flex-col p-6 gap-6 rounded-lg">
+              <div className="fixed inset-0 flex justify-center items-center bg-black/50 z-10">
+                <div className="bg-white p-6 rounded-lg flex flex-col gap-6">
                   <div className="text-xl">
                     Bạn có chắc chắn muốn đăng xuất?
                   </div>
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex justify-between gap-4">
                     <ButtonComponent
                       text="Hủy"
                       bgColor="bg-white"
-                      onClick={handleCloseModalLogout}
                       textColor="text-black"
                       hoverColor="hover:bg-gray-100"
+                      onClick={handleCloseModalLogout}
                     />
                     <ButtonComponent
                       text="Đăng xuất"
                       onClick={handleLogout}
                       isLoading={isLoading}
-                      disabled={isSuccess}
                     />
                   </div>
                 </div>

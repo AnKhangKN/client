@@ -1,14 +1,13 @@
 import axios from "axios";
 
-export const createNewPost = async (accessToken, data) => {
+export const createNotification = async (accessToken, data) => {
   try {
     const res = await axios.post(
-      `${import.meta.env.VITE_BACKEND_API}/user/posts`,
+      `${import.meta.env.VITE_BACKEND_API}/shared/notifications`,
       data,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "multipart/form-data",
         },
       }
     );
@@ -20,10 +19,10 @@ export const createNewPost = async (accessToken, data) => {
   }
 };
 
-export const getPosts = async (accessToken) => {
+export const getNotification = async (accessToken) => {
   try {
     const res = await axios.get(
-      `${import.meta.env.VITE_BACKEND_API}/user/posts`,
+      `${import.meta.env.VITE_BACKEND_API}/shared/notifications`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -38,27 +37,10 @@ export const getPosts = async (accessToken) => {
   }
 };
 
-export const getPostById = async (accessToken, postId) => {
+export const getNotificationAdmin = async (accessToken) => {
   try {
     const res = await axios.get(
-      `${import.meta.env.VITE_BACKEND_API}/user/posts/${postId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-    return res.data;
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-export const getPostsDepartment = async (accessToken) => {
-  try {
-    const res = await axios.get(
-      `${import.meta.env.VITE_BACKEND_API}/user/posts/departments`,
+      `${import.meta.env.VITE_BACKEND_API}/shared/notifications/admin`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -73,12 +55,13 @@ export const getPostsDepartment = async (accessToken) => {
   }
 };
 
-export const getPostsDepartmentDetail = async (accessToken, departmentId) => {
+export const readNotification = async (accessToken, notificationId) => {
   try {
-    const res = await axios.get(
+    const res = await axios.put(
       `${
         import.meta.env.VITE_BACKEND_API
-      }/user/posts/departments/${departmentId}`,
+      }/shared/notifications/${notificationId}`,
+      {}, // body rỗng
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,

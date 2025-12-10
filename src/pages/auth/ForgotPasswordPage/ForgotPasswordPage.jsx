@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MessageComponent from "../../../components/shared/MessageComponent/MessageComponent";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import ButtonComponent from "../../../components/shared/ButtonComponent/ButtonComponent";
 import InputComponent from "../../../components/shared/InputComponent/InputComponent";
 
@@ -75,7 +75,7 @@ const ForgotPasswordPage = () => {
       <div className="flex flex-col items-center text-center space-y-4">
         <img
           className="w-48 h-48 bg-white rounded-full"
-          src={LogoCTUT}
+          src={AvatarDefault}
           alt="CTUT Logo"
         />
         <div className="text-blue-700 text-2xl font-bold">

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { MdCloseFullscreen } from "react-icons/md";
 import * as ValidateToken from "../../../utils/token.utils";
 import * as UserServices from "../../../services/user/UserServices";
-import logoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 
 const GroupChatCreateComponent = ({ handleCloseGroupChatCreate }) => {
   const [friends, setFriends] = useState([]);
@@ -45,7 +45,7 @@ const GroupChatCreateComponent = ({ handleCloseGroupChatCreate }) => {
           {friends.map((friend) => (
             <div key={friend._id} className="flex items-center gap-2 mb-4">
               <div className="w-10 h-10">
-                <img src={friend.userAvatar || logoCTUT} alt="" />
+                <img src={friend.userAvatar || AvatarDefault} alt="" />
               </div>
 
               <div>

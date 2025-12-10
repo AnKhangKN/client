@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import { BsPencilSquare } from "react-icons/bs";
 import { RiSearchLine } from "react-icons/ri";
 import * as ChatServices from "../../../services/shared/ChatServices";
@@ -135,6 +135,7 @@ const SidebarMessageComponent = ({
                   const friend = chat.members.find((m) => m._id !== user.id);
                   friend &&
                     handleSelectUser(
+                      friend._id,
                       friend.userAvatar,
                       friend.lastName,
                       friend.firstName,
@@ -156,7 +157,9 @@ const SidebarMessageComponent = ({
                   >
                     <img
                       className="w-full h-full object-cover"
-                      src={chat.groupAvatar || friend?.userAvatar || LogoCTUT}
+                      src={
+                        chat.groupAvatar || friend?.userAvatar || AvatarDefault
+                      }
                       alt={getChatName(chat)}
                     />
                   </div>
@@ -211,7 +214,7 @@ const SidebarMessageComponent = ({
                     className="flex items-center gap-2 bg-blue-50 dark:bg-[#2d3748] px-3 py-1 rounded-full shadow-sm"
                   >
                     <img
-                      src={m.userAvatar || LogoCTUT}
+                      src={m.userAvatar || AvatarDefault}
                       alt={m.userName}
                       className="w-6 h-6 rounded-full object-cover"
                     />
@@ -259,7 +262,7 @@ const SidebarMessageComponent = ({
                     >
                       <div className="flex gap-3 items-center">
                         <img
-                          src={friend.userAvatar || LogoCTUT}
+                          src={friend.userAvatar || AvatarDefault}
                           alt={friend.userName}
                           className="w-10 h-10 rounded-full object-cover"
                         />

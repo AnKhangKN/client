@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import { IoReturnUpBack } from "react-icons/io5";
 import { PiNotePencilLight } from "react-icons/pi";
 import InputComponent from "../../../components/shared/InputComponent/InputComponent";
@@ -57,7 +57,7 @@ const SecurityPage = () => {
         <div className="col-span-1 flex justify-center">
           <img
             className="w-40 h-40 rounded-full object-cover border"
-            src={LogoCTUT}
+            src={AvatarDefault}
             alt="Avatar"
           />
         </div>

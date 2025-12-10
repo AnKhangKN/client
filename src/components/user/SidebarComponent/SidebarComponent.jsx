@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import {
   HiOutlineBars3,
   HiMiniUserGroup,
@@ -16,18 +16,21 @@ import {
 } from "react-icons/pi";
 import { useLocation, useNavigate } from "react-router-dom";
 import { RiSearchLine } from "react-icons/ri";
-import { MdOutlineClose } from "react-icons/md";
 import "./style.css";
 import { useDispatch, useSelector } from "react-redux";
 import { IoSettingsOutline } from "react-icons/io5";
 import { BsActivity } from "react-icons/bs";
 import useClickOutside from "../../../hooks/useClickOutside";
 import * as AuthServices from "../../../services/shared/AuthServices";
+import * as NotificationServices from "@/services/shared/NotificationServices";
 import MessageComponent from "../../../components/shared/MessageComponent/MessageComponent";
 import * as TokenUtils from "../../../utils/token.utils";
+import * as ReportServices from "@/services/shared/ReportServices";
 import { toggleTheme } from "../../../features/theme/themeSlice";
 import { socket } from "../../../utils/socket";
 import SearchModal from "./SearchModal/SearchModal";
+import TextareaComponent from "@/components/shared/TextareaComponent/TextareaComponent";
+import ButtonComponent from "@/components/shared/ButtonComponent/ButtonComponent";
 
 const SidebarComponent = () => {
   const navigate = useNavigate();
@@ -44,6 +47,8 @@ const SidebarComponent = () => {
     type: "",
     key: 1,
   });
+  const [modalReportSystem, setModalReportSystem] = useState(false);
+  const [reportSystemMessage, setReportSystemMessage] = useState("");
 
   const handleOpenSearchModal = () => setSearchContainer(true);
   const handleCloseSearchModal = () => setSearchContainer(false);
@@ -82,13 +87,13 @@ const SidebarComponent = () => {
         location.pathname === "/department/feed" ? (
           <img
             className="w-6 h-6 shrink-0 rounded-full border border-gray-900 dark:border-white bg-white"
-            src={LogoCTUT}
+            src={AvatarDefault}
             alt="logo"
           />
         ) : (
           <img
             className="w-6 h-6 shrink-0 rounded-full bg-white"
-            src={LogoCTUT}
+            src={AvatarDefault}
             alt="logo"
           />
         ),
@@ -133,7 +138,11 @@ const SidebarComponent = () => {
       icon: theme === "light" ? <PiMoonLight /> : <PiCloudSunThin />,
       action: () => dispatch(toggleTheme()),
     },
-    { label: "Báo cáo sự cố", icon: <GoReport /> },
+    {
+      label: "Báo cáo sự cố",
+      icon: <GoReport />,
+      action: () => setModalReportSystem(true),
+    },
   ];
 
   const handleLogout = async () => {
@@ -164,6 +173,31 @@ const SidebarComponent = () => {
     }
   };
 
+  const handleReportSystem = async () => {
+    try {
+      console.log("error", reportSystemMessage);
+      const accessToken = await TokenUtils.getValidAccessToken();
+
+      const res = await ReportServices.createReport(accessToken, {
+        reportType: "System",
+        reason: "Lỗi hệ thống",
+        reportContent: reportSystemMessage,
+      });
+
+      const data = {
+        isAdmin: true,
+        type: "message",
+        message: reportSystemMessage,
+      };
+
+      await NotificationServices.createNotification(accessToken, data);
+
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div
       className={`hidden md:flex flex-col justify-between bg-white dark:bg-[#1c1c1d] dark:text-white ${
@@ -187,7 +221,7 @@ const SidebarComponent = () => {
         } gap-2`}
       >
         <img
-          src={LogoCTUT}
+          src={AvatarDefault}
           alt="Logo"
           className={`w-10 ${
             location.pathname === "/message" ? "block" : "xl:hidden block"
@@ -236,6 +270,30 @@ const SidebarComponent = () => {
         />
       )}
 
+      {modalReportSystem && (
+        <div className="fixed z-10 inset-0 bg-black/20 flex justify-center items-center">
+          <div className="bg-white dark:bg-[#3a3a3a] p-4 space-y-4 w-1/3 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>Báo cáo vấn đề của bạn</div>
+              <div
+                className="cursor-pointer"
+                onClick={() => setModalReportSystem(false)}
+              >
+                close
+              </div>
+            </div>
+
+            <TextareaComponent
+              label="Vẫn đề của bạn"
+              value={reportSystemMessage}
+              onChange={(e) => setReportSystemMessage(e.target.value)}
+            />
+
+            <ButtonComponent text="Gửi" onClick={handleReportSystem} />
+          </div>
+        </div>
+      )}
+
       {/* Bottom section */}
       <div className="flex flex-col gap-3 pt-4">
         <div
@@ -247,7 +305,7 @@ const SidebarComponent = () => {
         >
           <img
             className="w-6 h-6 rounded-full bg-white xl:me-3"
-            src={user.userAvatar || LogoCTUT}
+            src={user.userAvatar || AvatarDefault}
             alt="Logo"
           />
           <div

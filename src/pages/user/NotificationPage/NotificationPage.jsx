@@ -1,58 +1,48 @@
-import React from "react";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import React, { useEffect, useState } from "react";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
+import * as ValidateToken from "@/utils/token.utils";
+import * as UserServices from "../../../services/user/UserServices";
+import * as notificationServices from "@/services/shared/NotificationServices";
+import { formatVietnamTime } from "@/utils/formatVietnamTime";
+import { useNavigate } from "react-router-dom";
 
 const NotificationPage = () => {
-  const listNotification = [
-    {
-      id: "1",
-      memberAvatar: LogoCTUT,
-      memberName: "Khang",
-      content: "đã bắt đầu theo dõi bạn.",
-      createAt: "13/10/2024 5h36",
-    },
-    {
-      id: "2",
-      memberAvatar: LogoCTUT,
-      memberName: "Khang",
-      content: "đã bày tỏ cảm xúc vào bài viết của bạn.",
-      createAt: "13/10/2024 5h36",
-    },
-    {
-      id: "3",
-      memberAvatar: LogoCTUT,
-      memberName: "Khang",
-      content: "đã bình luận vào bài viết của bạn.",
-      createAt: "13/10/2024 5h36",
-    },
-    {
-      id: "4",
-      memberAvatar: LogoCTUT,
-      memberName: "Khang",
-      content: "đã nhắc bạn trong 1 bài viết.",
-      createAt: "13/10/2024 5h36",
-    },
-    {
-      id: "5",
-      memberAvatar: LogoCTUT,
-      memberName: "Khang",
-      content: "đã chia sẻ 1 bài viết của bạn.",
-      createAt: "13/10/2024 5h36",
-    },
-  ];
+  const [friendsSuggest, setFriendsSuggest] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const navigate = useNavigate();
 
-  const listSuggest = [
-    { id: "1", memberAvatar: LogoCTUT, memberName: "Khang" },
-    { id: "2", memberAvatar: LogoCTUT, memberName: "Khang" },
-    { id: "3", memberAvatar: LogoCTUT, memberName: "Khang" },
-    { id: "4", memberAvatar: LogoCTUT, memberName: "Khang" },
-    { id: "5", memberAvatar: LogoCTUT, memberName: "Khang" },
-    { id: "6", memberAvatar: LogoCTUT, memberName: "Khang" },
-    { id: "7", memberAvatar: LogoCTUT, memberName: "Khang" },
-    { id: "8", memberAvatar: LogoCTUT, memberName: "Khang" },
-  ];
+  const fetchFriendsSuggest = async () => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const res = await UserServices.getFriendSuggest(accessToken);
+
+      setFriendsSuggest(res.data);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  };
+
+  const getNotification = async () => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const res = await notificationServices.getNotification(accessToken);
+
+      setNotifications(res.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchFriendsSuggest();
+    getNotification();
+  }, []);
 
   return (
-    <div className="bg-white flex justify-center ">
+    <div className="bg-white dark:bg-[#1c1c1d] dark:text-white flex justify-center min-h-screen">
       <div className="w-full max-w-[800px] p-4">
         {/* Tiêu đề */}
         <div className="md:hidden block text-xl font-semibold mb-4">
@@ -63,25 +53,35 @@ const NotificationPage = () => {
         <div className="mb-6">
           <div className="text-base font-medium mb-2">Thông báo cho bạn</div>
           <div className="flex flex-col gap-3">
-            {listNotification.map((notification) => (
+            {notifications.map((notification) => (
               <div
-                key={notification.id}
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition"
+                key={notification._id}
+                onClick={() =>
+                  navigate(
+                    `${
+                      notification.post
+                        ? `/post/${notification.post}`
+                        : `/profile/${notification.sender.userName}`
+                    }`
+                  )
+                }
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 
+                cursor-pointer dark:hover:text-[#1c1c1c] transition"
               >
                 <img
                   className="w-10 h-10 rounded-full object-cover"
-                  src={notification.memberAvatar}
-                  alt={notification.memberName}
+                  src={notification.sender.userAvatar || AvatarDefault}
+                  alt={notification.sender.userName}
                 />
                 <div className="flex flex-col">
                   <span className="text-sm leading-snug">
                     <span className="font-medium">
-                      {notification.memberName}
+                      {notification.sender.userName}
                     </span>{" "}
-                    {notification.content}
+                    {notification.message}
                   </span>
                   <span className="text-xs text-gray-500 mt-0.5">
-                    {notification.createAt}
+                    {formatVietnamTime(notification.createdAt)}
                   </span>
                 </div>
               </div>
@@ -91,30 +91,26 @@ const NotificationPage = () => {
 
         {/* Gợi ý bạn có thể quen */}
         <div className="border-t pt-4">
-          <div className="text-base font-medium text-gray-700 mb-2">
+          <div className="text-base font-medium mb-2">
             Gợi ý bạn có thể quen
           </div>
 
           <div className="flex flex-col">
-            {listSuggest.map((suggest) => (
+            {friendsSuggest.map((suggest) => (
               <div
-                key={suggest.id}
-                className="flex justify-between items-center py-3 hover:bg-gray-50 px-2 rounded-lg transition"
+                key={suggest._id}
+                onClick={() => navigate(`/profile/${suggest.userName}`)}
+                className="flex justify-between items-center py-3 hover:bg-gray-50
+                cursor-pointer dark:hover:text-[#1c1c1c] px-2 rounded-lg transition"
               >
                 <div className="flex items-center gap-3">
                   <img
                     className="w-10 h-10 rounded-full object-cover"
-                    src={suggest.memberAvatar}
-                    alt={suggest.memberName}
+                    src={suggest.userAvatar || AvatarDefault}
+                    alt={suggest.userName}
                   />
-                  <div className="font-medium text-sm">
-                    {suggest.memberName}
-                  </div>
+                  <div className="font-medium text-sm">{suggest.userName}</div>
                 </div>
-
-                <button className="text-sm px-4 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition">
-                  Theo dõi
-                </button>
               </div>
             ))}
           </div>

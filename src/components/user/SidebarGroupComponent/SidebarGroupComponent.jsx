@@ -6,7 +6,7 @@ import { PiNewspaperClippingLight, PiUserCircleCheck } from "react-icons/pi";
 import { HiLightBulb, HiOutlineLightBulb } from "react-icons/hi2";
 import { RiSearchLine } from "react-icons/ri";
 import { GoPlus } from "react-icons/go";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import * as ValidateToken from "@/utils/token.utils";
 import * as GroupServices from "@/services/user/GroupServices";
 import { formatVietnamTime } from "@/utils/formatVietnamTime";
@@ -116,7 +116,7 @@ const SidebarGroupComponent = () => {
               >
                 <img
                   className="w-10 h-10 dark:bg-white rounded-full"
-                  src={group.groupAvatar || LogoCTUT}
+                  src={group.groupAvatar || AvatarDefault}
                   alt="logo"
                 />
 

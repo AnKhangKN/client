@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import * as ValidateToken from "@/utils/token.utils";
 import * as GroupServices from "@/services/user/GroupServices";
-import defaultGroupAvatar from "@/assets/logo/logo-ctut.png"; // ảnh default
+import defaultGroupAvatar from "@/assets/logo/avatar_default.webp"; // ảnh default
 
 const DiscoverPage = () => {
   const [groups, setGroups] = useState([]);

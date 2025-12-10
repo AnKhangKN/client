@@ -2,7 +2,7 @@ import React from "react";
 import { GoHome, GoHomeFill } from "react-icons/go";
 import { HiMiniUserGroup, HiOutlineUserGroup } from "react-icons/hi2";
 import { useLocation, useNavigate } from "react-router-dom";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import {
   PiBellSimpleRinging,
   PiBellSimpleRingingFill,
@@ -31,11 +31,15 @@ const BottomNavbarComponent = () => {
         location.pathname === "/department" ? (
           <img
             className="w-6 h-6 rounded-full border border-gray-900"
-            src={LogoCTUT}
+            src={AvatarDefault}
             alt="logo"
           />
         ) : (
-          <img className="w-6 h-6 rounded-full" src={LogoCTUT} alt="logo" />
+          <img
+            className="w-6 h-6 rounded-full"
+            src={AvatarDefault}
+            alt="logo"
+          />
         ),
       nav: "/department",
     },

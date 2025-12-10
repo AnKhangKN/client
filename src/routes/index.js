@@ -32,6 +32,7 @@ import PostManagementDetailPage from "@/pages/admin/PostManagementDetailPage/Pos
 import GroupDetailPage from "@/pages/user/Group/GroupDetailPage/GroupDetailPage";
 import GroupDetailMember from "@/pages/user/Group/GroupDetailMember/GroupDetailMember";
 import DiscoverDepartMentPage from "@/pages/user/Department/DiscoverPage/DiscoverPage";
+import SocialNetworkPage from "@/pages/user/SocialNetworkPage/SocialNetworkPage";
 
 export const routes = [
   // auth
@@ -118,6 +119,11 @@ export const routes = [
   {
     path: "/accounts/edit",
     page: EditPage,
+    isShowSidebarUser: true,
+  },
+  {
+    path: "/accounts/social",
+    page: SocialNetworkPage,
     isShowSidebarUser: true,
   },
   {

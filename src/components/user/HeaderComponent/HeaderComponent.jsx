@@ -1,5 +1,5 @@
 import React from "react";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import "./style.css";
 import { RiSearchLine } from "react-icons/ri";
 import { IoIosArrowDown } from "react-icons/io";
@@ -11,7 +11,7 @@ const HeaderComponent = () => {
         <div className="flex items-center gap-4">
           <img
             className="w-10 h-10 rounded-full bg-white"
-            src={LogoCTUT}
+            src={AvatarDefault}
             alt=""
           />
           <div className="text_logo text-2xl">CTUT Connect</div>
@@ -26,7 +26,7 @@ const HeaderComponent = () => {
           </div>
 
           <div className="relative">
-            <img className="w-8 h-8 rounded-full" src={LogoCTUT} alt="" />
+            <img className="w-8 h-8 rounded-full" src={AvatarDefault} alt="" />
 
             <div className="absolute right-0 bottom-0 flex justify-center items-center w-3 h-3 rounded-full bg-gray-100 border-2 border-white">
               <IoIosArrowDown />

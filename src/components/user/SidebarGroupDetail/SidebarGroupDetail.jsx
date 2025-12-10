@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import logoCTUT from "@/assets/logo/logo-ctut.png";
+import AvatarDefault from "@/assets/logo/avatar_default.webp";
 import { IoIosArrowRoundBack } from "react-icons/io";
 import {
   HiUserGroup,
@@ -107,10 +107,13 @@ const SidebarGroupDetail = () => {
   // Render UI
   // -------------------------------
   return (
-    <div className="h-screen bg-gray-100 p-3">
-      <div className="bg-white h-full rounded-xl shadow-md flex flex-col overflow-hidden">
+    <div className="h-screen bg-gray-100 p-3 dark:bg-[#1c1c1d] dark:text-white">
+      <div className="bg-white dark:bg-[#252728] h-full rounded-xl shadow-md flex flex-col overflow-hidden">
         {/* HEADER */}
-        <div className="flex items-center space-x-3 p-4 border-b sticky top-0 bg-white z-10">
+        <div
+          className="flex items-center space-x-3 p-4 border-b sticky top-0 dark:bg-[#252728]
+         bg-white z-10"
+        >
           <button
             onClick={() => navigate("/groups/feed")}
             className="p-1 hover:bg-gray-200 rounded-full transition"
@@ -118,10 +121,14 @@ const SidebarGroupDetail = () => {
             <IoIosArrowRoundBack size={28} />
           </button>
 
-          <img className="w-10 h-10 rounded-full" src={logoCTUT} alt="Logo" />
+          <img
+            className="w-10 h-10 rounded-full"
+            src={AvatarDefault}
+            alt="Logo"
+          />
 
           <div className="flex flex-col">
-            <span className="font-semibold text-gray-800">
+            <span className="font-semibold text-gray-800 dark:text-white">
               {group?.groupName || "Đang tải..."}
             </span>
             <span className="text-sm text-gray-500">Cộng đồng học tập</span>

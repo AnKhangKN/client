@@ -180,7 +180,7 @@ const MessageBoxComponent = ({
 
   return (
     <div className="fixed bottom-12 lg:bottom-0 lg:right-20 right-5 w-96 z-50">
-      <div className="bg-white flex flex-col border border-gray-200 lg:shadow-2xl rounded-t-lg overflow-hidden">
+      <div className="bg-white dark:bg-[#252728] flex flex-col border border-gray-200 lg:shadow-2xl rounded-t-lg overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 p-3 bg-gray-50">
           <div className="flex gap-2 items-center">

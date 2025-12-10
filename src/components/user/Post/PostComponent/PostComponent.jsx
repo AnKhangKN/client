@@ -1,52 +1,50 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { HiOutlineDotsHorizontal } from "react-icons/hi";
-import { IoMdLock } from "react-icons/io";
+import { IoIosCheckmarkCircle, IoMdLock } from "react-icons/io";
 import { BsDashLg } from "react-icons/bs";
 import {
   PiArrowsClockwiseLight,
   PiChatCenteredDotsLight,
-  PiChatCenteredTextLight,
-  PiDotsThreeLight,
   PiHeartFill,
   PiHeartLight,
 } from "react-icons/pi";
 import { CiLocationArrow1 } from "react-icons/ci";
-import { FaUserFriends } from "react-icons/fa";
-import { GiEarthAmerica } from "react-icons/gi";
 import TextCollapse from "../TextCollapse/TextCollapse";
 import MediaLayout from "../MediaLayout/MediaLayout";
 import FileItem from "../FileItem/FileItem";
-import LogoCTUT from "../../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../../assets/logo/avatar_default.webp";
 import { formatVietnamTime } from "../../../../utils/formatVietnamTime";
 import * as ValidateToken from "../../../../utils/token.utils";
 import { useSelector } from "react-redux";
 import ModalDetailPost from "../ModalDetailPost/ModalDetailPost";
 import * as CommentServices from "../../../../services/user/CommentServices";
 import * as HeartServices from "../../../../services/user/HeartServices";
-import * as ReportServices from "@/services/shared/ReportServices";
+import SharePostModal from "../SharePostModal/SharePostModal";
 import { useNavigate } from "react-router-dom";
+import { MdNavigateNext } from "react-icons/md";
+import { RiMoreLine } from "react-icons/ri";
+import ActionPostModal from "./ActionPostModal/ActionPostModal";
+import * as NotificationServices from "@/services/shared/NotificationServices";
 
 const PostComponent = ({ postsList }) => {
   const [posts, setPosts] = useState([]);
   const [heartedPosts, setHeartedPosts] = useState({});
   const [modalDetailPostId, setModalDetailPostId] = useState(null);
-  const user = useSelector((state) => state.user);
-  const menuRefs = useRef({});
   const [commentsList, setCommentsList] = useState([]);
+  const [sharePostModal, setSharePostModal] = useState(null);
+  const user = useSelector((state) => state.user);
   const navigate = useNavigate();
   const [actionPostModal, setActionPostModal] = useState(null);
-  const [reportModal, setReportModal] = useState(null);
-  const [selectedReason, setSelectedReason] = useState("");
-  const [otherReason, setOtherReason] = useState("");
 
   useEffect(() => {
     setPosts(postsList || []);
 
     const initialHearted = {};
     postsList?.forEach((p) => {
-      initialHearted[p._id] = p.hearts.some((h) => h.author === user.id);
+      const postData = p.type === "post" ? p.data : p.data.post;
+      initialHearted[p.type === "post" ? p.data._id : p.data._id] =
+        postData.hearts?.some((h) => h.author === user.id);
     });
-
     setHeartedPosts(initialHearted);
   }, [postsList, user.id]);
 
@@ -56,18 +54,34 @@ const PostComponent = ({ postsList }) => {
 
     const willHeart = !heartedPosts[postId];
 
+    // Tìm bài viết trong state posts
+    const postItem = posts.find((p) => {
+      const pd = p.type === "post" ? p.data : p.data.post;
+      return pd._id === postId;
+    });
+
+    if (!postItem) return; // nếu không tìm thấy thì thoát
+    const postData =
+      postItem.type === "post" ? postItem.data : postItem.data.post;
+
+    // cập nhật state hearts
     setPosts((prev) =>
-      prev.map((p) =>
-        p._id === postId
-          ? {
-              ...p,
-              heartsCount: willHeart ? p.heartsCount + 1 : p.heartsCount - 1,
-              hearts: willHeart
-                ? [...p.hearts, { author: user.id }]
-                : p.hearts.filter((h) => h.author !== user.id),
-            }
-          : p
-      )
+      prev.map((p) => {
+        const pd = p.type === "post" ? p.data : p.data.post;
+        if (pd._id !== postId) return p;
+
+        const updatedHeartsCount = willHeart
+          ? (pd.heartsCount || 0) + 1
+          : (pd.heartsCount || 0) - 1;
+
+        return {
+          ...p,
+          data:
+            p.type === "post"
+              ? { ...pd, heartsCount: updatedHeartsCount }
+              : { ...p.data, post: { ...pd, heartsCount: updatedHeartsCount } },
+        };
+      })
     );
 
     setHeartedPosts((prev) => ({
@@ -82,18 +96,43 @@ const PostComponent = ({ postsList }) => {
         targetType
       );
 
+      // Chỉ tạo notification khi bấm tim
+      if (willHeart) {
+        const data = {
+          user: postData.author._id, // chủ bài viết
+          type: "heart",
+          post: postId,
+          message: "đã tim bài viết",
+        };
+
+        await NotificationServices.createNotification(accessToken, data);
+      }
+
+      // cập nhật hearts thực tế từ server
       setPosts((prev) =>
-        prev.map((p) =>
-          p._id === postId
-            ? {
-                ...p,
-                heartsCount: res.heartsCount,
-                hearts: res.isHearted
-                  ? [...p.hearts, { author: user.id }]
-                  : p.hearts.filter((h) => h.author !== user.id),
-              }
-            : p
-        )
+        prev.map((p) => {
+          const pd = p.type === "post" ? p.data : p.data.post;
+          if (pd._id !== postId) return p;
+
+          const updatedHearts = res.isHearted
+            ? [...(pd.hearts || []), { author: user.id }]
+            : (pd.hearts || []).filter((h) => h.author !== user.id);
+
+          return {
+            ...p,
+            data:
+              p.type === "post"
+                ? { ...pd, heartsCount: res.heartsCount, hearts: updatedHearts }
+                : {
+                    ...p.data,
+                    post: {
+                      ...pd,
+                      heartsCount: res.heartsCount,
+                      hearts: updatedHearts,
+                    },
+                  },
+          };
+        })
       );
 
       setHeartedPosts((prev) => ({
@@ -102,21 +141,8 @@ const PostComponent = ({ postsList }) => {
       }));
     } catch (error) {
       console.log(error);
-
-      setPosts((prev) =>
-        prev.map((p) =>
-          p._id === postId
-            ? {
-                ...p,
-                heartsCount: willHeart ? p.heartsCount - 1 : p.heartsCount + 1,
-                hearts: willHeart
-                  ? p.hearts.filter((h) => h.author !== user.id)
-                  : [...p.hearts, { author: user.id }],
-              }
-            : p
-        )
-      );
-
+      // rollback state
+      setPosts(posts);
       setHeartedPosts((prev) => ({
         ...prev,
         [postId]: !willHeart,
@@ -126,393 +152,229 @@ const PostComponent = ({ postsList }) => {
 
   const handleOpenModal = async (postId) => {
     setModalDetailPostId(postId);
-
     try {
       const accessToken = await ValidateToken.getValidAccessToken();
       const comments = await CommentServices.getCommentsByPostId(
         accessToken,
         postId
       );
-
       setCommentsList(comments);
     } catch (error) {
       console.error("Error fetching comments:", error);
     }
   };
 
-  const handleOpenReportModal = (post) => {
-    setReportModal(post);
+  const handleOpenSharePostModal = (item) => {
+    setSharePostModal(item);
+    console.log(item);
   };
+  const handleCloseSharePostModal = () => setSharePostModal(null);
 
-  const handleSendReport = async () => {
-    try {
-      const accessToken = await ValidateToken.getValidAccessToken();
-
-      const data = {
-        reportType: "Post",
-        reportModels: reportModal?._id,
-        reason: selectedReason,
-        reportContent: otherReason,
-      };
-
-      const report = await ReportServices.createReport(accessToken, data);
-
-      if (report) {
-        setReportModal(null);
-        setOtherReason("");
-        setSelectedReason("");
-        setActionPostModal(false);
-      }
-    } catch (error) {
-      const msg =
-        error.response?.data?.message || error.message || "Đã xảy ra lỗi";
-      setReportModal(null);
-      setOtherReason("");
-      setSelectedReason("");
-      setActionPostModal(false);
-      console.log("Lỗi", msg);
-    }
-  };
+  const handleCloseActionPostModal = () => setActionPostModal(null);
 
   return (
     <>
-      {posts.map((item) => (
-        <div
-          key={item._id}
-          className="p-4 shadow rounded-md dark:text-white bg-white dark:bg-[#252728] dark:border-0 border border-gray-200"
-        >
-          {/* HEADER */}
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              {/* Avatar */}
-              <div className="relative">
-                {item.group && (
-                  <div className="w-10 h-10 overflow-hidden rounded-sm bg-white">
-                    <img
-                      className="w-full h-full"
-                      src={item.group.groupAvatar || LogoCTUT}
-                      alt="groupAvatar"
-                    />
-                  </div>
-                )}
-                <div
-                  className={`${
-                    item.group
-                      ? "absolute top-2 left-2 z-10 border-3 dark:border-black border-white"
-                      : ""
-                  } w-10 h-10 rounded-full bg-white overflow-hidden`}
-                >
-                  <img
-                    className="w-full h-full"
-                    src={item.author.userAvatar || LogoCTUT}
-                    alt="authorAvatar"
-                  />
-                </div>
-              </div>
+      {posts.map((item) => {
+        const isShare = item.type === "share";
+        const postData = isShare ? item.data.post : item.data;
+        const shareAuthor = isShare ? item.data.author : null; // người share
+        const shareCaption = isShare ? item.data.caption : null; // caption người share
 
-              {/* Info */}
-              <div className="flex flex-col">
-                {item.group ? (
-                  <>
-                    <div>{item.group.groupName}</div>
-
-                    <div className="group text-sm text-gray-500 flex items-center gap-2 relative">
-                      <div>{item.author.firstName}</div>
-
-                      <div className="w-1 h-1 rounded-full bg-gray-600"></div>
-
-                      <div>{formatVietnamTime(item.createdAt)}</div>
-
-                      <div className="w-1 h-1 rounded-full bg-gray-600"></div>
-
-                      <div>
-                        {item.privacy === "public" ? (
-                          <GiEarthAmerica className="text-gray-600 text-lg" />
-                        ) : item.privacy === "friends" ? (
-                          <FaUserFriends className="text-gray-600 text-lg" />
-                        ) : (
-                          <IoMdLock className="text-gray-600 text-lg" />
-                        )}
-                      </div>
-
-                      <div
-                        className="group-hover:block hidden opacity-0 absolute right-6 top-1 bg-gray-600 text-white px-1.5 py-0.5 text-[10px] 
-                      rounded-lg"
-                      >
-                        {item.privacy === "public" ? (
-                          <div>Công khai</div>
-                        ) : item.privacy === "friends" ? (
-                          <div>Bạn bè</div>
-                        ) : (
-                          <div>Mình tôi</div>
-                        )}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div
-                      onClick={() =>
-                        navigate(`/profile/${item.author.userName}`)
-                      }
-                      className="flex gap-2 items-center cursor-pointer"
-                    >
-                      {item.author.lastName} {item.author.firstName}
-                    </div>
-                    <div className="text-sm text-gray-500 flex items-center gap-2">
-                      <div>{formatVietnamTime(item.createdAt)}</div>
-                      <div className="w-1 h-1 rounded-full bg-gray-600"></div>
-                      <div className="group relative">
-                        <div>
-                          {item.privacy === "public" ? (
-                            <GiEarthAmerica className="text-gray-600 text-lg" />
-                          ) : item.privacy === "friends" ? (
-                            <FaUserFriends className="text-gray-600 text-lg" />
-                          ) : (
-                            <IoMdLock className="text-gray-600 text-lg" />
-                          )}
-                        </div>
-
-                        <div
-                          className="group-hover:block hidden w-20 text-center absolute -right-8 -top-7 bg-gray-600 
-                          text-white px-1.5 py-1 text-[12px] rounded-lg"
-                        >
-                          {item.privacy === "public" ? (
-                            <div>Công khai</div>
-                          ) : item.privacy === "friends" ? (
-                            <div>Bạn bè</div>
-                          ) : (
-                            <div>Mình tôi</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Menu */}
-            <div
-              className="flex gap-3 items-center relative"
-              ref={(el) => (menuRefs.current[item._id] = el)}
-            >
-              <div
-                className="hover:bg-gray-200 p-1.5 rounded-full group cursor-pointer"
-                onClick={() => setActionPostModal(item._id)}
-              >
-                <HiOutlineDotsHorizontal size={20} />
-              </div>
-
-              {actionPostModal === item._id && (
-                <div className="bg-black/40 inset-0 z-10 flex justify-center items-center fixed">
-                  <div className="bg-white rounded-lg flex flex-col text-center w-80">
-                    {user.id !== item.author._id && (
-                      <div className="flex flex-col">
-                        <div
-                          onClick={() => handleOpenReportModal(item)}
-                          className="cursor-pointer font-bold text-red-500 border-b border-gray-200 py-2.5"
-                        >
-                          Báo cáo
-                        </div>
-
-                        <div className="cursor-pointer font-bold text-red-500 border-b border-gray-200 py-2.5">
-                          Bỏ theo dõi Khang
-                        </div>
-                      </div>
-                    )}
-
-                    <div
-                      className="cursor-pointer border-b border-gray-200 py-2.5"
-                      onClick={() => navigate(`/post/${item._id}`)}
-                    >
-                      Đi tới bài viết
-                    </div>
-                    <div className="cursor-pointer border-b border-gray-200 py-2.5">
-                      Chia sẽ lên...
-                    </div>
-
-                    <div
-                      className="cursor-pointer py-2.5"
-                      onClick={() => setActionPostModal(false)}
-                    >
-                      Hủy
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {reportModal && (
-                <div className="fixed inset-0 z-20 bg-black/40 flex items-center justify-center">
-                  <div className="bg-white p-4 rounded-lg w-[400px]">
-                    {/* Header */}
-                    <div className="flex justify-between items-center mb-3">
-                      <div className="font-bold text-lg">Báo cáo</div>
-                      <div
-                        onClick={() => setReportModal(null)}
-                        className="cursor-pointer text-xl"
-                      >
-                        ×
-                      </div>
-                    </div>
-
-                    {/* Info */}
-                    <div className="mb-3">
-                      Đang báo cáo bài viết của tác giả:{" "}
-                      <b>
-                        {item.author.lastName} {item.author.firstName}
-                      </b>
-                    </div>
-
-                    {/* Reason select */}
-                    <div className="mb-3">
-                      <label className="font-medium">Lý do báo cáo:</label>
-                      <select
-                        className="w-full mt-1 border p-2 rounded"
-                        value={selectedReason}
-                        onChange={(e) => setSelectedReason(e.target.value)}
-                      >
-                        <option value="">-- Chọn lý do --</option>
-                        <option value="hate">
-                          Nội dung thù địch, công kích cá nhân
-                        </option>
-                        <option value="violence">Kích động bạo lực</option>
-                        <option value="spam">Spam hoặc quảng cáo</option>
-                        <option value="nudity">
-                          Nội dung nhạy cảm / khiêu dâm
-                        </option>
-                        <option value="illegal">
-                          Nội dung vi phạm pháp luật
-                        </option>
-                        <option value="misinformation">
-                          Thông tin sai sự thật
-                        </option>
-                        <option value="harassment">
-                          Quấy rối hoặc bắt nạt
-                        </option>
-                        <option value="disturbing">
-                          Nội dung gây khó chịu
-                        </option>
-                        <option value="scam">Lừa đảo / gây nguy hiểm</option>
-                        <option value="other">Khác...</option>
-                      </select>
-                    </div>
-
-                    {/* Show textarea when reason = other */}
-                    {selectedReason === "other" && (
-                      <div className="mb-3">
-                        <label className="font-medium">Nhập lý do khác:</label>
-                        <textarea
-                          className="w-full mt-1 border p-2 rounded"
-                          rows="3"
-                          placeholder="Nhập lý do báo cáo..."
-                          value={otherReason}
-                          onChange={(e) => setOtherReason(e.target.value)}
-                        ></textarea>
-                      </div>
-                    )}
-
-                    {/* Submit */}
-                    <button
-                      className="bg-red-500 text-white px-4 py-2 rounded w-full mt-2"
-                      onClick={handleSendReport}
-                    >
-                      Gửi báo cáo
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-          {/* CONTENT */}
-          <TextCollapse
-            text={item.content}
-            bgColor={item.bgContent || ""}
-            haveFiles={[...(item.medias || []), ...(item.documents || [])]}
-          />
-          {/* HASHTAGS */}
-          <div className="flex flex-wrap gap-2 mt-2 text-blue-500 text-sm">
-            {item.hashtag?.map((tag, i) => (
-              <span key={i}>{tag}</span>
-            ))}
-          </div>
-          {/* EMOTION */}
-          {item.emotion && (
-            <div className="flex items-center gap-1 my-2 text-sm text-gray-600">
-              <BsDashLg />
-              <span>đang cảm thấy {item.emotion}.</span>
-            </div>
-          )}
-          {/* FILES */}
-          <div className="my-4 flex flex-col gap-2">
-            {item.documents?.map((f, i) => (
-              <FileItem key={i} file={f} />
-            ))}
-          </div>
-          {/* MEDIA */}
+        return (
           <div
-            className="cursor-pointer"
-            onClick={() => handleOpenModal(item._id)}
+            key={isShare ? `share-${item.data._id}` : postData._id}
+            className="p-4 shadow rounded-md bg-white dark:bg-[#252728] dark:text-white border border-gray-200 dark:border-0 mb-4"
           >
-            <MediaLayout medias={item.medias} />
-          </div>
-
-          {/* MODAL */}
-          <ModalDetailPost
-            modalDetailPostId={modalDetailPostId}
-            commentsList={commentsList}
-            item={item}
-            handleCloseModal={() => setModalDetailPostId(null)}
-          />
-
-          {/* ACTIONS */}
-          <div className="flex justify-around items-center text-2xl pt-4 mt-6 border-t border-gray-300 dark:border-0">
-            <button
-              className={`flex gap-1.5 items-end cursor-pointer hover:bg-gray-100 py-1.5 ${
-                item.heartsCount ? "pl-2 pr-2.5" : "pl-2 pr-0.5"
-              } rounded-full`}
-              onClick={() => handleHeartPost(item._id)}
-            >
-              {heartedPosts[item._id] ? (
-                <PiHeartFill className="text-red-500" />
-              ) : (
-                <PiHeartLight />
+            {/* HEADER */}
+            <div className="flex flex-col gap-1">
+              {isShare && shareAuthor && (
+                <div className="text-sm text-gray-500">
+                  <b>
+                    {shareAuthor.lastName} {shareAuthor.firstName}
+                  </b>{" "}
+                  đã chia sẻ
+                </div>
               )}
 
-              <div className="text-[14px]">
-                {item.heartsCount !== 0 ? item.heartsCount : ""}
-              </div>
-            </button>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    {postData.group && (
+                      <div className="w-10 h-10 overflow-hidden rounded-sm bg-white">
+                        <img
+                          className="w-full h-full"
+                          src={postData.group.groupAvatar || AvatarDefault}
+                          alt="groupAvatar"
+                        />
+                      </div>
+                    )}
+                    <div
+                      className={`${
+                        postData.group
+                          ? "absolute top-2 left-2 z-10 border-3 dark:border-black border-white"
+                          : ""
+                      } w-10 h-10 rounded-full bg-white overflow-hidden`}
+                    >
+                      <img
+                        className="w-full h-full"
+                        src={postData.author.userAvatar || AvatarDefault}
+                        alt="authorAvatar"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-start justify-between w-full">
+                    <div className="flex flex-col">
+                      <div
+                        className="font-medium cursor-pointer"
+                        onClick={() =>
+                          navigate(`/profile/${postData.author.userName}`)
+                        }
+                      >
+                        {postData.author.lastName} {postData.author.firstName}{" "}
+                        {postData.author.isTeacher && (
+                          <IoIosCheckmarkCircle className="inline text-indigo-500 ml-1" />
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-500 flex items-center gap-2">
+                        <div>{formatVietnamTime(postData.createdAt)}</div>
+                      </div>
+                    </div>
 
-            <button
-              className={`flex gap-1.5 items-end cursor-pointer hover:bg-gray-100 py-1.5 ${
-                item.comment ? "pl-2 pr-2.5" : "pl-2 pr-0.5"
-              } rounded-full`}
-              onClick={() => handleOpenModal(item._id)}
-            >
-              <PiChatCenteredDotsLight />
-              <div className="text-[14px]">
-                {item.comment !== 0 ? item.comment : ""}
-              </div>
-            </button>
+                    <RiMoreLine
+                      onClick={() => setActionPostModal(postData)}
+                      size={24}
+                    />
 
-            <button
-              className={`flex gap-1.5 items-end cursor-pointer hover:bg-gray-100 py-1.5 ${
-                item.share ? "pl-1 pr-2" : "pl-2 pr-0.5"
-              } rounded-full`}
-            >
-              <PiArrowsClockwiseLight />
-              <div className="text-[14px]">
-                {item.share !== 0 ? item.share : ""}
-              </div>
-            </button>
+                    {actionPostModal && (
+                      <ActionPostModal
+                        actionPostModal={actionPostModal}
+                        handleCloseActionPostModal={handleCloseActionPostModal}
+                      />
+                    )}
+                  </div>
+                </div>
 
-            <button className="cursor-pointer hover:bg-gray-100 py-1.5 pl-1.5 pr-2 rounded-full">
-              <CiLocationArrow1 />
-            </button>
+                {isShare && shareCaption && (
+                  <div className="py-4 text-gray-700 dark:text-gray-300 italic">
+                    {shareCaption}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* NỘI DUNG BÀI GỐC */}
+            <div className="mt-3 p-3 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
+              <TextCollapse
+                text={postData.content}
+                bgColor={postData.bgContent || ""}
+                haveFiles={[
+                  ...(postData.medias || []),
+                  ...(postData.documents || []),
+                ]}
+              />
+
+              {/* FILES */}
+              <div className="my-4 flex flex-col gap-2">
+                {postData.documents?.map((f, i) => (
+                  <FileItem key={i} file={f} />
+                ))}
+              </div>
+
+              {/* MEDIA */}
+              <div
+                className="cursor-pointer"
+                onClick={() => handleOpenModal(postData._id)}
+              >
+                <MediaLayout medias={postData.medias} />
+              </div>
+            </div>
+
+            {/* MODAL DETAIL */}
+            <ModalDetailPost
+              modalDetailPostId={modalDetailPostId}
+              commentsList={commentsList}
+              item={postData}
+              handleCloseModal={() => setModalDetailPostId(null)}
+            />
+
+            {/* ACTIONS */}
+            {!isShare ? (
+              <div className="flex justify-around items-center text-2xl pt-4 mt-4 border-t border-gray-300 dark:border-0">
+                <button
+                  className="flex gap-1.5 items-end cursor-pointer hover:bg-gray-100 py-1.5 pl-2 pr-2.5 rounded-full"
+                  onClick={() => handleHeartPost(postData._id)}
+                >
+                  {heartedPosts[postData._id] ? (
+                    <PiHeartFill className="text-red-500" />
+                  ) : (
+                    <PiHeartLight />
+                  )}
+                  <div className="text-[14px]">
+                    {postData.heartsCount !== 0 ? postData.heartsCount : ""}
+                  </div>
+                </button>
+
+                <button
+                  className="flex gap-1.5 items-end cursor-pointer hover:bg-gray-100 py-1.5 pl-2 pr-2.5 rounded-full"
+                  onClick={() => handleOpenModal(postData._id)}
+                >
+                  <PiChatCenteredDotsLight />
+                  <div className="text-[14px]">
+                    {postData.commentsCount || ""}
+                  </div>
+                </button>
+
+                <button
+                  className="flex gap-1.5 items-end cursor-pointer hover:bg-gray-100 py-1.5 pl-2 pr-2.5 rounded-full"
+                  onClick={() => handleOpenSharePostModal(item)}
+                >
+                  <PiArrowsClockwiseLight />
+                  <div className="text-[14px]">
+                    {postData.sharesCount || ""}
+                  </div>
+                </button>
+
+                {sharePostModal && (
+                  <SharePostModal
+                    item={sharePostModal}
+                    handleCloseSharePostModal={handleCloseSharePostModal}
+                  />
+                )}
+
+                <button
+                  onClick={() => {
+                    navigator.clipboard
+                      .writeText(`http://localhost:5173/post/${postData._id}`)
+                      .then(
+                        () => {
+                          console.log("copy");
+                        },
+                        (err) => {
+                          console.error("Copy thất bại: ", err);
+                        }
+                      );
+                  }}
+                  className="cursor-pointer hover:bg-gray-100 py-1.5 pl-1.5 pr-2 rounded-full"
+                >
+                  <CiLocationArrow1 />
+                </button>
+              </div>
+            ) : (
+              <div className="w-full flex justify-center py-4">
+                <button
+                  className="cursor-pointer flex items-center space-x-4"
+                  onClick={() => navigate(`/post/${postData._id}`)}
+                >
+                  Xem chi tiết bài viết{" "}
+                  <span>
+                    <MdNavigateNext size={28} />
+                  </span>
+                </button>
+              </div>
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </>
   );
 };

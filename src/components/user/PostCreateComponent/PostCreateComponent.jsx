@@ -1,6 +1,6 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import { ImImages } from "react-icons/im";
 import {
   BsEmojiLaughing,
@@ -16,6 +16,7 @@ import * as ValidateToken from "../../../utils/token.utils";
 import MessageComponent from "../../shared/MessageComponent/MessageComponent";
 import ButtonComponent from "../../shared/ButtonComponent/ButtonComponent";
 import { useLocation } from "react-router-dom";
+import * as DepartmentServices from "@/services/admin/DepartmentServices";
 
 const PostCreateComponent = () => {
   const user = useSelector((state) => state.user);
@@ -36,6 +37,9 @@ const PostCreateComponent = () => {
   const [openPrivacyPost, setOpenPrivacyPost] = useState(false);
   const [privacy, setPrivacy] = useState(user.privacyPost);
   const postGroup = currentPath.startsWith("/groups");
+  const departmentPath = currentPath.startsWith("/department");
+  const [departments, setDepartments] = useState([]);
+  const [selectDepartment, setSelectDepartment] = useState("");
 
   const imageRef = useRef();
   const fileRef = useRef();
@@ -127,6 +131,24 @@ const PostCreateComponent = () => {
   const handleRemoveFile = (idx) =>
     setFilesList((prev) => prev.filter((_, i) => i !== idx));
 
+  useEffect(() => {
+    if (!departmentPath) return;
+
+    const fetchDepartments = async () => {
+      try {
+        const accessToken = await ValidateToken.getValidAccessToken();
+        const departments = await DepartmentServices.getDepartments(
+          accessToken
+        );
+        setDepartments(departments.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchDepartments();
+  }, [departmentPath]);
+
   const handleAddNewPost = async () => {
     const content = document.querySelector("textarea").value;
     if (!content) {
@@ -143,6 +165,14 @@ const PostCreateComponent = () => {
       formData.append("content", content);
       if (postGroup) {
         formData.append("group", currentPath.split("/").pop());
+      }
+      if (departmentPath) {
+        if (!selectDepartment) {
+          alert("Hãy chọn khoa trước khi tạo bài viết");
+          return;
+        }
+
+        formData.append("department", selectDepartment);
       }
       formData.append("emotion", selectedEmotion?.label || "");
       formData.append("bgContent", selectedBgTextArea || "");
@@ -194,7 +224,7 @@ const PostCreateComponent = () => {
       {/* Header input post */}
       <div className="flex items-center gap-3">
         <img
-          src={user?.userAvatar || LogoCTUT}
+          src={user?.userAvatar || AvatarDefault}
           alt="avatar"
           className="w-12 h-12 rounded-full object-cover bg-white"
         />
@@ -246,8 +276,28 @@ const PostCreateComponent = () => {
           <div className="bg-white dark:bg-[#2c2c2c] rounded-lg p-6 w-full max-w-xl relative flex flex-col gap-4">
             {/* Header */}
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold dark:text-white">
-                Tạo bài viết <span>{postGroup ? "của nhóm" : ""}</span>
+              <h2 className="text-lg font-semibold dark:text-white flex gap-2">
+                <div>Tạo bài viết</div>
+                <div>
+                  {postGroup ? (
+                    <div>cho nhóm</div>
+                  ) : departmentPath ? (
+                    <div>
+                      <span>cho khoa</span>
+                      <select
+                        value={selectDepartment}
+                        onChange={(e) => setSelectDepartment(e.target.value)}
+                      >
+                        <option value="">-- Chọn khoa --</option>
+                        {departments.map((dm) => (
+                          <option key={dm._id} value={dm._id}>
+                            {dm.departmentCode}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : null}
+                </div>
               </h2>
               <button
                 onClick={() => setModalNewPost(false)}
@@ -260,7 +310,7 @@ const PostCreateComponent = () => {
             {/* User info */}
             <div className="flex items-center gap-3 mb-3">
               <img
-                src={user?.userAvatar || LogoCTUT}
+                src={user?.userAvatar || AvatarDefault}
                 alt="avatar"
                 className="w-12 h-12 rounded-full object-cover bg-white"
               />

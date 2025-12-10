@@ -6,69 +6,54 @@ const initialState = {
   firstName: "",
   lastName: "",
   email: "",
-  userName: "",
+  studentId: "",
+  courses: "",
   userAvatar: "",
   userCover: "",
-  privacyPost: "",
+  bio: "",
+  orderConnect: [],
+  gender: "",
+  major: "",
+  userName: "",
   following: [],
   follower: [],
-  bio: "",
+  friendsHidden: [],
   isAdmin: false,
   isTeacher: true,
+  privacyPost: "",
+  status: "",
 };
 
 export const userSlice = createSlice({
   name: "user",
   initialState,
-  reducers: {
-    updateUser: (state, action) => {
-      const {
-        _id,
-        firstName,
-        lastName,
-        email,
-        userName,
-        userAvatar,
-        userCover,
-        privacyPost,
-        following,
-        follower,
-        bio,
-        isAdmin,
-        isTeacher,
-      } = action.payload;
 
-      state.id = _id;
-      state.firstName = firstName;
-      state.lastName = lastName;
-      state.email = email;
-      state.userName = userName;
-      state.userAvatar = userAvatar;
-      state.userCover = userCover;
-      state.privacyPost = privacyPost;
-      state.following = following || [];
-      state.follower = follower || [];
-      state.bio = bio;
-      state.isAdmin = isAdmin;
-      state.isTeacher = isTeacher;
+  reducers: {
+    updateUser: {
+      reducer(state, action) {
+        Object.assign(state, action.payload);
+      },
+      prepare(user) {
+        return {
+          payload: {
+            ...user,
+            id: user._id,
+            following: user.following || [],
+            follower: user.follower || [],
+          },
+        };
+      },
     },
 
     updateFollowingList: (state, action) => {
       const { friendId, isFollowing } = action.payload;
-      if (isFollowing) {
-        // thêm nếu chưa có
-        if (!state.following.includes(friendId)) {
-          state.following.push(friendId);
-        }
-      } else {
-        // bỏ theo dõi
-        state.following = state.following.filter((id) => id !== friendId);
-      }
+
+      state.following = isFollowing
+        ? Array.from(new Set([...state.following, friendId]))
+        : state.following.filter((id) => id !== friendId);
     },
 
-    resetUser: (state) => {
-      Object.assign(state, initialState);
-    },
+    resetUser: () => initialState,
   },
 });
 

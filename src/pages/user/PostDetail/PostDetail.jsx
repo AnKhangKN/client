@@ -1,52 +1,62 @@
 import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import { useParams } from "react-router-dom";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import * as ValidateToken from "../../../utils/token.utils";
 import * as CommentServices from "../../../services/user/CommentServices";
-import * as HeartServices from "../../../services/user/HeartServices";
 import * as PostServices from "../../../services/user/PostServices";
-import { formatVietnamTime } from "../../../utils/formatVietnamTime";
+import * as HeartServices from "@/services/user/HeartServices";
 import MediaCarousel from "../../../components/user/Post/MediaCarousel/MediaCarousel";
 import FileItem from "../../../components/user/Post/FileItem/FileItem";
 import { RiMoreLine } from "react-icons/ri";
+import * as NotificationServices from "@/services/shared/NotificationServices";
 import {
-  PiHeartFill,
-  PiHeartLight,
   PiImagesSquareLight,
   PiFilesLight,
+  PiHeartFill,
+  PiHeartLight,
+  PiChatCenteredDotsLight,
+  PiArrowsClockwiseLight,
 } from "react-icons/pi";
 import ButtonComponent from "../../../components/shared/ButtonComponent/ButtonComponent";
+import TextCollapse from "@/components/user/Post/TextCollapse/TextCollapse";
+import CommentPost from "@/components/user/Post/ModalDetailPost/CommentPost/CommentPost";
+import ActionPostModal from "@/components/user/Post/PostComponent/ActionPostModal/ActionPostModal";
+import { useSelector } from "react-redux";
+import SharePostModal from "@/components/user/Post/SharePostModal/SharePostModal";
+import { CiLocationArrow1 } from "react-icons/ci";
 
 const PostDetail = () => {
-  const [selectedMedia, setSelectedMedia] = useState([]);
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [selectedCommentForMenu, setSelectedCommentForMenu] = useState(null);
-  const [content, setContent] = useState("");
-  const [comments, setComments] = useState([]);
-  const [heartedComments, setHeartedComments] = useState({});
+  const { postId } = useParams();
+  const user = useSelector((state) => state.user);
+
   const [postDetails, setPostDetails] = useState(null);
-  const [showPostMenu, setShowPostMenu] = useState(false);
+  const [comments, setComments] = useState([]);
   const [visibleReplies, setVisibleReplies] = useState({});
   const [replyingTo, setReplyingTo] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [heartedPost, setHeartedPost] = useState(false);
+  const [sharePostModal, setSharePostModal] = useState(null);
+  const [showPostMenu, setShowPostMenu] = useState(null);
 
-  const user = useSelector((state) => state.user);
-  const { postId } = useParams();
-  const navigate = useNavigate();
+  const [selectedMedia, setSelectedMedia] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [content, setContent] = useState("");
 
-  // Fetch post details
-  const fetchPostDetails = async (postId) => {
+  // --- Fetch post details ---
+  const fetchPostDetails = async () => {
     try {
       const token = await ValidateToken.getValidAccessToken();
       const res = await PostServices.getPostById(token, postId);
-      setPostDetails(res);
+
+      setPostDetails(res.data);
+      setHeartedPost(res.data.data.hearts?.some((h) => h.author === user.id));
     } catch (err) {
       console.error(err);
     }
   };
 
-  // Fetch comments
-  const fetchComments = async (postId) => {
+  // --- Fetch comments ---
+  const fetchComments = async () => {
     try {
       const token = await ValidateToken.getValidAccessToken();
       const res = await CommentServices.getCommentsByPostId(token, postId);
@@ -57,94 +67,114 @@ const PostDetail = () => {
   };
 
   useEffect(() => {
-    fetchPostDetails(postId);
-    fetchComments(postId);
+    fetchPostDetails();
+
+    fetchComments();
   }, [postId]);
 
-  const handleMediaChange = (e) => {
-    const files = Array.from(e.target.files);
-    const mediaFiles = files.filter(
-      (f) => f.type.startsWith("image/") || f.type.startsWith("video/")
-    );
-    if (mediaFiles.length !== files.length)
-      alert("Chỉ được chọn ảnh hoặc video!");
+  const handleHeartPost = async () => {
+    if (!postDetails) return;
+    const accessToken = await ValidateToken.getValidAccessToken();
+    const willHeart = !heartedPost;
 
-    setSelectedMedia((prev) => {
-      const newMedia = mediaFiles.map((file) => ({
-        file,
-        url: URL.createObjectURL(file),
+    setPostDetails((prev) => ({
+      ...prev,
+      data: {
+        ...prev.data,
+        heartsCount: willHeart
+          ? (prev.data.heartsCount || 0) + 1
+          : (prev.data.heartsCount || 0) - 1,
+        hearts: willHeart
+          ? [...(prev.data.hearts || []), { author: user.id }]
+          : (prev.data.hearts || []).filter((h) => h.author !== user.id),
+      },
+    }));
+
+    setHeartedPost(willHeart);
+
+    try {
+      const res = await HeartServices.heartTarget(
+        accessToken,
+        postDetails.data?._id,
+        "Post"
+      );
+
+      // Chỉ tạo notification khi bấm tim
+      if (willHeart) {
+        const data = {
+          user: postDetails.data?.author?._id, // chủ bài viết
+          sender: user.id, // người hiện tại
+          type: "heart",
+          post: postDetails.data?._id,
+          message: "đã tim bài viết",
+        };
+
+        await NotificationServices.createNotification(accessToken, data);
+      }
+
+      setPostDetails((prev) => ({
+        ...prev,
+        data: {
+          ...prev.data,
+          heartsCount: res.heartsCount,
+          hearts: res.isHearted
+            ? [...(prev.data.hearts || []), { author: user.id }]
+            : (prev.data.hearts || []).filter((h) => h.author !== user.id),
+        },
       }));
-      const total = prev.length + newMedia.length;
-      if (total > 1) {
-        const allowed = 1 - prev.length;
-        alert("Chỉ được gửi tối đa 1 media!");
-        return [...prev, ...newMedia.slice(0, allowed)];
-      }
-      return [...prev, ...newMedia];
-    });
 
-    e.target.value = "";
+      setHeartedPost(res.isHearted);
+    } catch (err) {
+      console.error(err);
+      // rollback
+      setPostDetails((prev) => ({
+        ...prev,
+        data: {
+          ...prev.data,
+          heartsCount: willHeart
+            ? (prev.data.heartsCount || 0) + 1
+            : (prev.data.heartsCount || 0) - 1,
+          hearts: willHeart
+            ? [...(prev.data.hearts || []), { author: user.id }]
+            : (prev.data.hearts || []).filter((h) => h.author !== user.id),
+        },
+      }));
+
+      setHeartedPost(!willHeart);
+    }
   };
 
-  const handleFilesChange = (e) => {
-    const allowedExtensions = [
-      "pdf",
-      "doc",
-      "docx",
-      "xls",
-      "xlsx",
-      "ppt",
-      "pptx",
-      "zip",
-      "rar",
-      "7z",
-    ];
-    const maxSize = 10 * 1024 * 1024;
-    const files = Array.from(e.target.files);
-    const validFiles = [],
-      invalidFiles = [];
+  // --- Share post ---
+  const handleOpenSharePostModal = () => setSharePostModal(postDetails);
+  const handleCloseSharePostModal = () => setSharePostModal(null);
 
-    files.forEach((f) => {
-      const ext = f.name.split(".").pop().toLowerCase();
-      if (!allowedExtensions.includes(ext))
-        invalidFiles.push(`${f.name} (không hợp lệ)`);
-      else if (f.size > maxSize) invalidFiles.push(`${f.name} (quá lớn >10MB)`);
-      else validFiles.push(f);
-    });
-
-    if (invalidFiles.length)
-      alert("Các file không hợp lệ:\n" + invalidFiles.join("\n"));
-
-    setSelectedFiles((prev) => {
-      const MAX_FILES = 1;
-      const total = prev.length + validFiles.length;
-      if (total > MAX_FILES) {
-        const allowed = MAX_FILES - prev.length;
-        if (allowed <= 0) {
-          alert(`Chỉ được gửi tối đa ${MAX_FILES} file tài liệu!`);
-          return prev;
-        }
-        alert(`Chỉ được gửi tối đa ${MAX_FILES} file tài liệu!`);
-        return [...prev, ...validFiles.slice(0, allowed)];
-      }
-      return [...prev, ...validFiles];
-    });
-
-    e.target.value = "";
+  // --- Copy link ---
+  const handleCopyLink = () => {
+    if (!postDetails) return;
+    navigator.clipboard
+      .writeText(`${window.location.origin}/post/${postDetails._id}`)
+      .then(() => alert("Đã sao chép link bài viết!"))
+      .catch((err) => console.error("Copy thất bại:", err));
   };
 
+  // --- Comment input ---
   const handleSendComment = async () => {
+    if (
+      !content.trim() &&
+      selectedMedia.length === 0 &&
+      selectedFiles.length === 0
+    ) {
+      alert("Hãy nhập bình luận hoặc gửi file!");
+      return;
+    }
+
+    setLoading(true);
     try {
       const accessToken = await ValidateToken.getValidAccessToken();
-
       const formData = new FormData();
-      formData.append("post", postDetails._id);
+      formData.append("post", postDetails.data._id);
       formData.append("content", content.trim());
-
-      if (replyingTo) {
-        formData.append("parentComment", replyingTo._id);
-      }
-
+      if (replyingTo) formData.append("parentComment", replyingTo._id);
       selectedMedia.forEach((m) => formData.append("mediaComments", m.file));
       selectedFiles.forEach((f) => formData.append("documentComments", f));
 
@@ -152,558 +182,311 @@ const PostDetail = () => {
 
       if (!replyingTo) {
         setComments((prev) => [response, ...prev]);
+      } else {
+        // Cập nhật local replies
+        setVisibleReplies((prev) => {
+          const oldReplies = prev[replyingTo._id] || [];
+          return { ...prev, [replyingTo._id]: [response, ...oldReplies] };
+        });
+        setComments((prev) =>
+          prev.map((c) =>
+            c._id === replyingTo._id
+              ? { ...c, repliesCount: (c.repliesCount || 0) + 1 }
+              : c
+          )
+        );
       }
 
-      // reset form
+      const data = {
+        user: postDetails?.data?.author?._id, // chủ bài viết
+        sender: user.id, // người gửi hiện tại
+        type: "comment",
+        post: postDetails?.data?._id,
+        message: "đã bình luận bài viết",
+      };
+
+      await NotificationServices.createNotification(accessToken, data);
+
       setContent("");
       setReplyingTo(null);
       setSelectedMedia([]);
       setSelectedFiles([]);
-    } catch (error) {
-      console.error("Error adding comment:", error);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleHeartComment = async (commentId) => {
-    try {
-      const token = await ValidateToken.getValidAccessToken();
-      const targetType = "Comment";
-
-      const res = await HeartServices.heartTarget(token, commentId, targetType);
-
-      // Cập nhật comment cha
-      setComments((prev) =>
-        prev.map((c) =>
-          c._id === commentId
-            ? {
-                ...c,
-                heartsCount: res.heartsCount,
-                hearts: res.isHearted
-                  ? [...c.hearts, { author: user.id }]
-                  : c.hearts.filter((h) => h.author !== user.id),
-              }
-            : c
-        )
-      );
-
-      // Cập nhật reply nếu nó đang hiển thị
-      setVisibleReplies((prev) => {
-        const newReplies = { ...prev };
-        Object.keys(newReplies).forEach((parentId) => {
-          newReplies[parentId] = newReplies[parentId].map((r) =>
-            r._id === commentId
-              ? {
-                  ...r,
-                  heartsCount: res.heartsCount,
-                  hearts: res.isHearted
-                    ? [...r.hearts, { author: user.id }]
-                    : r.hearts.filter((h) => h.author !== user.id),
-                }
-              : r
-          );
-        });
-        return newReplies;
-      });
-
-      // Cập nhật trạng thái tim
-      setHeartedComments((prev) => ({
-        ...prev,
-        [commentId]: res.isHearted,
-      }));
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleOpenModalComment = (comment) => {
-    // nếu comment đã được mở menu rồi thì đóng
-    if (selectedCommentForMenu?._id === comment._id) {
-      setSelectedCommentForMenu(null);
-    } else {
-      setSelectedCommentForMenu(comment);
-    }
-  };
-
-  const handleRepliesComment = async (parentId) => {
-    try {
-      const accessToken = await ValidateToken.getValidAccessToken();
-      const res = await CommentServices.getCommentsReplyByCommentId(
-        accessToken,
-        parentId
-      );
-
-      setVisibleReplies((prev) => ({
-        ...prev,
-        [parentId]: res || [],
-      }));
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const renderReplies = (replies) => {
-    return replies.map((reply) => (
-      <div key={reply._id} className="ml-0 mt-2 space-y-2">
-        <div className="flex gap-2">
-          <div className="w-6 h-6 overflow-hidden rounded-full">
-            <img
-              src={reply.author?.userAvatar || LogoCTUT}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-semibold">
-                {reply.author?.lastName ||
-                  reply.author?.userName ||
-                  "Người dùng"}{" "}
-                {reply.author?.firstName}
-              </div>
-              <div className="text-xs text-gray-400">
-                {formatVietnamTime(reply.createdAt)}
-              </div>
-            </div>
-
-            <div className="flex space-x-8 justify-between items-center bg-gray-100 rounded-sm px-2 py-1 mt-2">
-              <div className="text-sm text-gray-800">{reply.content}</div>
-
-              <button
-                onClick={() => handleHeartComment(reply._id)}
-                className="flex items-center gap-2"
-              >
-                {heartedComments[reply._id] ||
-                reply.hearts.some((h) => h.author === user.id) ? (
-                  <PiHeartFill className="text-red-500" />
-                ) : (
-                  <PiHeartLight />
-                )}
-
-                <div className="text-[16px]">{reply.heartsCount}</div>
-              </button>
-            </div>
-
-            {reply.medias && reply.medias.length > 0 && (
-              <div className="flex gap-2 mt-2">
-                {reply.medias.map((m, i) => (
-                  <div key={i} className="w-24 h-16 overflow-hidden rounded">
-                    {m.type && m.type.startsWith("image") ? (
-                      <img
-                        src={m.url}
-                        alt="media"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <video
-                        src={m.url}
-                        className="w-full h-full object-cover"
-                        controls
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {reply.documents && reply.documents.length > 0 && (
-              <div className="mt-2">
-                {reply.documents.map((d, i) => (
-                  <div key={i} className="my-1">
-                    <FileItem file={d} />
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="flex items-center justify-between p-2">
-              <div className="text-sm text-gray-500 flex gap-2 items-center">
-                <div
-                  className="cursor-pointer"
-                  onClick={() => setReplyingTo(reply)}
-                >
-                  Reply
-                </div>
-
-                <div
-                  onClick={() => handleOpenModalComment(reply)}
-                  className="hover:bg-gray-100 p-1 rounded-full cursor-pointer relative"
-                >
-                  <RiMoreLine />
-
-                  {selectedCommentForMenu &&
-                    selectedCommentForMenu._id === reply._id && (
-                      <div
-                        className="absolute bg-white shadow-lg rounded p-2 t-0 z-50
-                                        w-24"
-                      >
-                        <div className="cursor-pointer p-1 hover:bg-gray-100">
-                          Chỉnh sửa
-                        </div>
-                        <div className="cursor-pointer p-1 hover:bg-gray-100">
-                          Xóa
-                        </div>
-                      </div>
-                    )}
-                </div>
-              </div>
-
-              {reply.repliesCount > 0 && (
-                <>
-                  <div
-                    className="cursor-pointer text-sm text-blue-500"
-                    onClick={() => handleRepliesComment(reply._id)}
-                  >
-                    Xem thêm {reply.repliesCount} trả lời
-                  </div>
-                </>
-              )}
-            </div>
-
-            {visibleReplies[reply._id] &&
-              visibleReplies[reply._id].length > 0 && (
-                <div className="ml-0 mt-2 space-y-2">
-                  {renderReplies(visibleReplies[reply._id])}
-                </div>
-              )}
-          </div>
-        </div>
-      </div>
-    ));
   };
 
   if (!postDetails) return <div>Loading...</div>;
 
   return (
-    <div className="flex flex-1 overflow-hidden h-screen">
-      {/* Left Column */}
-      <div className="flex-1 p-4 border-r border-gray-200 flex flex-col">
-        <h2 className="text-xl font-semibold mb-4">Nội dung bài viết</h2>
-        <div className="overflow-auto flex-1 scrollbar-hide">
-          <p className="mb-4">{postDetails.content}</p>
-          {postDetails.medias?.length > 0 && (
-            <MediaCarousel medias={postDetails.medias} />
-          )}
-          <div className="mt-4">
-            {postDetails.documents?.map((f, i) => (
-              <div key={i} className="my-3">
-                <FileItem file={f} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Right Column */}
-      <div className="w-120 flex flex-col">
-        <div className="border-b border-gray-200 p-2 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 overflow-hidden">
-              <img
-                className="w-full h-full object-cover"
-                src={postDetails.author.userAvatar || LogoCTUT}
-                alt=""
-              />
-            </div>
-            <div>
-              {postDetails.author.lastName} {postDetails.author.firstName}
-            </div>
-          </div>
-
-          {/* More menu */}
-          <button onClick={() => setShowPostMenu(true)} className="text-xl">
-            <RiMoreLine />
-          </button>
-          {showPostMenu && (
-            <div className="bg-black/20 inset-0 z-50 flex justify-center items-center fixed">
-              <div className="bg-white p-4 rounded shadow-lg flex flex-col gap-2">
-                <div
-                  className="cursor-pointer hover:bg-gray-100 px-2 py-1"
-                  onClick={() => alert("Báo cáo")}
-                >
-                  Báo cáo
-                </div>
-                <div
-                  className="cursor-pointer hover:bg-gray-100 px-2 py-1"
-                  onClick={() => navigate(`/post/${postDetails._id}`)}
-                >
-                  Đi tới bài viết
-                </div>
-                <div className="cursor-pointer hover:bg-gray-100 px-2 py-1">
-                  Bỏ theo dõi
-                </div>
-                <div
-                  className="cursor-pointer hover:bg-gray-100 px-2 py-1"
-                  onClick={() => setShowPostMenu(false)}
-                >
-                  Hủy
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Comments */}
-        <div className="flex-1 overflow-auto p-2">
-          <div className="space-y-3">
-            {comments && comments.length > 0 ? (
-              comments.map((c) => (
-                <div key={c._id}>
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 overflow-hidden rounded-full">
-                      <img
-                        className="w-full h-full object-cover"
-                        src={c.author?.userAvatar || LogoCTUT}
-                        alt=""
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm font-semibold">
-                          {c.author?.lastName ||
-                            c.author?.userName ||
-                            "Người dùng"}
-                          {c.author?.firstName}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {formatVietnamTime(c.createdAt)}
-                        </div>
-                      </div>
-
-                      <div
-                        className="flex space-x-8 items-center justify-between bg-gray-100 rounded-sm px-2 py-1
-                              mt-2"
-                      >
-                        <div className="text-sm text-gray-800 mt-1">
-                          {c.content}
-                        </div>
-
-                        <button
-                          onClick={() => handleHeartComment(c._id)}
-                          className="flex items-center gap-2"
-                        >
-                          {heartedComments[c._id] ||
-                          c.hearts.some((h) => h.author === user.id) ? (
-                            <PiHeartFill className="text-red-500" />
-                          ) : (
-                            <PiHeartLight />
-                          )}
-
-                          <div className="text-[16px]">{c.heartsCount}</div>
-                        </button>
-                      </div>
-
-                      {c.medias && c.medias.length > 0 && (
-                        <div className="flex gap-2 mt-2">
-                          {c.medias.map((m, i) => (
-                            <div
-                              key={i}
-                              className="w-24 h-16 overflow-hidden rounded"
-                            >
-                              {m.type && m.type.startsWith("image") ? (
-                                <img
-                                  src={m.url}
-                                  alt="media"
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <video
-                                  src={m.url}
-                                  className="w-full h-full object-cover"
-                                  controls
-                                />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {c.documents && c.documents.length > 0 && (
-                        <div className="mt-2">
-                          {c.documents.map((d, i) => (
-                            <div key={i} className="my-1">
-                              <FileItem file={d} />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between p-2">
-                        <div className="text-sm text-gray-500 flex gap-2 items-center">
-                          <div
-                            className="cursor-pointer"
-                            onClick={() => setReplyingTo(c)}
-                          >
-                            Reply
-                          </div>
-
-                          <div
-                            onClick={() => handleOpenModalComment(c)}
-                            className="hover:bg-gray-100 p-1 rounded-full cursor-pointer  relative"
-                          >
-                            <RiMoreLine />
-
-                            {selectedCommentForMenu &&
-                              selectedCommentForMenu._id === c._id && (
-                                <div
-                                  className="absolute bg-white shadow-lg rounded p-2 t-0 z-50
-                                        w-24"
-                                >
-                                  <div className="cursor-pointer p-1 hover:bg-gray-100">
-                                    Chỉnh sửa
-                                  </div>
-                                  <div className="cursor-pointer p-1 hover:bg-gray-100">
-                                    Xóa
-                                  </div>
-                                </div>
-                              )}
-                          </div>
-                        </div>
-
-                        {c.repliesCount > 0 && (
-                          <>
-                            <div>
-                              <div
-                                className="cursor-pointer text-sm text-blue-500"
-                                onClick={() => {
-                                  handleRepliesComment(c._id);
-                                }}
-                              >
-                                Xem thêm {c.repliesCount} trả lời
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      {visibleReplies[c._id] &&
-                        visibleReplies[c._id].length > 0 && (
-                          <div>{renderReplies(visibleReplies[c._id])}</div>
-                        )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-sm text-gray-500">Chưa có bình luận</div>
-            )}
-          </div>
-        </div>
-
-        {/* Media / File Preview */}
-        {(selectedMedia.length > 0 || selectedFiles.length > 0) && (
-          <div className="px-4 pb-2">
-            <div className="flex gap-3 items-start">
-              {selectedMedia.map((m, idx) => (
-                <div key={idx} className="relative">
-                  {m.file.type.startsWith("image/") ? (
-                    <img
-                      src={m.url}
-                      alt="preview"
-                      className="w-32 h-20 object-cover rounded"
-                    />
-                  ) : (
-                    <video
-                      src={m.url}
-                      className="w-32 h-20 object-cover rounded"
-                      controls
-                    />
-                  )}
-                  <button
-                    onClick={() =>
-                      setSelectedMedia((prev) =>
-                        prev.filter((_, i) => i !== idx)
-                      )
-                    }
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center"
-                  >
-                    ×
-                  </button>
+    <div className="flex flex-1 h-screen">
+      {/* Left column: Post content */}
+      <div className="flex-1 mt-20 p-4 border-r border-gray-200 flex flex-col">
+        {postDetails.data?.medias?.length > 0 ? (
+          <MediaCarousel medias={postDetails.data.medias} />
+        ) : (
+          <div>
+            <div className="text-2xl font-bold">Nội dung bài viết</div>
+            <TextCollapse
+              text={postDetails.data.content}
+              bgColor={postDetails.data.bgContent || ""}
+              haveFiles={[
+                ...(postDetails.data.medias || []),
+                ...(postDetails.data.documents || []),
+              ]}
+            />
+            <div className="mt-4">
+              {postDetails.data.documents?.map((f, i) => (
+                <div key={i} className="my-3">
+                  <FileItem file={f} />
                 </div>
               ))}
-
-              <div className="flex flex-col gap-2">
-                {selectedFiles.map((f, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded"
-                  >
-                    <div className="text-sm">{f.name}</div>
-                    <div className="text-xs text-gray-500">
-                      {(f.size / 1024).toFixed(1)} KB
-                    </div>
-                    <button
-                      onClick={() =>
-                        setSelectedFiles((prev) =>
-                          prev.filter((_, i) => i !== idx)
-                        )
-                      }
-                      className="ml-2 text-red-500 text-sm"
-                    >
-                      Xóa
-                    </button>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         )}
+      </div>
 
-        {/* Comment input */}
-        <div className="flex flex-col gap-2 border-t border-gray-200 py-2 px-4">
-          {replyingTo && (
-            <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded mb-2">
-              <div className="text-sm">
-                Đang trả lời:
-                <span className="font-semibold ml-1">
-                  {replyingTo.author?.lastName} {replyingTo.author?.firstName}
-                </span>
-                <div className="text-xs text-gray-500 mt-1">
-                  {replyingTo.content}
+      {/* Right column: Info + comments */}
+      <div className="w-120 flex flex-col">
+        {/* Author + menu */}
+        <div className="border-b border-gray-200 p-2 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 ">
+              <img
+                src={postDetails.data.author.userAvatar || AvatarDefault}
+                alt=""
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              {postDetails.data.author.lastName}{" "}
+              {postDetails.data.author.firstName}
+            </div>
+          </div>
+          <button
+            onClick={() => setShowPostMenu(postDetails)}
+            className="text-xl"
+          >
+            <RiMoreLine />
+          </button>
+        </div>
+
+        {/* Comments + actions */}
+        <div className="flex-1 p-2 flex flex-col justify-between">
+          <div className="space-y-3 overflow-y-auto h-full">
+            {postDetails.data.medias?.length > 0 && (
+              <div>
+                <TextCollapse
+                  text={postDetails.data.content}
+                  bgColor={postDetails.data.bgContent || ""}
+                  haveFiles={[
+                    ...(postDetails.data.medias || []),
+                    ...(postDetails.data.documents || []),
+                  ]}
+                />
+                <div className="mt-4">
+                  {postDetails.data.documents?.map((f, i) => (
+                    <div key={i} className="my-3">
+                      <FileItem file={f} />
+                    </div>
+                  ))}
                 </div>
               </div>
+            )}
+
+            {showPostMenu && (
+              <ActionPostModal
+                actionPostModal={showPostMenu}
+                handleCloseActionPostModal={() => setShowPostMenu(null)}
+              />
+            )}
+
+            <div className="flex justify-around items-center text-2xl pt-4 mt-4 border-t border-gray-300 dark:border-0">
+              <button
+                onClick={handleHeartPost}
+                className="flex gap-1.5 items-end cursor-pointer hover:bg-gray-100 py-1.5 pl-2 pr-2.5 rounded-full"
+              >
+                {heartedPost ? (
+                  <PiHeartFill className="text-red-500" />
+                ) : (
+                  <PiHeartLight />
+                )}
+                <div className="text-[14px]">
+                  {postDetails.data.heartsCount || ""}
+                </div>
+              </button>
+
+              <button className="flex gap-1.5 items-end cursor-pointer hover:bg-gray-100 py-1.5 pl-2 pr-2.5 rounded-full">
+                <PiChatCenteredDotsLight />
+                <div className="text-[14px]">
+                  {postDetails.data.commentsCount || ""}
+                </div>
+              </button>
 
               <button
-                onClick={() => {
-                  setReplyingTo(null);
-                }}
-                className="text-red-500 text-lg"
+                onClick={handleOpenSharePostModal}
+                className="flex gap-1.5 items-end cursor-pointer hover:bg-gray-100 py-1.5 pl-2 pr-2.5 rounded-full"
               >
-                ×
+                <PiArrowsClockwiseLight />
+                <div className="text-[14px]">
+                  {postDetails.data.sharesCount || ""}
+                </div>
+              </button>
+
+              <button
+                onClick={handleCopyLink}
+                className="cursor-pointer hover:bg-gray-100 py-1.5 pl-1.5 pr-2 rounded-full"
+              >
+                <CiLocationArrow1 />
               </button>
             </div>
-          )}
-          <div className="flex items-center gap-2">
-            <div className="flex gap-2 items-center">
-              <label
-                htmlFor="medias"
-                className="cursor-pointer p-1 text-3xl rounded-full text-green-600"
-              >
-                <PiImagesSquareLight />
-              </label>
-              <input
-                id="medias"
-                type="file"
-                className="hidden"
-                multiple
-                accept="image/*,video/*"
-                onChange={handleMediaChange}
-              />
-              <label
-                htmlFor="files"
-                className="cursor-pointer p-1 text-3xl rounded-full text-indigo-500"
-              >
-                <PiFilesLight />
-              </label>
-              <input
-                id="files"
-                type="file"
-                className="hidden"
-                multiple
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z"
-                onChange={handleFilesChange}
+
+            <div className="h-[calc(100vh-350px)]">
+              <CommentPost
+                commentList={comments}
+                setReplyingTo={setReplyingTo}
+                visibleReplies={visibleReplies}
+                setVisibleReplies={setVisibleReplies}
               />
             </div>
-            <div className="flex gap-2 items-center w-full">
+          </div>
+
+          {/* Media / file preview + input */}
+          <div className="relative">
+            <div className="absolute -top-16 -left-4">
+              {(selectedMedia.length > 0 || selectedFiles.length > 0) && (
+                <div className="px-4 pb-2 flex gap-3 items-start">
+                  {selectedMedia.map((m, idx) => (
+                    <div key={idx} className="relative">
+                      {m.file.type.startsWith("image/") ? (
+                        <img
+                          src={m.url}
+                          alt="preview"
+                          className="w-32 h-20 object-cover rounded"
+                        />
+                      ) : (
+                        <video
+                          src={m.url}
+                          className="w-32 h-20 object-cover rounded"
+                          controls
+                        />
+                      )}
+                      <button
+                        onClick={() =>
+                          setSelectedMedia((prev) =>
+                            prev.filter((_, i) => i !== idx)
+                          )
+                        }
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+
+                  <div className="flex flex-col gap-2">
+                    {selectedFiles.map((f, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded"
+                      >
+                        <div className="text-sm">{f.name}</div>
+                        <div className="text-xs text-gray-500">
+                          {(f.size / 1024).toFixed(1)} KB
+                        </div>
+                        <button
+                          onClick={() =>
+                            setSelectedFiles((prev) =>
+                              prev.filter((_, i) => i !== idx)
+                            )
+                          }
+                          className="ml-2 text-red-500 text-sm"
+                        >
+                          Xóa
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Comment input */}
+          <div className="mt-auto flex flex-col justify-between gap-2 border-t border-gray-200 py-2 px-4 relative">
+            {replyingTo && (
+              <div className="absolute -top-12 left-0 flex items-center justify-between bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded mb-2">
+                <div className="text-sm">
+                  Đang trả lời:
+                  <span className="font-semibold ml-1">
+                    {replyingTo.author?.lastName} {replyingTo.author?.firstName}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setReplyingTo(null)}
+                  className="text-red-500 text-lg"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            <div className="flex border border-gray-300 rounded-xl px-2 py-1.5">
+              {!content.trim() && (
+                <div className="flex gap-2 items-center">
+                  <label
+                    htmlFor="medias"
+                    className="cursor-pointer p-1 text-3xl rounded-full text-green-600"
+                  >
+                    <PiImagesSquareLight />
+                  </label>
+                  <input
+                    id="medias"
+                    type="file"
+                    className="hidden"
+                    multiple
+                    accept="image/*,video/*"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files);
+                      const mediaFiles = files.filter(
+                        (f) =>
+                          f.type.startsWith("image/") ||
+                          f.type.startsWith("video/")
+                      );
+                      setSelectedMedia((prev) => [
+                        ...prev,
+                        ...mediaFiles.map((file) => ({
+                          file,
+                          url: URL.createObjectURL(file),
+                        })),
+                      ]);
+                      e.target.value = "";
+                    }}
+                  />
+
+                  <label
+                    htmlFor="files"
+                    className="cursor-pointer p-1 text-3xl rounded-full text-indigo-500"
+                  >
+                    <PiFilesLight />
+                  </label>
+                  <input
+                    id="files"
+                    type="file"
+                    className="hidden"
+                    multiple
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files);
+                      setSelectedFiles((prev) => [...prev, ...files]);
+                      e.target.value = "";
+                    }}
+                  />
+                </div>
+              )}
+
               <input
                 type="text"
                 value={content}
@@ -713,18 +496,33 @@ const PostDetail = () => {
                     ? `Trả lời ${replyingTo.author?.firstName}...`
                     : "Viết bình luận..."
                 }
-                className="flex-1 border border-gray-300 rounded px-2 py-1 outline-0"
+                className="flex-1 rounded px-2 py-1 outline-0"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSendComment();
+                  }
+                }}
               />
+
               <ButtonComponent
                 text="Bình luận"
+                loading={loading}
                 onClick={handleSendComment}
-                py="py-1"
-                width="w-26"
+                py="py-2"
+                width="w-36"
               />
             </div>
           </div>
         </div>
       </div>
+
+      {sharePostModal && (
+        <SharePostModal
+          item={sharePostModal}
+          handleCloseSharePostModal={handleCloseSharePostModal}
+        />
+      )}
     </div>
   );
 };

@@ -3,7 +3,7 @@ import { HiOutlineDotsHorizontal } from "react-icons/hi";
 import { RiSearchLine } from "react-icons/ri";
 import MessageBoxComponent from "../MessageBoxComponent/MessageBoxComponent";
 import GroupMessageBoxComponent from "../GroupMessageBoxComponent/GroupMessageBoxComponent.jsx";
-import logoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import * as ChatServices from "../../../services/shared/ChatServices.js";
 import * as ValidateToken from "../../../utils/token.utils.js";
 import { PiPlusCircleFill } from "react-icons/pi";
@@ -81,7 +81,7 @@ const ActiveFriendsListAndGroupsListComponent = ({
             <div className="relative">
               <img
                 className="w-10 h-10 rounded-full dark:bg-white object-cover"
-                src={friend.userAvatar || logoCTUT}
+                src={friend.userAvatar || AvatarDefault}
                 alt={friend.userName}
               />
               {/* chấm xanh online */}

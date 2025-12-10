@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import { CiCircleInfo } from "react-icons/ci";
 import { VscSend } from "react-icons/vsc";
 import {
@@ -12,7 +12,7 @@ import { RxDotsHorizontal } from "react-icons/rx";
 import * as ValidateToken from "../../../utils/token.utils";
 import * as ChatServices from "../../../services/shared/ChatServices";
 import * as HeartServices from "@/services/user/HeartServices";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { socket } from "../../../utils/socket";
 import { SiGitconnected } from "react-icons/si";
 import InputComponent from "../../../components/shared/InputComponent/InputComponent";
@@ -20,6 +20,8 @@ import SidebarMessageComponent from "../../../components/user/SidebarMessageComp
 import ButtonComponent from "../../../components/shared/ButtonComponent/ButtonComponent";
 import * as UserServices from "../../../services/user/UserServices";
 import { IoIosShareAlt } from "react-icons/io";
+import { useNavigate } from "react-router-dom";
+import { updateUser } from "@/features/user/userSlice";
 
 const MessagePage = () => {
   const user = useSelector((state) => state.user);
@@ -45,11 +47,19 @@ const MessagePage = () => {
   const [replyingTo, setReplyingTo] = useState(null);
   const [enteredPassword, setEnteredPassword] = useState("");
   const [modalEditMessages, setModalEditMessages] = useState(null);
+  const [isHidden, setIsHidden] = useState(false);
+  const [isHiddenByUserDetail, setIsHiddenByUserDetail] = useState(false);
+  const dispatch = useDispatch();
+
   const [authenticatedChats, setAuthenticatedChats] = useState(() => {
     // Lấy từ sessionStorage
     const saved = sessionStorage.getItem("authenticatedChats");
     return saved ? JSON.parse(saved) : {};
   });
+
+  const navigate = useNavigate();
+
+  const [userSelectedCheckHidden, setUserSelectedCheckHidden] = useState({});
   const [cancelPassword, setCancelPassword] = useState(false);
 
   const fetchFriends = async () => {
@@ -79,8 +89,24 @@ const MessagePage = () => {
     fetchChatList();
   }, []);
 
-  // --- Select user chat ---
+  useEffect(() => {
+    if (!selectUser) return;
+
+    setIsHidden(
+      user.friendsHidden?.some(
+        (item) => String(item.friendId?._id) === String(selectUser._id)
+      )
+    );
+
+    setIsHiddenByUserDetail(
+      userSelectedCheckHidden.friendsHidden?.some(
+        (item) => String(item.friendId) === String(user._id)
+      )
+    );
+  }, [selectUser, userSelectedCheckHidden]);
+
   const handleSelectUser = async (
+    _id,
     userAvatar,
     lastName,
     firstName,
@@ -90,7 +116,8 @@ const MessagePage = () => {
     members,
     admins
   ) => {
-    setSelectUser({
+    const selected = {
+      _id,
       userAvatar,
       lastName,
       firstName,
@@ -99,21 +126,67 @@ const MessagePage = () => {
       chatName,
       members,
       admins,
-    });
+    };
+    setSelectUser(selected);
 
     try {
       const accessToken = await ValidateToken.getValidAccessToken();
-
       const res = await ChatServices.getChatPassword(accessToken, chatId);
 
       setHasPassword(res.hasPassword);
 
+      await checkHidden(userName);
+
       if (res.hasPassword && !authenticatedChats[chatId]) {
-        // Chat có mật khẩu nhưng chưa xác thực
         setModalPasswordPrompt(true);
       } else {
-        // Chat không có mật khẩu hoặc đã xác thực
         await loadMessages(chatId);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const checkHidden = async (userName) => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+      const res = await UserServices.getProfile(accessToken, userName);
+
+      const selectedUserData = res.data.user;
+      setUserSelectedCheckHidden(selectedUserData);
+
+      // Cập nhật check hidden ngay
+      setIsHidden(
+        user.friendsHidden?.some(
+          (item) => String(item.friendId?._id) === String(selectedUserData._id)
+        )
+      );
+
+      setIsHiddenByUserDetail(
+        selectedUserData.friendsHidden?.some(
+          (item) => String(item.friendId) === String(user._id)
+        )
+      );
+    } catch (error) {
+      if (error.response.data.message === "Không tìm thấy người dùng!") {
+        navigate("/404");
+      }
+      console.log(error.response.data.message === "Không tìm thấy người dùng!");
+    }
+  };
+
+  const handleUnblock = async () => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+
+      const id = selectUser._id;
+
+      const res = await UserServices.deleteUserHidden(accessToken, id);
+
+      if (res) {
+        setModalChatDetail(false);
+        dispatch(updateUser(res.data));
+        setSelectUser(null);
       }
     } catch (error) {
       console.log(error);
@@ -128,7 +201,7 @@ const MessagePage = () => {
         password: enteredPassword,
       });
 
-      if (res.success) {
+      if (res) {
         // Lưu vào session
         const updated = {
           ...authenticatedChats,
@@ -471,6 +544,25 @@ const MessagePage = () => {
     );
   };
 
+  const handleBlockFriend = async () => {
+    try {
+      const accessToken = await ValidateToken.getValidAccessToken();
+      const res = await UserServices.hiddenOrBlockFriend(accessToken, {
+        friendId: selectUser._id,
+        type: "block",
+      });
+
+      if (res) {
+        alert("Chặn người dùng thành công!");
+        setSelectUser(null);
+        handleCloseModalChatDetail();
+        dispatch(updateUser(res.data));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <div className="flex h-screen dark:bg-[#1c1c1d] dark:text-white">
       {/* Sidebar */}
@@ -489,12 +581,18 @@ const MessagePage = () => {
             <div className="flex items-center gap-4 text-lg">
               <div className="text-sm">{selectUser.chatName}</div>
             </div>
-            <div
-              onClick={handleOpenModalChatDetail}
-              className="text-3xl hover:bg-gray-200 p-2 cursor-pointer"
-            >
-              <CiCircleInfo />
-            </div>
+            {isHiddenByUserDetail ? (
+              <></>
+            ) : isHidden ? (
+              <></>
+            ) : (
+              <div
+                onClick={handleOpenModalChatDetail}
+                className="text-3xl hover:bg-gray-200 p-2 cursor-pointer"
+              >
+                <CiCircleInfo />
+              </div>
+            )}
           </div>
 
           {/* modal detail */}
@@ -520,7 +618,9 @@ const MessagePage = () => {
                 {/* Content */}
                 <div
                   className={`p-6 flex flex-col  ${
-                    selectUser.members.length <= 2 ? "justify-between" : "gap-6"
+                    selectUser?.members?.length <= 2
+                      ? "justify-between"
+                      : "gap-6"
                   }  md:h-[620px] h-[calc(100vh-110px)] overflow-y-auto`}
                 >
                   <div className="flex items-center justify-between">
@@ -643,7 +743,7 @@ const MessagePage = () => {
                   </div>
 
                   {/* Chỉ hiển thị với group */}
-                  {selectUser.members.length > 2 ? (
+                  {selectUser?.members?.length > 2 ? (
                     <>
                       {/* Tên nhóm mới */}
                       <div className="p-4 bg-gray-50 dark:bg-[#2a2a2a] flex flex-col gap-4">
@@ -681,7 +781,7 @@ const MessagePage = () => {
                                   <div className="w-10 h-10 rounded-full overflow-hidden">
                                     <img
                                       className="w-full h-full object-cover"
-                                      src={member.userAvatar || LogoCTUT}
+                                      src={member.userAvatar || AvatarDefault}
                                       alt={`${member.firstName} ${member.lastName}`}
                                     />
                                   </div>
@@ -716,15 +816,16 @@ const MessagePage = () => {
                         {/* Hành động */}
                         <div className="flex justify-end gap-4 mt-4">
                           <ButtonComponent text="Rời khỏi nhóm" />
-                          {/* <ButtonComponent text="Xóa đoạn chat" /> */}
                         </div>
                       </div>
                     </>
                   ) : (
                     <>
                       <div className="flex items-center justify-between gap-4 mt-4">
-                        <ButtonComponent text="Báo cáo" />
-                        <ButtonComponent text="Chặn người dùng" />
+                        <ButtonComponent
+                          text="Chặn người dùng"
+                          onClick={handleBlockFriend}
+                        />
                       </div>
                     </>
                   )}
@@ -851,7 +952,7 @@ const MessagePage = () => {
                         <div className="w-8 h-8 absolute rounded-full overflow-hidden">
                           <img
                             className="w-full h-full object-cover"
-                            src={msg.senderId.userAvatar || LogoCTUT}
+                            src={msg.senderId.userAvatar || AvatarDefault}
                             alt={msg.senderId.userName}
                           />
                         </div>
@@ -1106,48 +1207,59 @@ const MessagePage = () => {
                 </div>
               )}
 
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <label className="text-green-600 p-1 text-4xl hover:bg-gray-200 rounded-full cursor-pointer">
-                    <PiImagesSquareLight />
-                    <input
-                      type="file"
-                      accept="image/*,video/*"
-                      multiple
-                      className="hidden"
-                      onChange={handleMediaChange}
-                    />
-                  </label>
-
-                  <label className="text-indigo-600 p-1 text-4xl hover:bg-gray-200 rounded-full cursor-pointer">
-                    <PiFilesLight />
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z"
-                      multiple
-                      className="hidden"
-                      onChange={handleFilesChange}
-                    />
-                  </label>
-                </div>
-
-                <div className="flex items-center gap-4 border border-gray-200 w-full rounded-full px-4">
-                  <input
-                    type="text"
-                    placeholder="Nhập tin nhắn..."
-                    className="flex-1 outline-none text-lg py-2"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
+              {isHidden ? (
+                <div>
+                  <ButtonComponent
+                    text="Bỏ chặn để chat"
+                    onClick={handleUnblock}
                   />
-                  <div
-                    className="text-indigo-600 p-1 text-3xl cursor-pointer hover:text-indigo-800"
-                    onClick={handleSendMessage}
-                  >
-                    <VscSend />
+                </div>
+              ) : isHiddenByUserDetail ? (
+                <div>Hiện không thể gửi tin nhắn</div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <label className="text-green-600 p-1 text-4xl hover:bg-gray-200 rounded-full cursor-pointer">
+                      <PiImagesSquareLight />
+                      <input
+                        type="file"
+                        accept="image/*,video/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleMediaChange}
+                      />
+                    </label>
+
+                    <label className="text-indigo-600 p-1 text-4xl hover:bg-gray-200 rounded-full cursor-pointer">
+                      <PiFilesLight />
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z"
+                        multiple
+                        className="hidden"
+                        onChange={handleFilesChange}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-4 border border-gray-200 w-full rounded-full px-4">
+                    <input
+                      type="text"
+                      placeholder="Nhập tin nhắn..."
+                      className="flex-1 outline-none text-lg py-2"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                    />
+                    <div
+                      className="text-indigo-600 p-1 text-3xl cursor-pointer hover:text-indigo-800"
+                      onClick={handleSendMessage}
+                    >
+                      <VscSend />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

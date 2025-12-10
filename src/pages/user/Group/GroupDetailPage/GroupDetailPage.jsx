@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import * as ValidateToken from "@/utils/token.utils";
 import * as GroupServices from "@/services/user/GroupServices";
 import * as ReportServices from "@/services/shared/ReportServices";
+import * as NotificationServices from "@/services/shared/NotificationServices";
 import { useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 
@@ -16,8 +17,8 @@ import { RiCameraLensFill, RiMoreLine } from "react-icons/ri";
 import { GiEarthAmerica } from "react-icons/gi";
 import { IoMdLock } from "react-icons/io";
 
-import bgCover from "@/assets/bgTest/bgTest.jpg";
-import logoTest from "@/assets/logo/logo-ctut.png";
+import bgCover from "@/assets/cover/cover_default.webp";
+import logoTest from "@/assets/logo/avatar_default.webp";
 import GroupIntroduction from "./GroupIntroduction/GroupIntroduction";
 
 const GroupDetailPage = () => {
@@ -89,6 +90,18 @@ const GroupDetailPage = () => {
         reportContent: otherReason,
       });
 
+      const dataNotification = {
+        group: group._id,
+        isAdmin: true,
+        type: "report",
+        message: "đã báo cáo 1 nhóm.",
+      };
+
+      await NotificationServices.createNotification(
+        accessToken,
+        dataNotification
+      );
+
       setReportModal(false);
       setSelectedReason("");
       setOtherReason("");
@@ -101,15 +114,15 @@ const GroupDetailPage = () => {
   };
 
   return (
-    <div className="flex">
+    <div className="flex ">
       {/* LEFT SIDEBAR */}
       <SidebarGroupDetail />
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 bg-neutral-100 p-4 overflow-hidden h-screen">
+      <div className="flex-1 bg-neutral-100 p-4 overflow-hidden h-screen dark:bg-[#1c1c1d] dark:text-white">
         <div className="overflow-y-auto h-full">
           {/* ————————— COVER ————————— */}
-          <div className="p-8 bg-white shadow rounded-xl mb-6">
+          <div className="p-8 bg-white dark:bg-[#252728] dark:text-white shadow rounded-xl mb-6">
             <div
               className="relative w-full pb-[35%] bg-cover bg-center rounded-lg overflow-hidden"
               style={{
@@ -190,7 +203,10 @@ const GroupDetailPage = () => {
                   <RiMoreLine size={24} />
 
                   {modalAction && (
-                    <div className="absolute top-14 right-0 bg-white border border-gray-300 rounded-lg shadow-xl z-20 w-52">
+                    <div
+                      className="absolute top-14 right-0 dark:bg-[#2a2a2a] bg-white 
+                    border border-gray-300 rounded-lg shadow-xl z-20 w-52"
+                    >
                       <div className="hover:bg-gray-100 p-3 cursor-pointer">
                         Chia sẻ
                       </div>
@@ -213,7 +229,7 @@ const GroupDetailPage = () => {
           {/* ————————— REPORT MODAL ————————— */}
           {reportModal && (
             <div className="fixed inset-0 z-20 bg-black/40 flex items-center justify-center">
-              <div className="bg-white p-4 rounded-lg w-[400px]">
+              <div className="bg-white dark:bg-[#2a2a2a] p-4 rounded-lg w-[400px]">
                 <div className="flex justify-between items-center mb-3">
                   <div className="font-bold text-lg">Báo cáo nhóm</div>
                   <div
@@ -231,7 +247,7 @@ const GroupDetailPage = () => {
                 <div className="mb-3">
                   <label className="font-medium">Lý do báo cáo:</label>
                   <select
-                    className="w-full mt-1 border p-2 rounded"
+                    className="w-full dark:bg-[#2a2a2a] mt-1 border p-2 rounded"
                     value={selectedReason}
                     onChange={(e) => setSelectedReason(e.target.value)}
                   >

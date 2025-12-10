@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import ChatBoxComponent from "../../../components/user/ChatBoxComponent/ChatBoxComponent";
 import HeaderComponent from "../../../components/user/HeaderComponent/HeaderComponent";
 import ActiveFriendsListAndGroupsListComponent from "../../../components/user/ActiveFriendsListAndGroupsComponent/ActiveFriendsListAndGroupsComponent";
@@ -12,12 +12,6 @@ import * as UserServices from "../../../services/user/UserServices";
 import { useSelector } from "react-redux";
 
 const HomePage = () => {
-  const listGroup = [
-    { id: "1", groupAvatar: LogoCTUT, groupName: "Web" },
-    { id: "2", groupAvatar: LogoCTUT, groupName: "Web" },
-    { id: "3", groupAvatar: LogoCTUT, groupName: "Web" },
-  ];
-
   const [posts, setPosts] = useState([]);
   const firstFivePosts = posts.slice(0, 5);
   const remainingPosts = posts.slice(5);
@@ -30,6 +24,7 @@ const HomePage = () => {
       const accessToken = await ValidateToken.getValidAccessToken();
 
       const res = await PostServices.getPosts(accessToken);
+
       setPosts(res.posts);
     } catch (error) {
       console.log(error);
@@ -42,6 +37,8 @@ const HomePage = () => {
       const accessToken = await ValidateToken.getValidAccessToken();
 
       const res = await UserServices.getFriendSuggest(accessToken);
+
+      console.log(res);
 
       setFriendsSuggest(res.data);
     } catch (error) {
@@ -86,15 +83,11 @@ const HomePage = () => {
       >
         <ActiveFriendsListAndGroupsListComponent
           activeFriendsList={online.onlineFriends}
-          groupsList={listGroup}
         />
       </div>
 
       <div className="fixed z-50 lg:hidden block bottom-12 right-5">
-        <ChatBoxComponent
-          listFriends={online.onlineFriends}
-          listGroups={listGroup}
-        />
+        <ChatBoxComponent listFriends={online.onlineFriends} />
       </div>
     </div>
   );

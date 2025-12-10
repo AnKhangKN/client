@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import bgTest from "../../../assets/bgTest/bgTest.jpg";
-import logoCTUT from "../../../assets/logo/logo-ctut.png";
+import CoverDefault from "../../../assets/cover/cover_default.webp";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import { RiCameraLensFill, RiSettings4Fill } from "react-icons/ri";
 import ButtonComponent from "../../../components/shared/ButtonComponent/ButtonComponent";
 import PostCreateComponent from "../../../components/user/PostCreateComponent/PostCreateComponent";
@@ -11,13 +11,13 @@ import * as ChatServices from "../../../services/shared/ChatServices";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import * as UserServicesShared from "@/services/shared/UserServices";
 import * as ReportServices from "@/services/shared/ReportServices";
+import * as NotificationServices from "@/services/shared/NotificationServices";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { updateFollowingList } from "../../../features/user/userSlice";
 import useClickOutside from "../../../hooks/useClickOutside";
 import { socket } from "../../../utils/socket";
 import MessageBoxComponent from "../../../components/user/MessageBoxComponent/MessageBoxComponent";
-import ResourcesComponent from "../../../components/user/ResourcesProfileComponent/ResourcesProfileComponent";
 import MessageComponent from "../../../components/shared/MessageComponent/MessageComponent";
 import { IoSettingsOutline } from "react-icons/io5";
 
@@ -29,8 +29,8 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const [coverImage, setCoverImage] = useState(bgTest);
-  const [avatarImage, setAvatarImage] = useState(logoCTUT);
+  const [coverImage, setCoverImage] = useState(CoverDefault);
+  const [avatarImage, setAvatarImage] = useState(AvatarDefault);
   const [loading, setLoading] = useState(false);
   const [followerCount, setFollower] = useState();
   const [userAvatarFile, setUserAvatarFile] = useState(null);
@@ -67,8 +67,8 @@ const ProfilePage = () => {
         const res = await UserServices.getProfile(accessToken, userName);
 
         setUserDetail(res.data.user);
-        setAvatarImage(res.data.user.userAvatar || logoCTUT);
-        setCoverImage(res.data.user.userCover || bgTest);
+        setAvatarImage(res.data.user.userAvatar || AvatarDefault);
+        setCoverImage(res.data.user.userCover || CoverDefault);
         setPosts(res.data.posts);
         setFollower(res.data.user.followers?.length || 0);
         setFollowingCount(res.data.user.following?.length || 0);
@@ -114,6 +114,16 @@ const ProfilePage = () => {
       const res = await UserServices.followFriend(accessToken, { friendId });
 
       setIsFollowing(res.isFollowing);
+
+      if (isFollowing) {
+        const data = {
+          user: friendId, // người nhận
+          type: "follow",
+          message: "đã bắt đầu theo dõi bạn.",
+        };
+
+        await NotificationServices.createNotification(accessToken, data);
+      }
 
       // Nếu đang xem trang của người khác
       if (userDetail._id !== user.id) {
@@ -199,7 +209,10 @@ const ProfilePage = () => {
         type: "success",
         key: Date.now(),
       });
-      setTimeout(() => navigate("/login"), 2000);
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 500);
     } catch (error) {
       setMessage({
         text:
@@ -215,6 +228,7 @@ const ProfilePage = () => {
   // --- Upload avatar ---
   const handleConfirmUserAvatar = async () => {
     if (!userAvatarFile) return;
+    setLoading(true);
     try {
       const accessToken = await ValidateToken.getValidAccessToken();
       const formData = new FormData();
@@ -224,7 +238,8 @@ const ProfilePage = () => {
         accessToken,
         formData
       );
-      if (res.success) {
+      if (res) {
+        setLoading(false);
         setAvatarImage(previewAvatar);
         setUserAvatarFile(null);
         setPreviewAvatar(null);
@@ -238,6 +253,7 @@ const ProfilePage = () => {
   // --- Upload cover ---
   const handleConfirmUserCover = async () => {
     if (!userCoverFile) return;
+    setLoading(true);
     try {
       const accessToken = await ValidateToken.getValidAccessToken();
       const formData = new FormData();
@@ -247,7 +263,8 @@ const ProfilePage = () => {
         accessToken,
         formData
       );
-      if (res.success) {
+      if (res) {
+        setLoading(false);
         setCoverImage(previewCover);
         setUserCoverFile(null);
         setPreviewCover(null);
@@ -276,6 +293,18 @@ const ProfilePage = () => {
 
       const report = await ReportServices.createReport(accessToken, data);
 
+      const dataNotification = {
+        user: userDetail._id, // Người bị report
+        isAdmin: true,
+        type: "report",
+        message: "đã báo cáo 1 người dùng.",
+      };
+
+      await NotificationServices.createNotification(
+        accessToken,
+        dataNotification
+      );
+
       if (report) {
         setLoading(false);
         setSettingModal(false);
@@ -293,6 +322,14 @@ const ProfilePage = () => {
       console.log("Lỗi", msg);
     }
   };
+
+  const isHidden = user.friendsHidden?.some(
+    (item) => String(item.friendId?._id) === String(userDetail._id)
+  );
+
+  const isHiddenByUserDetail = userDetail.friendsHidden?.some(
+    (item) => String(item.friendId) === String(user._id)
+  );
 
   return (
     <div className="flex justify-center bg-white dark:bg-[#1c1c1d] dark:text-white">
@@ -328,7 +365,8 @@ const ProfilePage = () => {
               <div className="absolute flex gap-2 right-4 bottom-4 bg-white p-4 rounded-lg">
                 <ButtonComponent
                   text="OK"
-                  width="w-28"
+                  loading={loading}
+                  width="w-32"
                   onClick={handleConfirmUserCover}
                 />
                 <ButtonComponent
@@ -368,8 +406,9 @@ const ProfilePage = () => {
               {previewAvatar && (
                 <div className="absolute flex items-center gap-2 -bottom-6 -right-44 bg-white shadow p-4 rounded-lg">
                   <ButtonComponent
+                    loading={loading}
                     text="OK"
-                    width="w-28"
+                    width="w-32"
                     onClick={handleConfirmUserAvatar}
                   />
                   <ButtonComponent
@@ -383,50 +422,57 @@ const ProfilePage = () => {
               )}
 
               {/* Nút follow */}
-              <div
-                className={`absolute -bottom-25 -left-8 ${
-                  userDetail._id !== user.id ? "block" : "hidden"
-                }`}
-              >
-                <div className="flex items-center justify-center w-60">
-                  {isFollowing ? (
-                    <div className="flex flex-col gap-2">
-                      <ButtonComponent
-                        text="Đang theo dõi"
-                        width="w-48"
-                        bgColor="bg-gray-100"
-                        textColor="text-black"
-                        hoverColor="hover:bg-gray-200"
-                        py="py-1"
-                        disabled={loading}
-                        onClick={() => handleFollowFriend(userDetail._id)} // toggle unfollow
-                      />
-
-                      <ButtonComponent
-                        text="Nhắn tin"
-                        py="py-1"
-                        onClick={() => handleOpenMessageBox(userDetail)}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      <ButtonComponent
-                        text="Theo dõi"
-                        disabled={loading}
-                        onClick={() => handleFollowFriend(userDetail._id)}
-                        width="w-40"
-                        py="py-1"
-                      />
-
-                      <ButtonComponent
-                        text="Nhắn tin"
-                        py="py-1"
-                        onClick={() => handleOpenMessageBox(userDetail)}
-                      />
-                    </div>
-                  )}
+              {isHidden ? (
+                <div className="absolute -bottom-20 left-0 text-red-500 font-medium">
+                  Người dùng này đã bị ẩn hoặc chặn
                 </div>
-              </div>
+              ) : isHiddenByUserDetail ? (
+                <div className="absolute -bottom-20 left-0 text-red-500 font-medium">
+                  Đã bị người dùng này chặn
+                </div>
+              ) : (
+                userDetail._id !== user.id && (
+                  // các nút follow / message
+                  <div className="absolute -bottom-25 -left-8">
+                    <div className="flex items-center justify-center w-60">
+                      {isFollowing ? (
+                        <div className="flex flex-col gap-2">
+                          <ButtonComponent
+                            text="Đang theo dõi"
+                            width="w-48"
+                            bgColor="bg-gray-100"
+                            textColor="text-black"
+                            hoverColor="hover:bg-gray-200"
+                            py="py-1"
+                            disabled={loading}
+                            onClick={() => handleFollowFriend(userDetail._id)}
+                          />
+                          <ButtonComponent
+                            text="Nhắn tin"
+                            py="py-1"
+                            onClick={() => handleOpenMessageBox(userDetail)}
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <ButtonComponent
+                            text="Theo dõi"
+                            width="w-40"
+                            py="py-1"
+                            disabled={loading}
+                            onClick={() => handleFollowFriend(userDetail._id)}
+                          />
+                          <ButtonComponent
+                            text="Nhắn tin"
+                            py="py-1"
+                            onClick={() => handleOpenMessageBox(userDetail)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              )}
             </div>
 
             {/* --- Tên, thông tin người dùng --- */}
@@ -442,16 +488,22 @@ const ProfilePage = () => {
                   <div className="text-lg">{userDetail.userName}</div>
                 </div>
 
-                <button
-                  className={`p-2 text-2xl cursor-pointer `}
-                  onClick={() => setSettingModal(true)}
-                >
-                  <IoSettingsOutline />
-                </button>
+                {isHidden ? (
+                  <></>
+                ) : isHiddenByUserDetail ? (
+                  <></>
+                ) : (
+                  <button
+                    className={`p-2 text-2xl cursor-pointer `}
+                    onClick={() => setSettingModal(true)}
+                  >
+                    <IoSettingsOutline />
+                  </button>
+                )}
 
                 {settingModal && (
                   <div className="bg-black/40 fixed inset-0 flex items-center justify-center z-10">
-                    <div className="bg-white w-80 rounded-2xl text-center">
+                    <div className="bg-white dark:bg-[#2a2a2a] w-80 rounded-2xl text-center">
                       {user.id === userDetail._id ? (
                         <div>
                           <div
@@ -487,8 +539,11 @@ const ProfilePage = () => {
                           </div>
 
                           {reportModal && (
-                            <div className="fixed inset-0 z-20 bg-black/40 flex items-center justify-center">
-                              <div className="bg-white p-4 rounded-lg w-[400px]">
+                            <div
+                              className="fixed inset-0 z-20 bg-black/40 flex items-center 
+                            justify-center"
+                            >
+                              <div className="bg-white dark:bg-[#2a2a2a] p-4 rounded-lg w-[400px]">
                                 {/* Header */}
                                 <div className="flex justify-between items-center mb-3">
                                   <div className="font-bold text-lg">
@@ -516,7 +571,7 @@ const ProfilePage = () => {
                                     Lý do báo cáo:
                                   </label>
                                   <select
-                                    className="w-full mt-1 border p-2 rounded"
+                                    className="w-full dark:bg-[#2a2a2a] mt-1 border p-2 rounded"
                                     value={selectedReason}
                                     onChange={(e) =>
                                       setSelectedReason(e.target.value)
@@ -687,7 +742,7 @@ const ProfilePage = () => {
                                     className="flex items-center gap-3 cursor-pointer"
                                   >
                                     <img
-                                      src={f.userAvatar || logoCTUT}
+                                      src={f.userAvatar || AvatarDefault}
                                       alt={f.userName}
                                       className="w-10 h-10 rounded-full object-cover"
                                     />
@@ -744,66 +799,77 @@ const ProfilePage = () => {
                     </div>
                   </div>
                 )}
-
-                <div className="text-sm">
-                  {userDetail.bio ? userDetail.bio : "No bio yet"}
-                </div>
-              </div>
-
-              <div className="relative">
-                <div className="flex gap-3 items-center absolute text-[12px]">
-                  <div className="bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1">
-                    link 1
-                  </div>
-                  <div className="bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1">
-                    link 2
-                  </div>
-                  <div className="bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1">
-                    link 3
-                  </div>
-                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* --- CONTENT & SIDEBAR --- */}
-        <div className="mt-64 flex w-full gap-6">
-          <div className="flex-1 space-y-4">
-            <div
-              className={`${userDetail._id != user.id ? "hidden" : "block"}`}
-            >
-              <PostCreateComponent />
+        {isHidden ? (
+          <></>
+        ) : isHiddenByUserDetail ? (
+          <></>
+        ) : (
+          <>
+            <div className="flex justify-between">
+              <div className="mt-64 flex w-[620px] shrink-0 gap-6">
+                <div className="flex-1 space-y-4 ">
+                  <div
+                    className={`${
+                      userDetail._id != user.id ? "hidden" : "block"
+                    }`}
+                  >
+                    <PostCreateComponent />
+                  </div>
+
+                  <PostComponent postsList={posts} />
+
+                  <div className="w-full flex justify-center">
+                    {posts.length === 0 && (
+                      <div className="pt-20">Chưa có bài viết nào.</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className="mt-64 mx-4 p-4 dark:border-0 border h-full w-full rounded-md shadow border-gray-200
+                    dark:bg-[#252728]
+          flex flex-col space-y-4"
+              >
+                <div className="font-bold text-xl">Giới thiệu</div>
+                <div className="text-sm">
+                  {userDetail.bio ? userDetail.bio : "No bio yet"}
+                </div>
+
+                <div className="font-bold text-xl">Liên kết khác</div>
+                <div className="flex gap-3 items-center text-[12px]">
+                  {user?.orderConnect?.length > 0 &&
+                    user.orderConnect.map((link, index) => (
+                      <a
+                        key={index}
+                        href={link.linkConnect}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1"
+                      >
+                        {link.linkName}
+                      </a>
+                    ))}
+                </div>
+              </div>
             </div>
 
-            <PostComponent postsList={posts} />
-
-            <div className="w-full flex justify-center">
-              {posts.length === 0 ? (
-                <div className="pt-20">Chưa có bài viết nào.</div>
-              ) : (
-                <></>
-              )}
-            </div>
-          </div>
-
-          {/* <div
-            className={` w-[280px] shrink-0 ${
-              posts.length === 0 ? "hidden" : "hidden lg:block"
-            }`}
-          >
-            <ResourcesComponent />
-          </div> */}
-        </div>
-
-        {/* Message box */}
-        {messageBox ? (
-          <MessageBoxComponent
-            handleCloseMessageBox={handleCloseMessageBox}
-            chatId={chatId}
-            selectedUser={selectedUser}
-          />
-        ) : null}
+            {/* Message box */}
+            {messageBox ? (
+              <MessageBoxComponent
+                handleCloseMessageBox={handleCloseMessageBox}
+                chatId={chatId}
+                selectedUser={selectedUser}
+              />
+            ) : null}
+          </>
+        )}
       </div>
     </div>
   );

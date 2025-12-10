@@ -14,7 +14,7 @@ const MediaCarousel = ({ medias }) => {
   const currentMedia = medias[currentIndex];
 
   return (
-    <div className="relative w-full h-96 flex items-center h-full justify-center bg-gray-100">
+    <div className="relative w-full h-96 flex items-center justify-center bg-gray-100">
       {currentMedia.type === "image" ? (
         <img
           src={currentMedia.url}

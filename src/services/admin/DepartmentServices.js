@@ -36,3 +36,22 @@ export const createDepartment = async (accessToken, data) => {
     throw error;
   }
 };
+
+export const updateDepartment = async (accessToken, data) => {
+  try {
+    const res = await axios.put(
+      `${import.meta.env.VITE_BACKEND_API}/admin/departments`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};

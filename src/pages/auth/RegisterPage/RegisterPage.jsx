@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import LogoCTUT from "../../../assets/logo/logo-ctut.png";
+import AvatarDefault from "../../../assets/logo/avatar_default.webp";
 import { useNavigate } from "react-router-dom";
 import * as AuthServices from "../../../services/shared/AuthServices";
 import MessageComponent from "../../../components/shared/MessageComponent/MessageComponent";
@@ -131,7 +131,7 @@ const RegisterPage = () => {
       <div className="flex flex-col items-center text-center space-y-4">
         <img
           className="w-48 h-48 bg-white rounded-full shadow"
-          src={LogoCTUT}
+          src={AvatarDefault}
           alt="CTUT Logo"
         />
         <h1 className="text-blue-700 text-2xl font-bold">

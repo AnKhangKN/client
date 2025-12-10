@@ -28,7 +28,7 @@ const TextareaComponent = ({
 
       <label
         htmlFor={id}
-        className={`absolute left-2 bg-white px-1 text-gray-500 transition-all duration-200
+        className={`absolute left-2 bg-white dark:bg-[#3a3a3a] px-1 text-gray-500 transition-all duration-200
           ${
             isFilled
               ? "-top-2 text-blue-600 text-[12px]"
